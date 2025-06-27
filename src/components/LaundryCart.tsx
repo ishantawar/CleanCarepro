@@ -214,6 +214,22 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
 
   const handleProceedToCheckout = () => {
+    // Check authentication first before validation
+    if (!currentUser) {
+      console.log("User not authenticated, redirecting to login");
+      if (onLoginRequired) {
+        onLoginRequired();
+      } else {
+        addNotification(
+          createWarningNotification(
+            "Login Required",
+            "Please sign in to complete your booking",
+          ),
+        );
+      }
+      return;
+    }
+
     // Validate form and show inline errors
     const errors = validateCheckoutForm(
       currentUser,
@@ -225,12 +241,6 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 
     if (errors.length > 0) {
       setValidationErrors(errors);
-
-      // If user is not authenticated, trigger login
-      if (!currentUser && onLoginRequired) {
-        onLoginRequired();
-        return;
-      }
 
       // Scroll to validation errors
       const errorElement = document.getElementById("validation-errors");
