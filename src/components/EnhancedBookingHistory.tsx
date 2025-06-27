@@ -161,11 +161,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   const refreshBookings = async () => {
     setRefreshing(true);
     try {
+      // Clear local cache first
+      localStorage.removeItem("user_bookings");
+
       await loadBookings();
       addNotification(
         createSuccessNotification(
           "Refreshed",
-          "Booking history updated successfully",
+          "Booking history updated from database",
         ),
       );
     } catch (error) {
