@@ -503,7 +503,21 @@ const LaundryIndex = () => {
         />
       )}
 
-      {/* Authentication is now handled directly in ResponsiveLaundryHome via PhoneOtpAuthModal */}
+      {/* Authentication View */}
+      {currentView === "auth" && (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <PhoneOtpAuthModal
+              isOpen={true}
+              onClose={() => setCurrentView("home")}
+              onSuccess={(user) => {
+                handleLoginSuccess(user);
+                setCurrentView("home");
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {currentView === "bookings" && (
         <EnhancedBookingHistory
