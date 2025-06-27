@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Clock, ChevronRight } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 import {
   format,
   addDays,
@@ -43,9 +43,9 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
       const date = addDays(today, i);
       dates.push({
         date,
-        day: format(date, "EEE"),
-        fullDate: format(date, "dd"),
-        month: format(date, "MMM"),
+        day: format(date, "EEE"), // Mon
+        fullDate: format(date, "dd"), // 23
+        month: format(date, "MMM"), // Jun
       });
     }
 
@@ -159,8 +159,8 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           </div>
         )}
 
-        {/* Static 7-day horizontal scroll */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        {/* Horizontal, evenly spaced 7-day row */}
+        <div className="grid grid-cols-7 gap-2">
           {weekDates.map((dateItem) => (
             <Button
               key={dateItem.date.toISOString()}
@@ -171,7 +171,7 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
               }
               onClick={() => onDateChange(dateItem.date)}
               className={cn(
-                "flex-shrink-0 h-auto flex flex-col items-center justify-center p-3 min-w-[70px] hover:scale-105 transition-transform",
+                "flex flex-col items-center justify-center p-3 h-auto",
                 selectedDate && isSameDay(selectedDate, dateItem.date)
                   ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
                   : "hover:border-green-300 hover:bg-green-50"
