@@ -594,15 +594,26 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">C</span>
+              <div className="relative flex-1 max-w-lg">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search laundry services..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10 pr-10 bg-gray-50 border-gray-200 focus:bg-white"
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <VoiceSearch
+                    onResult={(transcript) => {
+                      handleSearch(transcript);
+                    }}
+                    onError={(error) => {
+                      console.error("Voice search error:", error);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  />
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    CleanCare Pro
-                  </h1>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+              </div>
                     <Monitor className="h-3 w-3" />
                     <span>Desktop</span>
                   </div>
