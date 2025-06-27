@@ -453,7 +453,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                 return (
                   <Card
                     key={service.id}
-                    className="border-0 shadow-lg rounded-2xl overflow-hidden"
+                    className="border-0 shadow-lg rounded-2xl overflow-hidden service-card"
                   >
                     <CardContent className="p-3">
                       <div className="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-xl mb-3 flex items-center justify-center">
@@ -499,7 +499,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                         </div>
 
                         {quantity > 0 ? (
-                          <div className="flex items-center justify-between bg-green-50 rounded-lg p-2 mt-2 sm:gap-0.5 sm:mt-[22px]">
+                          <div className="flex items-center justify-between bg-green-50 rounded-lg p-2 mt-2 quantity-controls">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -525,7 +525,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                         ) : (
                           <Button
                             onClick={() => addToCart(service.id)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2 service-add-button mobile-button mt-2 sm:mt-[23px]"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2 service-add-button mobile-button"
                           >
                             ADD
                           </Button>
