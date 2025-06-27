@@ -84,14 +84,61 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
     try {
       setLoading(true);
+
+      // Import MongoDB helpers
+      const { bookingHelpers } = await import(
+        "../integrations/mongodb/bookingHelpers"
+      );
       const bookingService = BookingService.getInstance();
 
-      console.log("Loading bookings for current user...");
-      // Use the new method that automatically handles user ID resolution
+      console.log(
+        "Loading bookings from MongoDB for user:",
+        currentUser._id || currentUser.id,
+      );
+
+      // Try MongoDB first
+      let mongoBookings = [];
+      if (currentUser._id) {
+        const mongoResponse = await bookingHelpers.getUserBookings(
+          currentUser._id,
+        );
+        if (mongoResponse.data && mongoResponse.data.length > 0) {
+          mongoBookings = mongoResponse.data.map((booking: any) => ({
+            id: booking._id,
+            userId: booking.customer_id,
+            services: booking.services || [booking.service],
+            totalAmount: booking.final_amount || booking.total_price,
+            status: booking.status,
+            pickupDate: booking.scheduled_date,
+            deliveryDate: booking.scheduled_date, // Could calculate +1 day
+            pickupTime: booking.scheduled_time,
+            deliveryTime: "18:00",
+            address: booking.address,
+            contactDetails: {
+              phone: currentUser.phone,
+              name: currentUser.full_name || currentUser.name,
+              instructions:
+                booking.additional_details || booking.special_instructions,
+            },
+            paymentStatus: booking.payment_status,
+            createdAt: booking.created_at || booking.createdAt,
+            updatedAt: booking.updated_at || booking.updatedAt,
+          }));
+          console.log("✅ Loaded bookings from MongoDB:", mongoBookings.length);
+          setBookings(mongoBookings);
+          return;
+        }
+      }
+
+      // Fallback to BookingService
+      console.log("Loading bookings from BookingService...");
       const response = await bookingService.getCurrentUserBookings();
 
       if (response.success && response.bookings) {
-        console.log("Bookings loaded successfully:", response.bookings.length);
+        console.log(
+          "✅ Bookings loaded from BookingService:",
+          response.bookings.length,
+        );
         setBookings(response.bookings);
       } else {
         console.log("No bookings found or error:", response.error);
