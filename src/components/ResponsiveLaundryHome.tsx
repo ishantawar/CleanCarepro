@@ -525,7 +525,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                         ) : (
                           <Button
                             onClick={() => addToCart(service.id)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2 h-8 transition-none transform-none hover:scale-100 active:scale-95"
                           >
                             ADD
                           </Button>
