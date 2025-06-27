@@ -242,7 +242,7 @@ export class DVHostingSmsService {
       }
 
       // For local development, try backend API
-      const response = await fetch(`${this.apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`, {
+      const response = await fetch(`${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -431,7 +431,7 @@ export class DVHostingSmsService {
       }
 
       // For local development, try backend API
-      const response = await fetch(`${this.apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`, {
+      const response = await fetch(`${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
