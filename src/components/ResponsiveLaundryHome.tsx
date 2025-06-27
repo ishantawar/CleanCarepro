@@ -35,6 +35,7 @@ import DebugPanel from "./DebugPanel";
 import BookingDebugPanel from "./BookingDebugPanel";
 import ConnectionStatus from "./ConnectionStatus";
 import NotificationPanel from "./NotificationPanel";
+import VoiceSearch from "./VoiceSearch";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import { saveCartData, getCartData } from "@/utils/formPersistence";
 
@@ -394,7 +395,15 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
               onChange={(e) => handleSearch(e.target.value)}
               className="bg-transparent border-none text-white placeholder-gray-400 focus:ring-0 p-0 text-sm"
             />
-            <Mic className="h-5 w-5 text-gray-400 ml-3" />
+            <VoiceSearch
+              onResult={(transcript) => {
+                handleSearch(transcript);
+              }}
+              onError={(error) => {
+                console.error("Voice search error:", error);
+              }}
+              className="ml-3 text-gray-400 hover:text-white"
+            />
           </div>
 
           {/* Categories */}
