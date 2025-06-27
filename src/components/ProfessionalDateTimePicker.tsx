@@ -63,10 +63,10 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
     }));
   };
 
-  // Generate extended date options for dropdown (next 30 days)
+  // Generate extended date options for dropdown (next 7 days only)
   const generateExtendedDates = () => {
     const dates = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 7; i++) {
       const date = addDays(new Date(), i);
       dates.push({
         date,
@@ -172,7 +172,7 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
         {showDropdown && (
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">
-              Choose from next 30 days:
+              Choose from next 7 days:
             </Label>
             <Select
               value={selectedDate?.toISOString() || ""}
