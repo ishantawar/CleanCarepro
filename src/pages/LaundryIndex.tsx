@@ -99,7 +99,7 @@ const LaundryIndex = () => {
 
             if (displayLocation && displayLocation.trim()) {
               setCurrentLocation(displayLocation);
-              console.log("🎯 Final location set:", displayLocation);
+              console.log("��� Final location set:", displayLocation);
             } else {
               // If no location found, use coordinate-based fallback
               const fallbackLocation = getCoordinateBasedLocation(
@@ -392,48 +392,92 @@ const LaundryIndex = () => {
     console.log("Processing checkout for authenticated user:", cartData);
 
     try {
-      // Import booking service
+      // Import both booking helpers and service
       const { BookingService } = await import("../services/bookingService");
+      const { bookingHelpers } = await import(
+        "../integrations/mongodb/bookingHelpers"
+      );
+
       const bookingService = BookingService.getInstance();
 
-      // Create booking with proper structure
-      const bookingData = {
-        userId: currentUser.id || currentUser.phone,
-        services: cartData.services,
-        totalAmount: cartData.totalAmount,
-        status: "pending" as const,
-        pickupDate: cartData.pickupDate,
-        deliveryDate: cartData.deliveryDate,
-        pickupTime: cartData.pickupTime,
-        deliveryTime: cartData.deliveryTime,
-        address: cartData.address,
-        contactDetails: {
-          phone: cartData.phone || currentUser.phone,
-          name: currentUser.full_name || currentUser.name || "User",
-          instructions: cartData.instructions,
+      // Prepare services array for MongoDB
+      const servicesArray =
+        cartData.services?.map((service: any) =>
+          typeof service === "string" ? service : service.name,
+        ) || [];
+
+      // Create booking data for MongoDB backend
+      const mongoBookingData = {
+        customer_id: currentUser._id || currentUser.id,
+        service: servicesArray[0] || "Laundry Service",
+        service_type: "laundry",
+        services: servicesArray,
+        scheduled_date: cartData.pickupDate,
+        scheduled_time: cartData.pickupTime,
+        provider_name: "CleanCare Pro",
+        address:
+          typeof cartData.address === "string"
+            ? cartData.address
+            : cartData.address?.fullAddress || "",
+        coordinates: cartData.address?.coordinates || { lat: 0, lng: 0 },
+        additional_details: cartData.instructions || "",
+        total_price: cartData.totalAmount,
+        discount_amount: 0,
+        final_amount: cartData.totalAmount,
+        special_instructions: cartData.instructions || "",
+        charges_breakdown: {
+          base_price: cartData.totalAmount,
+          tax_amount: 0,
+          service_fee: 0,
+          discount: 0,
         },
-        paymentStatus: "pending" as const,
       };
 
-      // Save booking to database/localStorage
-      const result = await bookingService.createBooking(bookingData);
+      // Save to MongoDB backend first
+      console.log("💾 Saving to MongoDB backend...");
+      const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
 
-      if (result.success) {
+      if (mongoResult.data) {
+        console.log("✅ Booking saved to MongoDB:", mongoResult.data._id);
+
+        // Also save using booking service for local storage backup
+        const localBookingData = {
+          userId: currentUser._id || currentUser.id || currentUser.phone,
+          services: servicesArray,
+          totalAmount: cartData.totalAmount,
+          status: "pending" as const,
+          pickupDate: cartData.pickupDate,
+          deliveryDate: cartData.deliveryDate,
+          pickupTime: cartData.pickupTime,
+          deliveryTime: cartData.deliveryTime,
+          address: cartData.address,
+          contactDetails: {
+            phone: cartData.phone || currentUser.phone,
+            name: currentUser.full_name || currentUser.name || "User",
+            instructions: cartData.instructions,
+          },
+          paymentStatus: "pending" as const,
+        };
+
+        await bookingService.createBooking(localBookingData);
+
         // Show success message
         addNotification(
           createSuccessNotification(
             "Order Confirmed!",
-            "Your order has been placed successfully! You will receive a confirmation shortly.",
+            `Your order has been placed successfully! Booking ID: ${mongoResult.data._id.slice(-6)}`,
           ),
         );
 
         // Clear cart
         localStorage.removeItem("laundry_cart");
 
-        // Stay on home page instead of auto-redirecting to bookings
+        // Stay on home page
         setCurrentView("home");
       } else {
-        throw new Error(result.error || "Failed to create booking");
+        throw new Error(
+          mongoResult.error?.message || "Failed to create booking in database",
+        );
       }
     } catch (error) {
       console.error("Checkout failed:", error);
