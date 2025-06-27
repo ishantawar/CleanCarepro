@@ -8,19 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Clock, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  format,
-  addDays,
-  isSameDay,
-  isToday,
-  isTomorrow,
-  startOfWeek,
-  addWeeks,
-  subWeeks,
-  endOfWeek,
-  eachDayOfInterval,
-} from "date-fns";
+import { CalendarIcon, Clock } from "lucide-react";
+import { format, addDays, isSameDay, isToday, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface ProfessionalDateTimePickerProps {
@@ -130,14 +119,6 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
             Select Date
           </Label>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goToCurrentWeek}
-              className="text-xs px-2 py-1 h-auto"
-            >
-              Today
-            </Button>
             <Button
               variant="outline"
               size="sm"
