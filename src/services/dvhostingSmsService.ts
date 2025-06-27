@@ -1,3 +1,5 @@
+const apiBaseUrl =
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 export class DVHostingSmsService {
   private static instance: DVHostingSmsService;
   private currentPhone: string = "";
@@ -58,8 +60,7 @@ export class DVHostingSmsService {
       }
 
       // For local development, try backend API
-      const apiBaseUrl =
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+      
         console.log(apiBaseUrl)
       this.log("DVHosting SMS: Local environment, trying backend API:", {
         apiBaseUrl,
