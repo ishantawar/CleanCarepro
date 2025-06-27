@@ -31,7 +31,9 @@ import {
   getCartData,
 } from "@/utils/formPersistence";
 import EnhancedAddressForm from "./EnhancedAddressForm";
+import UnifiedLocationInput from "./UnifiedLocationInput";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
+import { FormValidation, validateCheckoutForm } from "./FormValidation";
 
 interface LaundryCartProps {
   onBack: () => void;
@@ -209,56 +211,38 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     localStorage.removeItem("laundry_cart");
   };
 
+  const [validationErrors, setValidationErrors] = useState<any[]>([]);
+
   const handleProceedToCheckout = () => {
-    // Check if user is authenticated first
-    if (!currentUser) {
-      if (onLoginRequired) {
+    // Validate form and show inline errors
+    const errors = validateCheckoutForm(
+      currentUser,
+      addressData,
+      phoneNumber,
+      selectedDate,
+      selectedTime,
+    );
+
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+
+      // If user is not authenticated, trigger login
+      if (!currentUser && onLoginRequired) {
         onLoginRequired();
         return;
-      } else {
-        addNotification(
-          createWarningNotification(
-            "Login Required",
-            "Please login to confirm your booking",
-          ),
-        );
-        return;
       }
-    }
 
-    if (!addressData) {
-      addNotification(
-        createWarningNotification(
-          "Address Required",
-          "Please enter pickup address",
-        ),
-      );
+      // Scroll to validation errors
+      const errorElement = document.getElementById("validation-errors");
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
       return;
     }
 
-    if (!phoneNumber.trim()) {
-      addNotification(
-        createWarningNotification(
-          "Phone Required",
-          "Please enter phone number",
-        ),
-      );
-      return;
-    }
-
-    if (!selectedDate) {
-      addNotification(
-        createWarningNotification("Date Required", "Please select pickup date"),
-      );
-      return;
-    }
-
-    if (!selectedTime) {
-      addNotification(
-        createWarningNotification("Time Required", "Please select pickup time"),
-      );
-      return;
-    }
+    // Clear validation errors
+    setValidationErrors([]);
 
     // Structure data to match booking service requirements
     const cartItems = getCartItems();
@@ -486,11 +470,22 @@ Confirm this booking?`;
           </CardContent>
         </Card>
 
-        {/* Enhanced Address Form */}
-        <EnhancedAddressForm
-          onAddressChange={setAddressData}
-          initialAddress={addressData}
-        />
+        {/* Unified Address Input */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Pickup Location
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UnifiedLocationInput
+              onAddressChange={setAddressData}
+              initialAddress={addressData}
+              placeholder="Enter your complete pickup address"
+            />
+          </CardContent>
+        </Card>
 
         {/* Contact & Schedule Details */}
         <Card>
@@ -617,12 +612,21 @@ Confirm this booking?`;
 
       {/* Fixed Bottom Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 sm:p-4 safe-area-bottom">
-        <Button
-          onClick={handleProceedToCheckout}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold"
-        >
-          Proceed to Checkout • ₹{getTotal()}
-        </Button>
+        <div className="space-y-3">
+          {/* Validation Errors */}
+          {validationErrors.length > 0 && (
+            <div id="validation-errors">
+              <FormValidation errors={validationErrors} />
+            </div>
+          )}
+
+          <Button
+            onClick={handleProceedToCheckout}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold"
+          >
+            Proceed to Checkout • ₹{getTotal()}
+          </Button>
+        </div>
       </div>
     </div>
   );
