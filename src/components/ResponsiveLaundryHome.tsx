@@ -446,7 +446,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
           {getFilteredServices().length === 0 ? (
             <EmptyStateCard />
           ) : (
-            <div className="grid grid-cols-2 gap-3 pb-20">
+            <div className="grid grid-cols-2 gap-3 pb-20 service-grid">
               {getFilteredServices().map((service) => {
                 const quantity = cart[service.id] || 0;
 
@@ -455,7 +455,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                     key={service.id}
                     className="border-0 shadow-lg rounded-2xl overflow-hidden service-card"
                   >
-                    <CardContent className="p-3">
+                    <CardContent className="p-3 card-content">
                       <div className="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-xl mb-3 flex items-center justify-center">
                         <span className="text-3xl">
                           {service.category.includes("Men")
@@ -472,64 +472,70 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                         </span>
                       </div>
 
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-xs text-gray-900 leading-tight line-clamp-2">
-                          {service.name}
-                        </h4>
+                      <div className="card-details">
+                        <div className="service-info">
+                          <h4 className="font-semibold text-xs text-gray-900 leading-tight line-clamp-2 mb-2">
+                            {service.name}
+                          </h4>
 
-                        <div className="text-xs text-gray-600">
-                          {service.category}
+                          <div className="text-xs text-gray-600 mb-2">
+                            {service.category}
+                          </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-sm font-bold text-gray-900">
-                              ₹{service.price}
-                            </span>
-                            <span className="text-xs text-gray-600 ml-1">
-                              {service.unit}
-                            </span>
-                          </div>
+                        <div className="price-badge-container">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-sm font-bold text-gray-900">
+                                ₹{service.price}
+                              </span>
+                              <span className="text-xs text-gray-600 ml-1">
+                                {service.unit}
+                              </span>
+                            </div>
 
-                          {service.popular && (
-                            <Badge className="bg-green-100 text-green-700 text-xs">
-                              Popular
-                            </Badge>
+                            {service.popular && (
+                              <Badge className="bg-green-100 text-green-700 text-xs">
+                                Popular
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="card-actions">
+                          {quantity > 0 ? (
+                            <div className="flex items-center justify-between bg-green-50 rounded-lg p-2 quantity-controls">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFromCart(service.id)}
+                                className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+
+                              <span className="font-semibold text-green-700 text-sm">
+                                {quantity}
+                              </span>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => addToCart(service.id)}
+                                className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() => addToCart(service.id)}
+                              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2 service-add-button mobile-button"
+                            >
+                              ADD
+                            </Button>
                           )}
                         </div>
-
-                        {quantity > 0 ? (
-                          <div className="flex items-center justify-between bg-green-50 rounded-lg p-2 mt-2 quantity-controls">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFromCart(service.id)}
-                              className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-
-                            <span className="font-semibold text-green-700 text-sm">
-                              {quantity}
-                            </span>
-
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => addToCart(service.id)}
-                              className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            onClick={() => addToCart(service.id)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2 service-add-button mobile-button"
-                          >
-                            ADD
-                          </Button>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
