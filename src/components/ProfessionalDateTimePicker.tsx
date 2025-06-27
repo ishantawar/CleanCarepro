@@ -155,10 +155,10 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           </div>
         )}
 
-        {/* Available dates (next 7 days) */}
+        {/* Available dates (next 7 days) - Vertical List */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Available Dates:</Label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
             {availableDates.map((dateItem) => {
               const isSelected =
                 selectedDate && isSameDay(dateItem.date, selectedDate);
@@ -169,16 +169,52 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
                   type="button"
                   onClick={() => onDateChange(dateItem.date)}
                   className={cn(
-                    "p-3 text-center rounded-lg transition-colors text-sm border",
+                    "w-full p-3 text-left rounded-lg transition-colors border flex items-center justify-between",
                     isSelected
                       ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
                       : "hover:bg-gray-100 border-gray-200 bg-white",
                   )}
                 >
-                  <div className="font-medium">{dateItem.label}</div>
-                  <div className="text-xs mt-1 opacity-75">
-                    {dateItem.shortDate}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium",
+                        isSelected
+                          ? "bg-white/20 text-white"
+                          : "bg-green-100 text-green-700",
+                      )}
+                    >
+                      {dateItem.fullDate}
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">
+                        {dateItem.label}
+                      </div>
+                      <div
+                        className={cn(
+                          "text-xs",
+                          isSelected ? "text-white/70" : "text-gray-500",
+                        )}
+                      >
+                        {dateItem.shortDate}
+                      </div>
+                    </div>
                   </div>
+                  {isSelected && (
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  )}
                 </button>
               );
             })}
