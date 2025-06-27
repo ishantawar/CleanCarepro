@@ -8,8 +8,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Clock } from "lucide-react";
-import { format, addDays, isSameDay, isToday, isTomorrow } from "date-fns";
+import { CalendarIcon, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  format,
+  addDays,
+  isSameDay,
+  isToday,
+  isTomorrow,
+  startOfWeek,
+  addWeeks,
+  subWeeks,
+  endOfWeek,
+  eachDayOfInterval,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface ProfessionalDateTimePickerProps {
@@ -27,52 +38,68 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
   onTimeChange,
   className,
 }) => {
+  const [currentWeekStart, setCurrentWeekStart] = useState(
+    startOfWeek(new Date(), { weekStartsOn: 1 }),
+  );
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Generate dates for next 7 days starting from today (no past dates)
-  const generateAvailableDates = () => {
+  const generateWeekDates = (weekStart: Date) => {
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+    const dates = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+    return dates.map((date) => ({
+      date,
+      label: isToday(date)
+        ? "Today"
+        : isTomorrow(date)
+        ? "Tomorrow"
+        : format(date, "EEE"),
+      shortDate: format(date, "dd MMM"),
+      fullDate: format(date, "dd"),
+      month: format(date, "MMM"),
+      day: format(date, "EEE"),
+      isPast: date < new Date() && !isToday(date),
+    }));
+  };
+
+  const generateExtendedDates = () => {
     const dates = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 30; i++) {
       const date = addDays(new Date(), i);
       dates.push({
         date,
         label: isToday(date)
           ? "Today"
           : isTomorrow(date)
-            ? "Tomorrow"
-            : format(date, "EEE"),
-        shortDate: format(date, "dd MMM"),
-        fullDate: format(date, "dd"),
-        month: format(date, "MMM"),
-        day: format(date, "EEE"),
-        isPast: false, // No past dates in this list
+          ? "Tomorrow"
+          : format(date, "EEE, MMM dd"),
+        value: date.toISOString(),
+        isPast: false,
       });
     }
     return dates;
   };
 
-  // Generate extended date options for dropdown (same as available dates)
-  const generateExtendedDates = () => {
-    return generateAvailableDates().map((dateItem) => ({
-      ...dateItem,
-      label: isToday(dateItem.date)
-        ? "Today"
-        : isTomorrow(dateItem.date)
-          ? "Tomorrow"
-          : format(dateItem.date, "EEE, MMM dd"),
-      value: dateItem.date.toISOString(),
-    }));
+  const goToPreviousWeek = () => {
+    const newWeekStart = subWeeks(currentWeekStart, 1);
+    if (newWeekStart >= startOfWeek(new Date(), { weekStartsOn: 1 })) {
+      setCurrentWeekStart(newWeekStart);
+    }
   };
 
-  // No week navigation needed - we always show next 7 days from today
+  const goToNextWeek = () => {
+    setCurrentWeekStart(addWeeks(currentWeekStart, 1));
+  };
 
-  // Generate time slots with 1-hour intervals
+  const goToCurrentWeek = () => {
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  };
+
   const generateTimeSlots = () => {
     const slots = [];
     const now = new Date();
     const currentHour = now.getHours();
 
-    // Generate slots from 8 AM to 9 PM (1-hour intervals)
     for (let hour = 8; hour <= 21; hour++) {
       const timeString = `${hour.toString().padStart(2, "0")}:00`;
       const displayTime = format(
@@ -80,7 +107,6 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
         "h:mm a",
       );
 
-      // Skip past times for today
       const isDisabled =
         selectedDate && isToday(selectedDate) && hour <= currentHour;
 
@@ -101,9 +127,11 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
     return slots;
   };
 
-  const availableDates = generateAvailableDates();
+  const weekDates = generateWeekDates(currentWeekStart);
   const extendedDates = generateExtendedDates();
   const timeSlots = generateTimeSlots();
+  const canGoPrevious =
+    currentWeekStart > startOfWeek(new Date(), { weekStartsOn: 1 });
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -115,6 +143,14 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
             Select Date
           </Label>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goToCurrentWeek}
+              className="text-xs px-2 py-1 h-auto"
+            >
+              Today
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -130,7 +166,7 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
         {showDropdown && (
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">
-              Choose from next 7 days:
+              Choose from next 30 days:
             </Label>
             <Select
               value={selectedDate?.toISOString() || ""}
@@ -155,70 +191,63 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           </div>
         )}
 
-        {/* Available dates (next 7 days) - Vertical List */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Available Dates:</Label>
-          <div className="space-y-2">
-            {availableDates.map((dateItem) => {
-              const isSelected =
-                selectedDate && isSameDay(dateItem.date, selectedDate);
+        {/* Week navigation */}
+        <div className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goToPreviousWeek}
+            disabled={!canGoPrevious}
+            className="p-2 h-auto"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-              return (
-                <button
-                  key={dateItem.date.toISOString()}
-                  type="button"
-                  onClick={() => onDateChange(dateItem.date)}
-                  className={cn(
-                    "w-full p-3 text-left rounded-lg transition-colors border flex items-center justify-between",
-                    isSelected
-                      ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
-                      : "hover:bg-gray-100 border-gray-200 bg-white",
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium",
-                        isSelected
-                          ? "bg-white/20 text-white"
-                          : "bg-green-100 text-green-700",
-                      )}
-                    >
-                      {dateItem.fullDate}
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">
-                        {dateItem.label}
-                      </div>
-                      <div
-                        className={cn(
-                          "text-xs",
-                          isSelected ? "text-white/70" : "text-gray-500",
-                        )}
-                      >
-                        {dateItem.shortDate}
-                      </div>
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <span className="text-sm font-medium">
+            {format(currentWeekStart, "MMM dd")} -{" "}
+            {format(
+              endOfWeek(currentWeekStart, { weekStartsOn: 1 }),
+              "MMM dd, yyyy",
+            )}
+          </span>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goToNextWeek}
+            className="p-2 h-auto"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Week dates - Horizontal Layout */}
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {weekDates.map((dateItem) => (
+            <Button
+              key={dateItem.date.toISOString()}
+              variant={
+                selectedDate && isSameDay(selectedDate, dateItem.date)
+                  ? "default"
+                  : "outline"
+              }
+              onClick={() => onDateChange(dateItem.date)}
+              disabled={dateItem.isPast}
+              className={cn(
+                "flex-shrink-0 h-auto flex items-center justify-center gap-2 px-4 py-2 min-w-[120px] hover:scale-105 transition-transform",
+                selectedDate && isSameDay(selectedDate, dateItem.date)
+                  ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
+                  : dateItem.isPast
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:border-green-300 hover:bg-green-50",
+              )}
+            >
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-semibold">{dateItem.day}</span>
+                <span className="text-xs">{`${dateItem.fullDate} ${dateItem.month}`}</span>
+              </div>
+            </Button>
+          ))}
         </div>
       </div>
 
