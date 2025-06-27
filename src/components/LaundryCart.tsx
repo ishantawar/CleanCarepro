@@ -31,7 +31,6 @@ import {
   getCartData,
 } from "@/utils/formPersistence";
 import EnhancedAddressForm from "./EnhancedAddressForm";
-import UnifiedLocationInput from "./UnifiedLocationInput";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
 import { FormValidation, validateCheckoutForm } from "./FormValidation";
 
@@ -480,22 +479,11 @@ Confirm this booking?`;
           </CardContent>
         </Card>
 
-        {/* Unified Address Input */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Pickup Location
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UnifiedLocationInput
-              onAddressChange={setAddressData}
-              initialAddress={addressData}
-              placeholder="Enter your complete pickup address"
-            />
-          </CardContent>
-        </Card>
+        {/* Enhanced Address Form */}
+        <EnhancedAddressForm
+          onAddressChange={setAddressData}
+          initialAddress={addressData}
+        />
 
         {/* Contact & Schedule Details */}
         <Card>
