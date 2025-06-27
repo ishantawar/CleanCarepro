@@ -77,6 +77,10 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
 
   // No week navigation needed - we always show next 7 days from today
 
+  // Generate the dates and other variables
+  const availableDates = generateAvailableDates();
+  const extendedDates = generateExtendedDates();
+
   // Generate time slots with 1-hour intervals
   const generateTimeSlots = () => {
     const slots = [];
@@ -174,62 +178,34 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           </div>
         )}
 
-        {/* Week navigation */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goToPreviousWeek}
-            disabled={!canGoPrevious}
-            className="p-2 h-auto"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+        {/* Available dates (next 7 days) */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Available Dates:</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {availableDates.map((dateItem) => {
+              const isSelected =
+                selectedDate && isSameDay(dateItem.date, selectedDate);
 
-          <span className="text-sm font-medium">
-            {format(currentWeekStart, "MMM dd")} -{" "}
-            {format(
-              endOfWeek(currentWeekStart, { weekStartsOn: 1 }),
-              "MMM dd, yyyy",
-            )}
-          </span>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goToNextWeek}
-            className="p-2 h-auto"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Week dates */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {weekDates.map((dateItem) => (
-            <Button
-              key={dateItem.date.toISOString()}
-              variant={
-                selectedDate && isSameDay(selectedDate, dateItem.date)
-                  ? "default"
-                  : "outline"
-              }
-              onClick={() => onDateChange(dateItem.date)}
-              disabled={dateItem.isPast}
-              className={cn(
-                "flex-shrink-0 h-auto flex flex-col items-center p-3 min-w-[70px] hover:scale-105 transition-transform",
-                selectedDate && isSameDay(selectedDate, dateItem.date)
-                  ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
-                  : dateItem.isPast
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:border-green-300 hover:bg-green-50",
-              )}
-            >
-              <span className="text-xs font-medium">{dateItem.day}</span>
-              <span className="text-lg font-bold">{dateItem.fullDate}</span>
-              <span className="text-xs">{dateItem.month}</span>
-            </Button>
-          ))}
+              return (
+                <button
+                  key={dateItem.date.toISOString()}
+                  type="button"
+                  onClick={() => onDateChange(dateItem.date)}
+                  className={cn(
+                    "p-3 text-center rounded-lg transition-colors text-sm border",
+                    isSelected
+                      ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
+                      : "hover:bg-gray-100 border-gray-200 bg-white",
+                  )}
+                >
+                  <div className="font-medium">{dateItem.label}</div>
+                  <div className="text-xs mt-1 opacity-75">
+                    {dateItem.shortDate}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
