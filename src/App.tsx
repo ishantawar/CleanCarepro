@@ -7,6 +7,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import InstallPrompt from "@/components/InstallPrompt";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import "./App.css";
+import "./styles/mobile-fixes.css";
 
 function App() {
   // Restore user session on app startup

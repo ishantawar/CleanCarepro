@@ -1,0 +1,128 @@
+/* Mobile-specific fixes for better UX */
+
+/* Prevent zoom on input focus */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+    transform: none !important;
+  }
+}
+
+/* Ensure consistent button sizing and prevent enlargement */
+.mobile-button {
+  transition: none !important;
+  transform: none !important;
+}
+
+.mobile-button:active {
+  transform: scale(0.95) !important;
+}
+
+/* Ensure ADD buttons are consistent */
+.service-add-button {
+  height: 32px !important;
+  min-height: 32px !important;
+  transition: background-color 0.2s ease !important;
+  transform: none !important;
+}
+
+.service-add-button:hover {
+  transform: none !important;
+  scale: 1 !important;
+}
+
+.service-add-button:active {
+  transform: scale(0.95) !important;
+}
+
+/* Touch-friendly button sizing */
+.mobile-touch {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent text selection on buttons */
+.mobile-button,
+.service-add-button {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Improve touch targets */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Fix iOS input styling */
+input,
+textarea,
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Prevent horizontal scroll */
+.mobile-container {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Safe area handling for devices with notches */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fix for modal z-index issues on mobile */
+.mobile-modal {
+  z-index: 9999 !important;
+}
+
+/* Prevent body scroll when modal is open */
+.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Voice search button animation */
+.voice-search-listening {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
