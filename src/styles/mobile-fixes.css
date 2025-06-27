@@ -41,6 +41,40 @@
   transform: scale(0.95) !important;
 }
 
+/* Mobile responsive button alignment */
+@media (max-width: 640px) {
+  .service-card-actions {
+    margin-top: auto;
+  }
+
+  /* Specific margin adjustments for different content heights */
+  .service-card:nth-child(1) .service-add-button,
+  .service-card:nth-child(1) .quantity-controls {
+    margin-top: 22px !important;
+  }
+
+  .service-card:nth-child(2) .service-add-button,
+  .service-card:nth-child(2) .quantity-controls {
+    margin-top: 23px !important;
+  }
+
+  .service-card:nth-child(3) .service-add-button,
+  .service-card:nth-child(3) .quantity-controls {
+    margin-top: 32px !important;
+  }
+
+  .service-card:nth-child(4) .service-add-button,
+  .service-card:nth-child(4) .quantity-controls {
+    margin-top: 21px !important;
+  }
+
+  /* Default for other cards */
+  .service-card:nth-child(n + 5) .service-add-button,
+  .service-card:nth-child(n + 5) .quantity-controls {
+    margin-top: 24px !important;
+  }
+}
+
 /* Touch-friendly button sizing */
 .mobile-touch {
   min-height: 44px;
