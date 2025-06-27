@@ -38,33 +38,10 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
   onTimeChange,
   className,
 }) => {
-  const [currentWeekStart, setCurrentWeekStart] = useState(
-    startOfWeek(new Date(), { weekStartsOn: 1 }),
-  ); // Start from Monday
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Generate dates for current week
-  const generateWeekDates = (weekStart: Date) => {
-    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-    const dates = eachDayOfInterval({ start: weekStart, end: weekEnd });
-
-    return dates.map((date) => ({
-      date,
-      label: isToday(date)
-        ? "Today"
-        : isTomorrow(date)
-          ? "Tomorrow"
-          : format(date, "EEE"),
-      shortDate: format(date, "dd MMM"),
-      fullDate: format(date, "dd"),
-      month: format(date, "MMM"),
-      day: format(date, "EEE"),
-      isPast: date < new Date() && !isToday(date),
-    }));
-  };
-
-  // Generate extended date options for dropdown (next 7 days only)
-  const generateExtendedDates = () => {
+  // Generate dates for next 7 days starting from today (no past dates)
+  const generateAvailableDates = () => {
     const dates = [];
     for (let i = 0; i < 7; i++) {
       const date = addDays(new Date(), i);
@@ -74,29 +51,31 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           ? "Today"
           : isTomorrow(date)
             ? "Tomorrow"
-            : format(date, "EEE, MMM dd"),
-        value: date.toISOString(),
-        isPast: false,
+            : format(date, "EEE"),
+        shortDate: format(date, "dd MMM"),
+        fullDate: format(date, "dd"),
+        month: format(date, "MMM"),
+        day: format(date, "EEE"),
+        isPast: false, // No past dates in this list
       });
     }
     return dates;
   };
 
-  const goToPreviousWeek = () => {
-    const newWeekStart = subWeeks(currentWeekStart, 1);
-    // Don't go to past weeks
-    if (newWeekStart >= startOfWeek(new Date(), { weekStartsOn: 1 })) {
-      setCurrentWeekStart(newWeekStart);
-    }
+  // Generate extended date options for dropdown (same as available dates)
+  const generateExtendedDates = () => {
+    return generateAvailableDates().map((dateItem) => ({
+      ...dateItem,
+      label: isToday(dateItem.date)
+        ? "Today"
+        : isTomorrow(dateItem.date)
+          ? "Tomorrow"
+          : format(dateItem.date, "EEE, MMM dd"),
+      value: dateItem.date.toISOString(),
+    }));
   };
 
-  const goToNextWeek = () => {
-    setCurrentWeekStart(addWeeks(currentWeekStart, 1));
-  };
-
-  const goToCurrentWeek = () => {
-    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  };
+  // No week navigation needed - we always show next 7 days from today
 
   // Generate time slots with 1-hour intervals
   const generateTimeSlots = () => {
