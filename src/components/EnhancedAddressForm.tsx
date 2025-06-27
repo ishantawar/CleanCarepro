@@ -677,99 +677,52 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           </div>
         )}
 
-        {/* Individual Address Fields */}
+        {/* Address Fields - Optimized Layout */}
         <div className="space-y-4">
-          {/* Row 1: House/Flat and Street */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="flatNo" className="text-sm font-medium">
-                🏠 Flat/House No. *
-              </Label>
-              <Input
-                id="flatNo"
-                placeholder="e.g., A-101, House No. 45"
-                value={address.flatNo}
-                onChange={(e) => handleFieldChange("flatNo", e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="street" className="text-sm font-medium">
-                🛣️ Street/Area
-              </Label>
-              <Input
-                id="street"
-                placeholder="e.g., MG Road, Sector 15"
-                value={address.street}
-                onChange={(e) => handleFieldChange("street", e.target.value)}
-                className="mt-1"
-              />
-            </div>
+          {/* Row 1: House/Flat Number */}
+          <div>
+            <Label htmlFor="flatNo" className="text-sm font-medium">
+              🏠 Flat/House No. *
+            </Label>
+            <Input
+              id="flatNo"
+              placeholder="e.g., A-101, House No. 45"
+              value={address.flatNo}
+              onChange={(e) => handleFieldChange("flatNo", e.target.value)}
+              className="mt-1"
+              required
+            />
           </div>
 
-          {/* Row 2: Landmark and Village/Town */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="landmark" className="text-sm font-medium">
-                📍 Landmark
-              </Label>
-              <Input
-                id="landmark"
-                placeholder="e.g., Near Metro Station, Opposite Mall"
-                value={address.landmark}
-                onChange={(e) => handleFieldChange("landmark", e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="village" className="text-sm font-medium">
-                🏘️ Village/Town *
-              </Label>
-              <Input
-                id="village"
-                placeholder="e.g., Gurgaon, DLF Phase 1"
-                value={address.village}
-                onChange={(e) => handleFieldChange("village", e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
+          {/* Row 2: Combined Area/Street + City + Pincode */}
+          <div>
+            <Label htmlFor="combined-address" className="text-sm font-medium">
+              📍 Area, City, Pincode *
+            </Label>
+            <Input
+              id="combined-address"
+              placeholder="e.g., Sector 15, Gurgaon, 122018"
+              value={`${address.street || ""}${address.street && address.village ? ", " : ""}${address.village || ""}${address.village && address.city && address.village !== address.city ? ", " : ""}${address.city && address.city !== address.village ? address.city : ""}${address.pincode ? ", " + address.pincode : ""}`
+                .replace(/^, /, "")
+                .replace(/, $/, "")}
+              onChange={(e) => handleCombinedAddressChange(e.target.value)}
+              className="mt-1"
+              required
+            />
           </div>
 
-          {/* Row 3: City and Pincode */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="city" className="text-sm font-medium">
-                🏙️ City *
-              </Label>
-              <Input
-                id="city"
-                placeholder="e.g., Gurgaon, Delhi, Mumbai"
-                value={address.city}
-                onChange={(e) => handleFieldChange("city", e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="pincode" className="text-sm font-medium">
-                📮 Pincode *
-              </Label>
-              <Input
-                id="pincode"
-                placeholder="e.g., 122018"
-                value={address.pincode}
-                onChange={(e) => handleFieldChange("pincode", e.target.value)}
-                maxLength={6}
-                pattern="[0-9]{6}"
-                className="mt-1"
-                required
-              />
-            </div>
+          {/* Row 3: Landmark */}
+          <div>
+            <Label htmlFor="landmark" className="text-sm font-medium">
+              🗺️ Landmark
+            </Label>
+            <Input
+              id="landmark"
+              placeholder="e.g., Near Metro Station, Opposite Mall"
+              value={address.landmark}
+              onChange={(e) => handleFieldChange("landmark", e.target.value)}
+              className="mt-1"
+            />
           </div>
         </div>
 
