@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -8,12 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon, Clock, ChevronRight } from "lucide-react";
 import {
   format,
   addDays,
   isSameDay,
   isToday,
+  isTomorrow,
 } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -32,20 +33,42 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
   onTimeChange,
   className,
 }) => {
-  // Generate next 7 days including today
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const generateNext7Days = () => {
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(new Date(), i);
-      return {
+    const today = new Date();
+    const dates = [];
+
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(today, i);
+      dates.push({
         date,
-        day: format(date, "EEE"),         // Mon
-        fullDate: format(date, "dd"),     // 24
-        month: format(date, "MMM"),       // Jun
-      };
-    });
+        day: format(date, "EEE"),
+        fullDate: format(date, "dd"),
+        month: format(date, "MMM"),
+      });
+    }
+
+    return dates;
   };
 
-  // Generate time slots: 8 AM – 9 PM
+  const generateExtendedDates = () => {
+    const dates = [];
+    for (let i = 0; i < 30; i++) {
+      const date = addDays(new Date(), i);
+      dates.push({
+        date,
+        label: isToday(date)
+          ? "Today"
+          : isTomorrow(date)
+          ? "Tomorrow"
+          : format(date, "EEE, MMM dd"),
+        value: date.toISOString(),
+      });
+    }
+    return dates;
+  };
+
   const generateTimeSlots = () => {
     const slots = [];
     const now = new Date();
@@ -55,7 +78,8 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
       const timeString = `${hour.toString().padStart(2, "0")}:00`;
       const displayTime = format(new Date(`2000-01-01T${timeString}`), "h:mm a");
 
-      const isDisabled = selectedDate && isToday(selectedDate) && hour <= currentHour;
+      const isDisabled =
+        selectedDate && isToday(selectedDate) && hour <= currentHour;
 
       if (!isDisabled) {
         let period = "Morning";
@@ -64,7 +88,9 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
 
         slots.push({
           value: displayTime,
-          label: `${displayTime} (${period})`,
+          label: displayTime,
+          period,
+          groupLabel: `${displayTime} (${period})`,
         });
       }
     }
@@ -72,21 +98,70 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
     return slots;
   };
 
-  const next7Days = generateNext7Days();
+  const weekDates = generateNext7Days();
+  const extendedDates = generateExtendedDates();
   const timeSlots = generateTimeSlots();
 
   return (
     <div className={cn("space-y-6", className)}>
       {/* Date Selection */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4" />
-          Select Date
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            Select Date
+          </Label>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDateChange(new Date())}
+              className="text-xs px-2 py-1 h-auto"
+            >
+              Today
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="text-xs px-2 py-1 h-auto"
+            >
+              All Dates
+            </Button>
+          </div>
+        </div>
 
-        {/* Horizontal scroll date buttons */}
+        {showDropdown && (
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">
+              Choose from next 30 days:
+            </Label>
+            <Select
+              value={selectedDate?.toISOString() || ""}
+              onValueChange={(value) => {
+                if (value) {
+                  onDateChange(new Date(value));
+                  setShowDropdown(false);
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose any date" />
+              </SelectTrigger>
+              <SelectContent>
+                {extendedDates.map((dateItem) => (
+                  <SelectItem key={dateItem.value} value={dateItem.value}>
+                    {dateItem.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Static 7-day horizontal scroll */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {next7Days.map((dateItem) => (
+          {weekDates.map((dateItem) => (
             <Button
               key={dateItem.date.toISOString()}
               variant={
@@ -99,7 +174,7 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
                 "flex-shrink-0 h-auto flex flex-col items-center justify-center p-3 min-w-[70px] hover:scale-105 transition-transform",
                 selectedDate && isSameDay(selectedDate, dateItem.date)
                   ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
-                  : "hover:border-green-300 hover:bg-green-50",
+                  : "hover:border-green-300 hover:bg-green-50"
               )}
             >
               <span className="text-xs font-medium">{dateItem.day}</span>
@@ -124,7 +199,7 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
             <SelectContent>
               {timeSlots.map((slot) => (
                 <SelectItem key={slot.value} value={slot.value}>
-                  {slot.label}
+                  {slot.groupLabel}
                 </SelectItem>
               ))}
             </SelectContent>
