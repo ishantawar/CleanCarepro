@@ -112,11 +112,9 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
     return slots;
   };
 
-  const weekDates = generateWeekDates(currentWeekStart);
+  const availableDates = generateAvailableDates();
   const extendedDates = generateExtendedDates();
   const timeSlots = generateTimeSlots();
-  const canGoPrevious =
-    currentWeekStart > startOfWeek(new Date(), { weekStartsOn: 1 });
 
   return (
     <div className={cn("space-y-6", className)}>
