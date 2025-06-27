@@ -65,7 +65,7 @@ export class DVHostingSmsService {
         apiBaseUrl,
         endpoint: "/api/otp/send",
       });
-
+      console.log(`${this.apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`)
       // Call backend API for local development
       const response = await fetch(`${this.apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`, {
         method: "POST",
