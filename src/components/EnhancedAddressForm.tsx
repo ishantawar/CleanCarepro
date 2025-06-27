@@ -388,6 +388,50 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     }
   };
 
+  const handleCombinedAddressChange = (value: string) => {
+    // Parse the combined address input and update the individual fields
+    const parts = value.split(",").map((part) => part.trim());
+
+    let updatedAddress = { ...address };
+
+    if (parts.length >= 1) {
+      updatedAddress.street = parts[0] || "";
+    }
+    if (parts.length >= 2) {
+      updatedAddress.village = parts[1] || "";
+    }
+    if (parts.length >= 3) {
+      // Check if this part is a pincode
+      if (/^\d{6}$/.test(parts[2])) {
+        updatedAddress.pincode = parts[2];
+      } else {
+        updatedAddress.city = parts[2];
+      }
+    }
+    if (parts.length >= 4) {
+      // Check if last part is a pincode (6 digits)
+      const lastPart = parts[parts.length - 1];
+      if (/^\d{6}$/.test(lastPart)) {
+        updatedAddress.pincode = lastPart;
+        // The third part should be city
+        updatedAddress.city = parts[2] || "";
+      } else {
+        updatedAddress.city = lastPart;
+      }
+    }
+
+    // Update full address
+    updatedAddress.fullAddress = value;
+
+    setAddress(updatedAddress);
+    if (onAddressChange) {
+      onAddressChange(updatedAddress);
+    }
+    if (onAddressUpdate) {
+      onAddressUpdate(updatedAddress);
+    }
+  };
+
   const resetForm = () => {
     const emptyAddress: AddressData = {
       flatNo: "",
