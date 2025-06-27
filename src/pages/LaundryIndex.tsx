@@ -13,11 +13,14 @@ import {
 
 const LaundryIndex = () => {
   const { addNotification } = useNotifications();
-  const [currentView, setCurrentView] = useState("home");
+  const [currentView, setCurrentView] = useState<
+    "home" | "cart" | "bookings" | "auth"
+  >("home");
+  const [previousView, setPreviousView] = useState<
+    "home" | "cart" | "bookings"
+  >("home");
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState("");
-
+  const [currentLocation, setCurrentLocation] = useState<string>("");
   const authService = DVHostingSmsService.getInstance();
   const pushService = PushNotificationService.getInstance();
 
@@ -369,17 +372,23 @@ const LaundryIndex = () => {
   };
 
   const handleViewCart = () => {
-    // Allow cart access without authentication
     setCurrentView("cart");
   };
 
   const handleViewBookings = () => {
     if (!currentUser) {
-      // Show auth modal for bookings access
+      // Auto-redirect to auth view
+      console.log("User not authenticated, showing auth view");
+      setPreviousView("bookings");
       setCurrentView("auth");
       return;
     }
     setCurrentView("bookings");
+  };
+
+  const handleLoginRequired = (fromView: "cart" | "bookings" = "cart") => {
+    setPreviousView(fromView);
+    setCurrentView("auth");
   };
 
   const handleProceedToCheckout = async (cartData: any) => {
@@ -513,7 +522,8 @@ const LaundryIndex = () => {
               onClose={() => setCurrentView("home")}
               onSuccess={(user) => {
                 handleLoginSuccess(user);
-                setCurrentView("home");
+                // Return to the view they were trying to access
+                setCurrentView(previousView);
               }}
             />
           </div>
@@ -524,7 +534,7 @@ const LaundryIndex = () => {
         <EnhancedBookingHistory
           currentUser={currentUser}
           onBack={() => setCurrentView("home")}
-          onLoginRequired={() => setCurrentView("auth")}
+          onLoginRequired={() => handleLoginRequired("bookings")}
         />
       )}
 
@@ -532,7 +542,7 @@ const LaundryIndex = () => {
         <LaundryCart
           onBack={() => setCurrentView("home")}
           onProceedToCheckout={handleProceedToCheckout}
-          onLoginRequired={() => setCurrentView("auth")}
+          onLoginRequired={() => handleLoginRequired("cart")}
           currentUser={currentUser}
         />
       )}
