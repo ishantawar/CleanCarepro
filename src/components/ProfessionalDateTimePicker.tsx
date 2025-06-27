@@ -66,10 +66,6 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
 
   // No week navigation needed - we always show next 7 days from today
 
-  // Generate the dates and other variables
-  const availableDates = generateAvailableDates();
-  const extendedDates = generateExtendedDates();
-
   // Generate time slots with 1-hour intervals
   const generateTimeSlots = () => {
     const slots = [];
