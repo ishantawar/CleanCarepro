@@ -43,35 +43,55 @@
 
 /* Mobile responsive button alignment */
 @media (max-width: 640px) {
-  .service-card-actions {
+  /* Service cards in grid layout */
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* Ensure all service cards have consistent height */
+  .service-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .service-card .card-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .service-card .card-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .service-card .card-actions {
     margin-top: auto;
+    padding-top: 8px;
   }
 
-  /* Specific margin adjustments for different content heights */
-  .service-card:nth-child(1) .service-add-button,
-  .service-card:nth-child(1) .quantity-controls {
-    margin-top: 22px !important;
+  /* Force all buttons to align at the same bottom position */
+  .service-add-button,
+  .quantity-controls {
+    margin-top: auto !important;
   }
 
-  .service-card:nth-child(2) .service-add-button,
-  .service-card:nth-child(2) .quantity-controls {
-    margin-top: 23px !important;
+  /* Ensure minimum height for content areas to force button alignment */
+  .service-card .card-details {
+    min-height: 140px;
+    justify-content: space-between;
   }
 
-  .service-card:nth-child(3) .service-add-button,
-  .service-card:nth-child(3) .quantity-controls {
-    margin-top: 32px !important;
+  .service-card .service-info {
+    flex: 1;
   }
 
-  .service-card:nth-child(4) .service-add-button,
-  .service-card:nth-child(4) .quantity-controls {
-    margin-top: 21px !important;
-  }
-
-  /* Default for other cards */
-  .service-card:nth-child(n + 5) .service-add-button,
-  .service-card:nth-child(n + 5) .quantity-controls {
-    margin-top: 24px !important;
+  .service-card .price-badge-container {
+    margin: 8px 0;
   }
 }
 
