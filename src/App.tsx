@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import LaundryIndex from "@/pages/LaundryIndex";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import InstallPrompt from "@/components/InstallPrompt";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import "./App.css";
 
@@ -32,6 +33,7 @@ function App() {
               <Route path="*" element={<LaundryIndex />} />
             </Routes>
             <Toaster />
+            <InstallPrompt />
           </div>
         </Router>
       </NotificationProvider>
