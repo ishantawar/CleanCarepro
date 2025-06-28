@@ -42,33 +42,45 @@ const getAuthHeaders = () => {
   };
 };
 
-// Helper function to safely parse JSON response
+// Helper function to safely parse JSON response using text-first approach
 const safeParseJSON = async (response: Response) => {
   if (!response) {
     throw new Error("No response received from server");
   }
 
   try {
-    // Check if we can read the response
-    if (response.bodyUsed) {
-      throw new Error("Response body already consumed");
+    // Read as text first, then parse as JSON - this avoids body consumption issues
+    const responseText = await response.text();
+
+    // If empty response, return error object
+    if (!responseText.trim()) {
+      return { error: "Empty response from server" };
     }
 
-    // For network failures or invalid responses, handle gracefully
-    if (!response.headers.get("content-type")?.includes("application/json")) {
-      // Not JSON, return empty object or handle as needed
-      return { error: "Invalid response format" };
-    }
+    // Try to parse as JSON
+    try {
+      return JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("JSON parse failed for response:", responseText);
 
-    return await response.json();
+      // Check if it looks like HTML (likely an error page)
+      if (
+        responseText.includes("<html") ||
+        responseText.includes("<!DOCTYPE")
+      ) {
+        return {
+          error: "Server returned HTML instead of JSON (likely an error page)",
+        };
+      }
+
+      // Return the raw text as error for debugging
+      return {
+        error: `Invalid JSON response: ${responseText.substring(0, 200)}...`,
+      };
+    }
   } catch (error: any) {
-    if (error.message.includes("already consumed")) {
-      throw error; // Re-throw body consumed errors
-    }
-
-    // Handle JSON parsing errors
-    console.error("JSON parsing failed:", error);
-    throw new Error(`Failed to parse response: ${error.message}`);
+    console.error("Failed to read response:", error);
+    throw new Error(`Failed to read response: ${error.message}`);
   }
 };
 
