@@ -129,64 +129,6 @@ const LaundryIndex = () => {
       }
     );
 
-        if (isNetworkError) {
-          console.log("🔄 Backend unavailable, saving locally:", mongoResult.error);
-        } else {
-          console.warn("❌ MongoDB booking failed:", mongoResult.error);
-        }
-
-        const localBookingData = {
-          userId: currentUser._id || currentUser.id || currentUser.phone,
-          services: servicesArray,
-          totalAmount: cartData.totalAmount,
-          status: "pending" as const,
-          pickupDate: cartData.pickupDate,
-          deliveryDate: cartData.deliveryDate,
-          pickupTime: cartData.pickupTime,
-          deliveryTime: cartData.deliveryTime,
-          address: cartData.address,
-          contactDetails: {
-            phone: cartData.phone || currentUser.phone,
-            name: currentUser.full_name || currentUser.name || "User",
-            instructions: cartData.instructions,
-          },
-          paymentStatus: "pending" as const,
-        };
-
-        const localResult = await bookingService.createBooking(localBookingData);
-
-        if (localResult.success) {
-          // Show different messages based on error type
-          if (isNetworkError) {
-            addNotification(
-              createSuccessNotification(
-                "Order Saved Offline!",
-                "Your order has been saved locally and will sync when you're back online.",
-              ),
-            );
-          } else {
-            addNotification(
-              createSuccessNotification(
-                "Order Saved!",
-                "Your order has been saved locally. You can view it in your booking history.",
-              ),
-            );
-          }
-
-          // Clear cart
-          localStorage.removeItem("laundry_cart");
-
-          // Stay on home page
-          setCurrentView("home");
-        } else {
-          throw new Error(
-            mongoResult.error?.message || "Failed to create booking",
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Checkout failed:", error);
-
       let errorMessage = "Failed to place order. Please try again.";
       let errorTitle = "Order Failed";
 
