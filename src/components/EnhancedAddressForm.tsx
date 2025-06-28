@@ -466,7 +466,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     };
     setAddress(emptyAddress);
     setSearchValue("");
-    onAddressChange(emptyAddress);
+    if (onAddressChange) {
+      onAddressChange(emptyAddress);
+    }
   };
 
   // Search for places when user types
