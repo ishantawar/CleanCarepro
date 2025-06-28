@@ -215,9 +215,20 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
 
   const handleProceedToCheckout = () => {
+    console.log("🛒 Checkout button clicked!");
+    console.log("📝 Current form data:", {
+      currentUser: !!currentUser,
+      addressData: !!addressData,
+      phoneNumber,
+      selectedDate,
+      selectedTime,
+      addressFullAddress: addressData?.fullAddress,
+      flatNo: addressData?.flatNo,
+    });
+
     // Check authentication first before validation
     if (!currentUser) {
-      console.log("User not authenticated, redirecting to login");
+      console.log("❌ User not authenticated, redirecting to login");
       if (onLoginRequired) {
         onLoginRequired();
       } else {
