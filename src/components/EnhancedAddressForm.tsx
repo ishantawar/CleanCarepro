@@ -531,9 +531,13 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         },
       );
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const formattedSuggestions = data.map((place: any) => ({
           description: place.display_name,
           place_id: place.place_id,
@@ -550,9 +554,14 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         }));
         setSuggestions(formattedSuggestions);
         setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
       }
     } catch (error) {
       console.error("Alternative search failed:", error);
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
     setIsSearching(false);
   };
