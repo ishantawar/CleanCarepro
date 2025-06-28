@@ -67,6 +67,13 @@ export const validateCheckoutForm = (
     });
   }
 
+  if (!addressData?.flatNo?.trim()) {
+    errors.push({
+      field: "flatNo",
+      message: "Flat/House number is required",
+    });
+  }
+
   if (!phoneNumber?.trim()) {
     errors.push({
       field: "phone",
