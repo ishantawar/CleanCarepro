@@ -136,10 +136,10 @@ export const bookingHelpers = {
         };
       }
 
-      // Check response status first, then parse
-      if (!response.ok) {
-        try {
-          data = await safeParseJSON(response);
+      try {
+        data = await safeParseJSON(response);
+
+        if (!response.ok) {
           return {
             data: null,
             error: {
@@ -149,7 +149,12 @@ export const bookingHelpers = {
               code: "SERVER_ERROR",
             },
           };
-        } catch (parseError) {
+        }
+      } catch (jsonError: any) {
+        console.error("Failed to parse response:", jsonError);
+
+        // If JSON parsing fails but we have a response, check status
+        if (response && !response.ok) {
           return {
             data: null,
             error: {
@@ -158,12 +163,7 @@ export const bookingHelpers = {
             },
           };
         }
-      }
 
-      try {
-        data = await safeParseJSON(response);
-      } catch (jsonError: any) {
-        console.error("Failed to parse response:", jsonError);
         return {
           data: null,
           error: {
