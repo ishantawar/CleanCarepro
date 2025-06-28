@@ -164,15 +164,6 @@ const LaundryIndex = () => {
           );
         }
       }
-
-        setCurrentLocation(locationMessage);
-      },
-      {
-        enableHighAccuracy: false, // Less accurate but faster
-        timeout: 10000, // Reduced timeout
-        maximumAge: 600000, // Cache for 10 minutes
-      },
-    );
   };
 
   // Helper function for coordinate-based location detection (fallback)
