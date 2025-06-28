@@ -535,12 +535,26 @@ const LaundryIndex = () => {
       }
     } catch (error) {
       console.error("Checkout failed:", error);
-      addNotification(
-        createErrorNotification(
-          "Order Failed",
-          "Failed to place order. Please try again.",
-        ),
-      );
+
+      let errorMessage = "Failed to place order. Please try again.";
+      let errorTitle = "Order Failed";
+
+      if (error instanceof Error) {
+        if (error.message.includes("User ID not found")) {
+          errorTitle = "Authentication Issue";
+          errorMessage = "Please sign in again to place your order.";
+        } else if (
+          error.message.includes("Network error") ||
+          error.message.includes("fetch")
+        ) {
+          errorTitle = "Connection Issue";
+          errorMessage = "Please check your internet connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      addNotification(createErrorNotification(errorTitle, errorMessage));
     }
   };
 
