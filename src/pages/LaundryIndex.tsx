@@ -473,10 +473,11 @@ const LaundryIndex = () => {
         await bookingService.createBooking(localBookingData);
 
         // Show success message
+        const bookingId = mongoResult.data._id || `local_${Date.now()}`;
         addNotification(
           createSuccessNotification(
             "Order Confirmed!",
-            `Your order has been placed successfully! Booking ID: ${mongoResult.data._id.slice(-6)}`,
+            `Your order has been placed successfully! Booking ID: ${bookingId.slice(-6)}`,
           ),
         );
 
