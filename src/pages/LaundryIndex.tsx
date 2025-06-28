@@ -417,7 +417,10 @@ const LaundryIndex = () => {
       const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
 
       if (mongoResult.data) {
-        console.log("✅ Booking saved to MongoDB:", mongoResult.data._id);
+        console.log(
+          "✅ Booking saved to MongoDB:",
+          mongoResult.data._id || "unknown_id",
+        );
 
         // Also save to Google Sheets
         try {
