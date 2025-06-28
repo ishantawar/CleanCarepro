@@ -520,6 +520,29 @@ Confirm this booking?`;
           </CardContent>
         </Card>
 
+        {/* Saved Addresses Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Delivery Address
+              </CardTitle>
+              {currentUser && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSavedAddresses(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Saved Addresses
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
+
         {/* Enhanced Address Form */}
         <EnhancedAddressForm
           onAddressChange={setAddressData}
