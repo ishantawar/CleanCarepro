@@ -576,8 +576,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       console.error("Alternative search failed:", error);
       setSuggestions([]);
       setShowSuggestions(false);
+      throw error; // Re-throw to let caller handle setIsSearching
     }
-    setIsSearching(false);
   };
 
   // Handle suggestion selection
