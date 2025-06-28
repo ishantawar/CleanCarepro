@@ -1,5 +1,4 @@
-const apiBaseUrl =
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 export class DVHostingSmsService {
   private static instance: DVHostingSmsService;
   private currentPhone: string = "";
@@ -61,25 +60,28 @@ export class DVHostingSmsService {
 
       // For local development, try backend API
 
-        console.log(apiBaseUrl)
+      console.log(apiBaseUrl);
       this.log("DVHosting SMS: Local environment, trying backend API:", {
         apiBaseUrl,
         endpoint: "/api/otp/send",
       });
-      console.log(`${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`)
+      console.log(`${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`);
       // Call backend API for local development
-      const response = await fetch(`${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
+      const response = await fetch(
+        `${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+          body: JSON.stringify({
+            phone: cleanPhone,
+          }),
         },
-        body: JSON.stringify({
-          phone: cleanPhone,
-        }),
-      }).catch((error) => {
+      ).catch((error) => {
         // Handle fetch errors in local development
         console.log("DVHosting SMS: Backend API error:", error);
         console.log("DVHosting SMS: Falling back to direct API call");
@@ -243,19 +245,22 @@ export class DVHostingSmsService {
       }
 
       // For local development, try backend API
-      const response = await fetch(`${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
+      const response = await fetch(
+        `${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+          body: JSON.stringify({
+            phone: cleanPhone,
+            otp: otp,
+          }),
         },
-        body: JSON.stringify({
-          phone: cleanPhone,
-          otp: otp,
-        }),
-      }).catch((error) => {
+      ).catch((error) => {
         // Handle fetch errors in hosted environments
         console.log(
           "DVHosting SMS: Verification fetch error in hosted environment:",
@@ -432,20 +437,26 @@ export class DVHostingSmsService {
       }
 
       // For local development, try backend API
-      const response = await fetch(`${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
+      const response = await fetch(
+        `${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+          body: JSON.stringify({
+            phone: cleanPhone,
+            otp: otp,
+            name:
+              name && name.trim()
+                ? name.trim()
+                : `User ${cleanPhone.slice(-4)}`,
+          }),
         },
-        body: JSON.stringify({
-          phone: cleanPhone,
-          otp: otp,
-          name: name && name.trim() ? name.trim() : `User ${cleanPhone.slice(-4)}`,
-        }),
-      }).catch((error) => {
+      ).catch((error) => {
         // Handle fetch errors in local development
         console.log("DVHosting SMS: Backend API error:", error);
         console.log("DVHosting SMS: Falling back to local verification");
@@ -460,7 +471,7 @@ export class DVHostingSmsService {
         const storedData = this.otpStorage.get(cleanPhone);
 
         if (!storedData) {
-          console.log("❌ No OTP found for phone:", cleanPhone);
+          console.log("�� No OTP found for phone:", cleanPhone);
           return {
             success: false,
             error: "No OTP found or expired",
@@ -524,7 +535,11 @@ export class DVHostingSmsService {
           };
         }
         if (result.success) {
-          return { success: true, user: result.data?.user, message: result.message };
+          return {
+            success: true,
+            user: result.data?.user,
+            message: result.message,
+          };
         } else {
           return {
             success: false,
@@ -689,11 +704,17 @@ export class DVHostingSmsService {
       this.log("📤 Saving user to backend:", userData);
 
       // Check if we're in a hosted environment without backend
-      const isHostedEnv = window.location.hostname.includes("fly.dev") ||
-                         window.location.hostname.includes("builder.codes");
+      const isHostedEnv =
+        window.location.hostname.includes("fly.dev") ||
+        window.location.hostname.includes("builder.codes");
 
-      if (isHostedEnv && (!apiBaseUrl || apiBaseUrl === "http://localhost:3001")) {
-        this.log("🌐 No backend available in hosted environment, using localStorage only");
+      if (
+        isHostedEnv &&
+        (!apiBaseUrl || apiBaseUrl === "http://localhost:3001")
+      ) {
+        this.log(
+          "🌐 No backend available in hosted environment, using localStorage only",
+        );
         // Return empty response to trigger localStorage fallback
         throw new Error("Backend not available in hosted environment");
       }
@@ -704,7 +725,6 @@ export class DVHostingSmsService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ phone: cleanedPhone }),
-      });
       });
 
       if (response.ok) {
