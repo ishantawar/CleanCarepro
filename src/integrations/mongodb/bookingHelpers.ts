@@ -242,6 +242,15 @@ export const bookingHelpers = {
 
   // Get bookings for a specific customer
   async getUserBookings(userId: string) {
+    // Check if backend is available
+    if (!API_BASE_URL) {
+      console.log("🌐 No backend URL configured - returning empty bookings");
+      return {
+        data: [],
+        error: null,
+      };
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
