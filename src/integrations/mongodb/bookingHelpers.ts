@@ -170,21 +170,33 @@ export const bookingHelpers = {
       } catch (fetchError: any) {
         console.error("Network fetch failed:", fetchError);
 
+        // Handle different types of network errors
+        let errorMessage = "Backend unavailable. Order will be saved locally.";
+
+        if (
+          fetchError.name === "TypeError" &&
+          fetchError.message.includes("fetch")
+        ) {
+          errorMessage =
+            "Network connection failed. Order will be saved locally.";
+        } else if (fetchError.name === "AbortError") {
+          errorMessage = "Request timeout. Order will be saved locally.";
+        }
+
         // Check if it's a CORS or network issue in hosted environment
         const isHostedEnv =
           window.location.hostname.includes("fly.dev") ||
-          window.location.hostname.includes("builder.codes");
+          window.location.hostname.includes("builder.codes") ||
+          window.location.hostname.includes("localhost");
 
         if (isHostedEnv) {
-          console.log(
-            "🌐 Hosted environment detected, treating as offline mode",
-          );
+          console.log("🌐 Environment detected, treating as offline mode");
         }
 
         return {
           data: null,
           error: {
-            message: "Backend unavailable. Order will be saved locally.",
+            message: errorMessage,
             code: "NETWORK_ERROR",
           },
         };
