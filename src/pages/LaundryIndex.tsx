@@ -128,9 +128,6 @@ const LaundryIndex = () => {
         maximumAge: 600000,
       }
     );
-      } else {
-        // Handle different types of errors
-        const isNetworkError = mongoResult.error?.code === "NETWORK_ERROR";
 
         if (isNetworkError) {
           console.log("🔄 Backend unavailable, saving locally:", mongoResult.error);
