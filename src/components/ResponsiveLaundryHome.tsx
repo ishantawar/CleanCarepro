@@ -408,9 +408,39 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
               </span>
               <Badge className="bg-white/20 text-white">Available</Badge>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4" />
-              <span>{userLocation || "Detect Location"}</span>
+            <div
+              className={`flex items-center gap-2 text-sm ${
+                userLocation?.includes("denied") ||
+                userLocation?.includes("access denied")
+                  ? "cursor-pointer hover:text-white/80 transition-colors"
+                  : ""
+              }`}
+              onClick={
+                userLocation?.includes("denied") ||
+                userLocation?.includes("access denied")
+                  ? requestLocationPermission
+                  : undefined
+              }
+              title={
+                userLocation?.includes("denied") ||
+                userLocation?.includes("access denied")
+                  ? "Click to request location permission again"
+                  : undefined
+              }
+            >
+              <MapPin
+                className={`h-4 w-4 ${
+                  userLocation?.includes("denied") ||
+                  userLocation?.includes("access denied")
+                    ? "animate-pulse"
+                    : ""
+                }`}
+              />
+              <span>
+                {isRequestingLocation
+                  ? "Requesting location..."
+                  : userLocation || "Detect Location"}
+              </span>
             </div>
           </div>
 
