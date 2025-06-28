@@ -164,10 +164,6 @@ const LaundryIndex = () => {
           );
         }
       }
-            break;
-          default:
-            locationMessage = "Enable location access";
-        }
 
         setCurrentLocation(locationMessage);
       },
