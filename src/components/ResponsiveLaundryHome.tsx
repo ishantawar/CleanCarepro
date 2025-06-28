@@ -624,17 +624,19 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                   className="pl-10 pr-10 bg-gray-50 border-gray-200 focus:bg-white"
                 />
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  <VoiceSearch
-                    onResult={(transcript) => {
-                      handleSearch(transcript);
-                    }}
-                    onError={(error) => {
-                      console.error("Voice search error:", error);
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
-                  />
-                </div>
-              </div>
+            {currentUser && (
+              <VoiceSearch
+                onResult={(transcript) => {
+                  console.log("Voice search result:", transcript);
+                  setSearchQuery(transcript);
+                  if (transcript.toLowerCase().includes("cart")) {
+                    handleViewCart();
+                  } else if (transcript.toLowerCase().includes("booking")) {
+                    handleViewBookings();
+                  }
+                }}
+              />
+            )}
 
               <div className="hidden lg:flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
                 <Clock className="h-4 w-4 text-green-600" />
