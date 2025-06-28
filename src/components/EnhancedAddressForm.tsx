@@ -590,8 +590,10 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
 
   // Update address whenever individual fields change
   useEffect(() => {
-    onAddressChange(address);
-  }, [address]);
+    if (onAddressChange) {
+      onAddressChange(address);
+    }
+  }, [address, onAddressChange]);
 
   return (
     <Card className={className}>
