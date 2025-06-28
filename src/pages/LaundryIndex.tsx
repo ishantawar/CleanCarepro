@@ -104,7 +104,30 @@ const LaundryIndex = () => {
 
             if (displayLocation && displayLocation.trim()) {
               setCurrentLocation(displayLocation);
-              console.log("��� Final location set:", displayLocation);
+              console.log("✅ Final location set:", displayLocation);
+            } else {
+              console.log("🔍 Using coordinate fallback");
+              setCurrentLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+            }
+          } catch (geocodeError) {
+            console.warn("Geocoding failed, using coordinates:", geocodeError);
+            setCurrentLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+          }
+        } catch (error) {
+          console.error("Location processing error:", error);
+          setCurrentLocation("Location unavailable");
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        setCurrentLocation("Location access denied");
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 600000,
+      }
+    );
       } else {
         // Handle different types of errors
         const isNetworkError = mongoResult.error?.code === "NETWORK_ERROR";
