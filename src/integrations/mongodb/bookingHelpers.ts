@@ -119,6 +119,30 @@ export const bookingHelpers = {
         };
       }
 
+      // Check response status first, then parse
+      if (!response.ok) {
+        try {
+          data = await safeParseJSON(response);
+          return {
+            data: null,
+            error: {
+              message:
+                data.error ||
+                `HTTP ${response.status}: Failed to create booking`,
+              code: "SERVER_ERROR",
+            },
+          };
+        } catch (parseError) {
+          return {
+            data: null,
+            error: {
+              message: `HTTP ${response.status}: Failed to create booking`,
+              code: "SERVER_ERROR",
+            },
+          };
+        }
+      }
+
       try {
         data = await safeParseJSON(response);
       } catch (jsonError: any) {
@@ -128,16 +152,6 @@ export const bookingHelpers = {
           error: {
             message: "Invalid response from server. Please try again.",
             code: "PARSE_ERROR",
-          },
-        };
-      }
-
-      if (!response.ok) {
-        return {
-          data: null,
-          error: {
-            message: data.error || "Failed to create booking",
-            code: "SERVER_ERROR",
           },
         };
       }
