@@ -66,18 +66,29 @@ export class BookingService {
     // If we only have phone number, try to resolve MongoDB ID
     if (currentUser.phone) {
       try {
-        const response = await fetch(`/api/auth/get-user-by-phone`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: currentUser.phone }),
-        });
+        // Check if we're in a hosted environment without backend
+        const isHostedEnv =
+          window.location.hostname.includes("fly.dev") ||
+          window.location.hostname.includes("builder.codes");
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.user && result.user._id) {
-            // Update local user data with MongoDB ID
-            authService.setCurrentUser(result.user);
-            return result.user._id;
+        if (isHostedEnv) {
+          console.log("🌐 Hosted environment - skipping user ID resolution");
+          // Use phone as fallback ID in hosted environment
+          currentUser._id = `user_${currentUser.phone}`;
+        } else {
+          const response = await fetch(`/api/auth/get-user-by-phone`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: currentUser.phone }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.user && result.user._id) {
+              // Update local user data with MongoDB ID
+              authService.setCurrentUser(result.user);
+              return result.user._id;
+            }
           }
         }
       } catch (error) {

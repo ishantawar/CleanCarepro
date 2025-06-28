@@ -324,7 +324,7 @@ const PhoneOtpAuthModal: React.FC<PhoneOtpAuthModalProps> = ({
                     <Input
                       id="otp"
                       type="text"
-                      placeholder="123456"
+                      placeholder="Enter OTP"
                       value={formData.otp}
                       onChange={(e) =>
                         setFormData({ ...formData, otp: e.target.value })

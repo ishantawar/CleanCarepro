@@ -4,8 +4,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import LaundryIndex from "@/pages/LaundryIndex";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import InstallPrompt from "@/components/InstallPrompt";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import "./App.css";
+import "./styles/mobile-fixes.css";
 
 function App() {
   // Restore user session on app startup
@@ -32,6 +34,7 @@ function App() {
               <Route path="*" element={<LaundryIndex />} />
             </Routes>
             <Toaster />
+            <InstallPrompt />
           </div>
         </Router>
       </NotificationProvider>

@@ -35,6 +35,7 @@ import DebugPanel from "./DebugPanel";
 import BookingDebugPanel from "./BookingDebugPanel";
 import ConnectionStatus from "./ConnectionStatus";
 import NotificationPanel from "./NotificationPanel";
+import VoiceSearch from "./VoiceSearch";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import { saveCartData, getCartData } from "@/utils/formPersistence";
 
@@ -59,7 +60,35 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showBookingDebugPanel, setShowBookingDebugPanel] = useState(false);
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const dvhostingSmsService = DVHostingSmsService.getInstance();
+
+  // Function to request location permission again
+  const requestLocationPermission = async () => {
+    setIsRequestingLocation(true);
+    try {
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          });
+        },
+      );
+
+      // Location successful - reload the page to update location
+      window.location.reload();
+    } catch (error) {
+      console.error("Location request failed:", error);
+      // Show a more helpful message to the user
+      alert(
+        "Please enable location access in your browser settings, then refresh the page.",
+      );
+    } finally {
+      setIsRequestingLocation(false);
+    }
+  };
 
   // Add keyboard shortcut for booking debug panel
   useEffect(() => {
@@ -324,7 +353,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                   }}
                   variant="ghost"
                   size="sm"
-                  className="text-white hover:bg-white/20 active:bg-white/30 px-4 py-2 min-h-[48px] min-w-[80px] mobile-button mobile-touch rounded-lg transition-all duration-200 font-medium"
+                  className="text-white hover:bg-white/20 active:bg-white/30 px-4 py-2 mobile-button mobile-touch rounded-lg transition-all duration-200 font-medium"
                   type="button"
                 >
                   <User className="h-4 w-4 mr-2" />
@@ -379,9 +408,39 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
               </span>
               <Badge className="bg-white/20 text-white">Available</Badge>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4" />
-              <span>{userLocation || "Detect Location"}</span>
+            <div
+              className={`flex items-center gap-2 text-sm ${
+                userLocation?.includes("denied") ||
+                userLocation?.includes("access denied")
+                  ? "cursor-pointer hover:text-white/80 transition-colors"
+                  : ""
+              }`}
+              onClick={
+                userLocation?.includes("denied") ||
+                userLocation?.includes("access denied")
+                  ? requestLocationPermission
+                  : undefined
+              }
+              title={
+                userLocation?.includes("denied") ||
+                userLocation?.includes("access denied")
+                  ? "Click to request location permission again"
+                  : undefined
+              }
+            >
+              <MapPin
+                className={`h-4 w-4 ${
+                  userLocation?.includes("denied") ||
+                  userLocation?.includes("access denied")
+                    ? "animate-pulse"
+                    : ""
+                }`}
+              />
+              <span>
+                {isRequestingLocation
+                  ? "Requesting location..."
+                  : userLocation || "Detect Location"}
+              </span>
             </div>
           </div>
 
@@ -394,7 +453,15 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
               onChange={(e) => handleSearch(e.target.value)}
               className="bg-transparent border-none text-white placeholder-gray-400 focus:ring-0 p-0 text-sm"
             />
-            <Mic className="h-5 w-5 text-gray-400 ml-3" />
+            <VoiceSearch
+              onResult={(transcript) => {
+                handleSearch(transcript);
+              }}
+              onError={(error) => {
+                console.error("Voice search error:", error);
+              }}
+              className="ml-3 text-gray-400 hover:text-white"
+            />
           </div>
 
           {/* Categories */}
@@ -437,16 +504,16 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
           {getFilteredServices().length === 0 ? (
             <EmptyStateCard />
           ) : (
-            <div className="grid grid-cols-2 gap-3 pb-20">
+            <div className="grid grid-cols-2 gap-3 pb-20 service-grid">
               {getFilteredServices().map((service) => {
                 const quantity = cart[service.id] || 0;
 
                 return (
                   <Card
                     key={service.id}
-                    className="border-0 shadow-lg rounded-2xl overflow-hidden"
+                    className="border-0 shadow-lg rounded-2xl overflow-hidden service-card"
                   >
-                    <CardContent className="p-3">
+                    <CardContent className="p-3 card-content">
                       <div className="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-xl mb-3 flex items-center justify-center">
                         <span className="text-3xl">
                           {service.category.includes("Men")
@@ -463,64 +530,70 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                         </span>
                       </div>
 
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-xs text-gray-900 leading-tight line-clamp-2">
-                          {service.name}
-                        </h4>
+                      <div className="card-details">
+                        <div className="service-info">
+                          <h4 className="font-semibold text-xs text-gray-900 leading-tight line-clamp-2 mb-2">
+                            {service.name}
+                          </h4>
 
-                        <div className="text-xs text-gray-600">
-                          {service.category}
+                          <div className="text-xs text-gray-600 mb-2">
+                            {service.category}
+                          </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-sm font-bold text-gray-900">
-                              ₹{service.price}
-                            </span>
-                            <span className="text-xs text-gray-600 ml-1">
-                              {service.unit}
-                            </span>
-                          </div>
+                        <div className="price-badge-container">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-sm font-bold text-gray-900">
+                                ₹{service.price}
+                              </span>
+                              <span className="text-xs text-gray-600 ml-1">
+                                {service.unit}
+                              </span>
+                            </div>
 
-                          {service.popular && (
-                            <Badge className="bg-green-100 text-green-700 text-xs">
-                              Popular
-                            </Badge>
+                            {service.popular && (
+                              <Badge className="bg-green-100 text-green-700 text-xs">
+                                Popular
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="card-actions">
+                          {quantity > 0 ? (
+                            <div className="flex items-center justify-between bg-green-50 rounded-lg p-2 quantity-controls">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFromCart(service.id)}
+                                className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+
+                              <span className="font-semibold text-green-700 text-sm">
+                                {quantity}
+                              </span>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => addToCart(service.id)}
+                                className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() => addToCart(service.id)}
+                              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2 service-add-button mobile-button"
+                            >
+                              ADD
+                            </Button>
                           )}
                         </div>
-
-                        {quantity > 0 ? (
-                          <div className="flex items-center justify-between bg-green-50 rounded-lg p-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFromCart(service.id)}
-                              className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-
-                            <span className="font-semibold text-green-700 text-sm">
-                              {quantity}
-                            </span>
-
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => addToCart(service.id)}
-                              className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            onClick={() => addToCart(service.id)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs py-2"
-                          >
-                            ADD
-                          </Button>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -600,6 +673,33 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                 </div>
               </div>
 
+              <div className="relative flex-1 max-w-lg">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search laundry services..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10 pr-10 bg-gray-50 border-gray-200 focus:bg-white"
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  {currentUser && (
+                    <VoiceSearch
+                      onResult={(transcript) => {
+                        console.log("Voice search result:", transcript);
+                        setSearchQuery(transcript);
+                        if (transcript.toLowerCase().includes("cart")) {
+                          handleViewCart();
+                        } else if (
+                          transcript.toLowerCase().includes("booking")
+                        ) {
+                          handleViewBookings();
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+
               <div className="hidden lg:flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
                 <Clock className="h-4 w-4 text-green-600" />
                 <span className="text-sm font-medium text-green-700">
@@ -609,9 +709,39 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
-                <MapPin className="h-4 w-4" />
-                <span>{userLocation || "Set Location"}</span>
+              <div
+                className={`hidden md:flex items-center gap-2 text-sm text-gray-600 ${
+                  userLocation?.includes("denied") ||
+                  userLocation?.includes("access denied")
+                    ? "cursor-pointer hover:text-gray-800 transition-colors"
+                    : ""
+                }`}
+                onClick={
+                  userLocation?.includes("denied") ||
+                  userLocation?.includes("access denied")
+                    ? requestLocationPermission
+                    : undefined
+                }
+                title={
+                  userLocation?.includes("denied") ||
+                  userLocation?.includes("access denied")
+                    ? "Click to request location permission again"
+                    : undefined
+                }
+              >
+                <MapPin
+                  className={`h-4 w-4 ${
+                    userLocation?.includes("denied") ||
+                    userLocation?.includes("access denied")
+                      ? "animate-pulse text-orange-500"
+                      : ""
+                  }`}
+                />
+                <span>
+                  {isRequestingLocation
+                    ? "Requesting location..."
+                    : userLocation || "Set Location"}
+                </span>
               </div>
 
               {currentUser && (
