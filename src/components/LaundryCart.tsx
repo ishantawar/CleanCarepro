@@ -690,6 +690,17 @@ Confirm this booking?`;
           </Button>
         </div>
       </div>
+
+      {/* Saved Addresses Modal */}
+      <SavedAddressesModal
+        isOpen={showSavedAddresses}
+        onClose={() => setShowSavedAddresses(false)}
+        onSelectAddress={(address) => {
+          setAddressData(address);
+          setShowSavedAddresses(false);
+        }}
+        currentUser={currentUser}
+      />
     </div>
   );
 };
