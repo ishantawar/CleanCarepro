@@ -158,13 +158,19 @@ export const bookingHelpers = {
   // Get bookings for a specific customer
   async getUserBookings(userId: string) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const response = await fetch(
         `${API_BASE_URL}/bookings/customer/${userId}`,
         {
           method: "GET",
           headers: getAuthHeaders(),
+          signal: controller.signal,
         },
       );
+
+      clearTimeout(timeoutId);
 
       const data = await safeParseJSON(response);
 
