@@ -48,10 +48,18 @@ export const bookingHelpers = {
   async createBooking(bookingData: Partial<Booking>) {
     try {
       const user = JSON.parse(localStorage.getItem("current_user") || "{}");
-      const customerId = user?._id;
 
-      if (!user._id) {
-        throw new Error("Logged-in user ID not found in local storage");
+      // Try to get customer ID from multiple possible fields
+      const customerId = user?._id || user?.id || user?.phone;
+
+      if (!customerId) {
+        console.error("User object:", user);
+        throw new Error("User ID not found. Please sign in again.");
+      }
+
+      // If we only have phone number, try to create or get user from backend
+      if (!user._id && user.phone) {
+        console.log("🔄 User missing MongoDB ID, using phone:", user.phone);
       }
 
       const response = await fetch(`${API_BASE_URL}/bookings`, {
@@ -59,7 +67,7 @@ export const bookingHelpers = {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           ...bookingData,
-          customer_id: user._id, // ✅ use Mongo ObjectId from backend
+          customer_id: customerId, // ✅ use resolved customer ID
         }),
       });
 
