@@ -101,8 +101,9 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
   const handleAddAddress = (address: AddressData) => {
     // Check for duplicate addresses by comparing full address
     const existingAddresses = [...addresses];
-    const isDuplicate = existingAddresses.some(addr =>
-      addr.fullAddress === address.fullAddress && addr.type === address.type
+    const isDuplicate = existingAddresses.some(
+      (addr) =>
+        addr.fullAddress === address.fullAddress && addr.type === address.type,
     );
 
     if (isDuplicate) {
@@ -120,7 +121,9 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
 
     // Replace existing address of same type (except "other")
     if (address.type !== "other") {
-      const existingIndex = existingAddresses.findIndex(addr => addr.type === address.type);
+      const existingIndex = existingAddresses.findIndex(
+        (addr) => addr.type === address.type,
+      );
       if (existingIndex >= 0) {
         existingAddresses[existingIndex] = newAddress;
         saveAddresses(existingAddresses);
@@ -131,8 +134,6 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
       saveAddresses([...existingAddresses, newAddress]);
     }
 
-    setShowAddForm(false);
-  };
     setShowAddForm(false);
   };
 
@@ -191,161 +192,166 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-blue-600" />
-            Saved Addresses
-          </DialogTitle>
-          <DialogDescription>
-            Manage your saved addresses for quick booking
-          </DialogDescription>
-        </DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-600" />
+              Saved Addresses
+            </DialogTitle>
+            <DialogDescription>
+              Manage your saved addresses for quick booking
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Add new address button */}
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">
-              {addresses.length === 0
-                ? "No saved addresses yet"
-                : `${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}`}
-            </p>
-            <Button
-              onClick={() => setShowAddForm(true)}
-              className="bg-green-600 hover:bg-green-700"
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Address
-            </Button>
-          </div>
-
-          {/* Address list */}
-          <div className="space-y-3">
-            {addresses.map((address) => (
-              <Card
-                key={address.id}
-                className="border border-gray-200 hover:border-gray-300 transition-colors"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 flex-1">
-                      {getAddressIcon(address.type)}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-medium text-gray-900 truncate">
-                            {address.label}
-                          </h4>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type)}`}
-                          >
-                            {address.type.charAt(0).toUpperCase() +
-                              address.type.slice(1)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                          {address.fullAddress}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                          {address.createdAt && (
-                            <span>
-                              Added:{" "}
-                              {new Date(address.createdAt).toLocaleDateString()}
-                            </span>
-                          )}
-                          {address.coordinates && (
-                            <span className="flex items-center gap-1">
-                              <Navigation className="h-3 w-3" />
-                              Location saved
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingAddress(address)}
-                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Address?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{address.label}"?
-                              This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteAddress(address.id!)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      <Button
-                        onClick={() => {
-                          onSelectAddress(address);
-                          onClose();
-                        }}
-                        className="bg-green-600 hover:bg-green-700"
-                        size="sm"
-                      >
-                        Select
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {addresses.length === 0 && (
-            <div className="text-center py-8">
-              <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Saved Addresses
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Add your frequently used addresses for quick booking
+          <div className="space-y-4 overflow-y-auto max-h-[60vh]">
+            {/* Add new address button */}
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-600">
+                {addresses.length === 0
+                  ? "No saved addresses yet"
+                  : `${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}`}
               </p>
               <Button
                 onClick={() => setShowAddForm(true)}
                 className="bg-green-600 hover:bg-green-700"
+                size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Your First Address
+                Add Address
               </Button>
             </div>
-          )}
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+            {/* Address list */}
+            <div className="space-y-3 overflow-y-auto">
+              {addresses.map((address) => (
+                <Card
+                  key={address.id}
+                  className="border border-gray-200 hover:border-gray-300 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        {getAddressIcon(address.type)}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-medium text-gray-900 truncate">
+                              {address.label}
+                            </h4>
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type)}`}
+                            >
+                              {address.type.charAt(0).toUpperCase() +
+                                address.type.slice(1)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 leading-relaxed break-words">
+                            {address.fullAddress}
+                          </p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            {address.createdAt && (
+                              <span>
+                                Added:{" "}
+                                {new Date(
+                                  address.createdAt,
+                                ).toLocaleDateString()}
+                              </span>
+                            )}
+                            {address.coordinates && (
+                              <span className="flex items-center gap-1">
+                                <Navigation className="h-3 w-3" />
+                                Location saved
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingAddress(address)}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete Address?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{address.label}
+                                "? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteAddress(address.id!)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
+                        <Button
+                          onClick={() => {
+                            onSelectAddress(address);
+                            onClose();
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                          size="sm"
+                        >
+                          Select
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {addresses.length === 0 && (
+              <div className="text-center py-8">
+                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Saved Addresses
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Add your frequently used addresses for quick booking
+                </p>
+                <Button
+                  onClick={() => setShowAddForm(true)}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Address
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Address Modal */}
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
