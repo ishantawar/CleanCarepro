@@ -67,8 +67,9 @@ export class BookingService {
     if (currentUser.phone) {
       try {
         // Check if we're in a hosted environment without backend
-        const isHostedEnv = window.location.hostname.includes("fly.dev") ||
-                           window.location.hostname.includes("builder.codes");
+        const isHostedEnv =
+          window.location.hostname.includes("fly.dev") ||
+          window.location.hostname.includes("builder.codes");
 
         if (isHostedEnv) {
           console.log("🌐 Hosted environment - skipping user ID resolution");
@@ -76,17 +77,18 @@ export class BookingService {
           currentUser._id = `user_${currentUser.phone}`;
         } else {
           const response = await fetch(`/api/auth/get-user-by-phone`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: currentUser.phone }),
-        });
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: currentUser.phone }),
+          });
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.user && result.user._id) {
-            // Update local user data with MongoDB ID
-            authService.setCurrentUser(result.user);
-            return result.user._id;
+          if (response.ok) {
+            const result = await response.json();
+            if (result.user && result.user._id) {
+              // Update local user data with MongoDB ID
+              authService.setCurrentUser(result.user);
+              return result.user._id;
+            }
           }
         }
       } catch (error) {
