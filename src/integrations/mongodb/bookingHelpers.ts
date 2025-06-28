@@ -42,64 +42,58 @@ const getAuthHeaders = () => {
   };
 };
 
-// Cache to store parsed response data to avoid re-reading
-const responseCache = new WeakMap<Response, Promise<any>>();
-
-// Helper function to safely parse JSON response with caching
+// Simple response parser that avoids all cloning and caching issues
 const safeParseJSON = async (response: Response) => {
   if (!response) {
     throw new Error("No response received from server");
   }
 
-  // Check if we already have this response cached
-  if (responseCache.has(response)) {
-    return await responseCache.get(response);
-  }
+  try {
+    // Simple approach: just read the response as text once
+    const responseText = await response.text();
 
-  // Create a promise for parsing this response
-  const parsePromise = (async () => {
+    // If empty response, return error object
+    if (!responseText.trim()) {
+      return { error: "Empty response from server" };
+    }
+
+    // Try to parse as JSON
     try {
-      // Clone the response before reading to avoid consumption issues
-      const responseClone = response.clone();
-      const responseText = await responseClone.text();
+      return JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("JSON parse failed for response:", responseText);
 
-      // If empty response, return error object
-      if (!responseText.trim()) {
-        return { error: "Empty response from server" };
-      }
-
-      // Try to parse as JSON
-      try {
-        return JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("JSON parse failed for response:", responseText);
-
-        // Check if it looks like HTML (likely an error page)
-        if (
-          responseText.includes("<html") ||
-          responseText.includes("<!DOCTYPE")
-        ) {
-          return {
-            error:
-              "Server returned HTML instead of JSON (likely an error page)",
-          };
-        }
-
-        // Return the raw text as error for debugging
+      // Check if it looks like HTML (likely an error page)
+      if (
+        responseText.includes("<html") ||
+        responseText.includes("<!DOCTYPE")
+      ) {
         return {
-          error: `Invalid JSON response: ${responseText.substring(0, 200)}...`,
+          error: "Server returned HTML instead of JSON (likely an error page)",
         };
       }
-    } catch (error: any) {
-      console.error("Failed to read response:", error);
-      throw new Error(`Failed to read response: ${error.message}`);
+
+      // Return the raw text as error for debugging
+      return {
+        error: `Invalid JSON response: ${responseText.substring(0, 200)}...`,
+      };
     }
-  })();
+  } catch (error: any) {
+    console.error("Failed to read response text:", error);
 
-  // Cache the promise
-  responseCache.set(response, parsePromise);
+    // If the response body was already consumed, return a generic error
+    if (
+      error.message.includes("already used") ||
+      error.message.includes("already read")
+    ) {
+      console.warn(
+        "Response body was already consumed - this indicates multiple read attempts",
+      );
+      return { error: "Server communication error - please try again" };
+    }
 
-  return await parsePromise;
+    throw new Error(`Failed to read response: ${error.message}`);
+  }
 };
 export const bookingHelpers = {
   // ✅ Create new booking
