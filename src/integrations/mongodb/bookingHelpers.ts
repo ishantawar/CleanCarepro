@@ -42,6 +42,23 @@ const getAuthHeaders = () => {
   };
 };
 
+// Helper function to safely parse JSON response
+const safeParseJSON = async (response: Response) => {
+  if (!response) {
+    throw new Error("No response received from server");
+  }
+
+  if (response.bodyUsed) {
+    throw new Error("Response body already consumed");
+  }
+
+  try {
+    return await response.json();
+  } catch (error) {
+    throw new Error(`Failed to parse JSON response: ${error.message}`);
+  }
+};
+
 export const bookingHelpers = {
   // ✅ Create new booking
   async createBooking(bookingData: Partial<Booking>) {
