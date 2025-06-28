@@ -340,7 +340,46 @@ Total Amount: ₹${finalTotal}
 Confirm this booking?`;
 
     if (confirm(confirmationMessage)) {
+      // Save address for future use before processing order
+      saveAddressAfterBooking(addressData);
       onProceedToCheckout(orderData);
+    }
+  };
+
+  const saveAddressAfterBooking = async (orderAddress: any) => {
+    if (!currentUser || !orderAddress) return;
+
+    try {
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const savedAddressesKey = `addresses_${userId}`;
+      const existingAddresses = JSON.parse(
+        localStorage.getItem(savedAddressesKey) || "[]",
+      );
+
+      // Check if this address already exists
+      const addressExists = existingAddresses.some(
+        (addr: any) => addr.fullAddress === orderAddress.fullAddress,
+      );
+
+      if (!addressExists && orderAddress.fullAddress) {
+        const newAddress = {
+          ...orderAddress,
+          id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          label: orderAddress.label || "Recent Order Address",
+          type: orderAddress.type || "other",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const updatedAddresses = [...existingAddresses, newAddress];
+        localStorage.setItem(
+          savedAddressesKey,
+          JSON.stringify(updatedAddresses),
+        );
+        console.log("✅ Address saved after booking");
+      }
+    } catch (error) {
+      console.error("Failed to save address after booking:", error);
     }
   };
 
