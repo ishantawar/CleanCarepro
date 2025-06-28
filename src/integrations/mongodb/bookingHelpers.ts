@@ -48,31 +48,27 @@ const safeParseJSON = async (response: Response) => {
     throw new Error("No response received from server");
   }
 
-  // Clone the response to avoid body consumption issues
-  let responseToUse = response;
-  if (response.bodyUsed) {
-    // If body is already used, we can't read it again
-    // This shouldn't happen in normal flow, but let's handle it gracefully
-    console.warn(
-      "Response body already consumed - this indicates a logic error",
-    );
-    throw new Error("Response body already consumed");
-  }
-
   try {
-    // Clone the response before reading to avoid consumption issues
-    responseToUse = response.clone();
-    return await responseToUse.json();
-  } catch (error) {
-    // If cloning fails, try the original response as last resort
-    try {
-      if (!response.bodyUsed) {
-        return await response.json();
-      }
-    } catch (fallbackError) {
-      console.error("Fallback JSON parsing also failed:", fallbackError);
+    // Check if we can read the response
+    if (response.bodyUsed) {
+      throw new Error("Response body already consumed");
     }
-    throw new Error(`Failed to parse JSON response: ${error.message}`);
+
+    // For network failures or invalid responses, handle gracefully
+    if (!response.headers.get("content-type")?.includes("application/json")) {
+      // Not JSON, return empty object or handle as needed
+      return { error: "Invalid response format" };
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    if (error.message.includes("already consumed")) {
+      throw error; // Re-throw body consumed errors
+    }
+
+    // Handle JSON parsing errors
+    console.error("JSON parsing failed:", error);
+    throw new Error(`Failed to parse response: ${error.message}`);
   }
 };
 
