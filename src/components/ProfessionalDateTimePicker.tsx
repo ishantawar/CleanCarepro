@@ -9,7 +9,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CalendarIcon, Clock } from "lucide-react";
-import { format, addDays, isSameDay, isToday, isTomorrow } from "date-fns";
+import {
+  format,
+  addDays,
+  isSameDay,
+  isToday,
+  isTomorrow,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface ProfessionalDateTimePickerProps {
@@ -29,58 +35,49 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Generate dates for next 7 days starting from today (no past dates)
-  const generateAvailableDates = () => {
+  const generateNext7Days = () => {
+    const today = new Date();
     const dates = [];
+
     for (let i = 0; i < 7; i++) {
+      const date = addDays(today, i);
+      dates.push({
+        date,
+        day: format(date, "EEE"), // Mon
+        fullDate: format(date, "dd"), // 23
+        month: format(date, "MMM"), // Jun
+      });
+    }
+
+    return dates;
+  };
+
+  const generateExtendedDates = () => {
+    const dates = [];
+    for (let i = 0; i < 30; i++) {
       const date = addDays(new Date(), i);
       dates.push({
         date,
         label: isToday(date)
           ? "Today"
           : isTomorrow(date)
-            ? "Tomorrow"
-            : format(date, "EEE"),
-        shortDate: format(date, "dd MMM"),
-        fullDate: format(date, "dd"),
-        month: format(date, "MMM"),
-        day: format(date, "EEE"),
-        isPast: false, // No past dates in this list
+          ? "Tomorrow"
+          : format(date, "EEE, MMM dd"),
+        value: date.toISOString(),
       });
     }
     return dates;
   };
 
-  // Generate extended date options for dropdown (same as available dates)
-  const generateExtendedDates = () => {
-    return generateAvailableDates().map((dateItem) => ({
-      ...dateItem,
-      label: isToday(dateItem.date)
-        ? "Today"
-        : isTomorrow(dateItem.date)
-          ? "Tomorrow"
-          : format(dateItem.date, "EEE, MMM dd"),
-      value: dateItem.date.toISOString(),
-    }));
-  };
-
-  // No week navigation needed - we always show next 7 days from today
-
-  // Generate time slots with 1-hour intervals
   const generateTimeSlots = () => {
     const slots = [];
     const now = new Date();
     const currentHour = now.getHours();
 
-    // Generate slots from 8 AM to 9 PM (1-hour intervals)
     for (let hour = 8; hour <= 21; hour++) {
       const timeString = `${hour.toString().padStart(2, "0")}:00`;
-      const displayTime = format(
-        new Date(`2000-01-01T${timeString}`),
-        "h:mm a",
-      );
+      const displayTime = format(new Date(`2000-01-01T${timeString}`), "h:mm a");
 
-      // Skip past times for today
       const isDisabled =
         selectedDate && isToday(selectedDate) && hour <= currentHour;
 
@@ -101,7 +98,7 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
     return slots;
   };
 
-  const availableDates = generateAvailableDates();
+  const weekDates = generateNext7Days();
   const extendedDates = generateExtendedDates();
   const timeSlots = generateTimeSlots();
 
@@ -116,6 +113,14 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           </Label>
           <div className="flex items-center gap-2">
             <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDateChange(new Date())}
+              className="text-xs px-2 py-1 h-auto"
+            >
+              Today
+            </Button>
+            <Button
               variant="outline"
               size="sm"
               onClick={() => setShowDropdown(!showDropdown)}
@@ -126,11 +131,10 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           </div>
         </div>
 
-        {/* Dropdown for extended date selection */}
         {showDropdown && (
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">
-              Choose from next 7 days:
+              Choose from next 30 days:
             </Label>
             <Select
               value={selectedDate?.toISOString() || ""}
@@ -155,74 +159,33 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
           </div>
         )}
 
-        {/* Available dates (next 7 days) - Vertical List */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Available Dates:</Label>
-          <div className="space-y-2">
-            {availableDates.map((dateItem) => {
-              const isSelected =
-                selectedDate && isSameDay(dateItem.date, selectedDate);
-
-              return (
-                <button
-                  key={dateItem.date.toISOString()}
-                  type="button"
-                  onClick={() => onDateChange(dateItem.date)}
-                  className={cn(
-                    "w-full p-3 text-left rounded-lg transition-colors border flex items-center justify-between",
-                    isSelected
-                      ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
-                      : "hover:bg-gray-100 border-gray-200 bg-white",
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium",
-                        isSelected
-                          ? "bg-white/20 text-white"
-                          : "bg-green-100 text-green-700",
-                      )}
-                    >
-                      {dateItem.fullDate}
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">
-                        {dateItem.label}
-                      </div>
-                      <div
-                        className={cn(
-                          "text-xs",
-                          isSelected ? "text-white/70" : "text-gray-500",
-                        )}
-                      >
-                        {dateItem.shortDate}
-                      </div>
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+        {/* Horizontal, evenly spaced 7-day row */}
+        <div className="grid grid-cols-7 gap-2">
+          {weekDates.map((dateItem) => (
+            <Button
+              key={dateItem.date.toISOString()}
+              variant={
+                selectedDate && isSameDay(selectedDate, dateItem.date)
+                  ? "default"
+                  : "outline"
+              }
+              onClick={() => onDateChange(dateItem.date)}
+              className={cn(
+                "flex flex-col items-center justify-center p-3 h-auto",
+                selectedDate && isSameDay(selectedDate, dateItem.date)
+                  ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
+                  : "hover:border-green-300 hover:bg-green-50"
+              )}
+            >
+              <span className="text-xs font-medium">{dateItem.day}</span>
+              <span className="text-lg font-bold">{dateItem.fullDate}</span>
+              <span className="text-xs">{dateItem.month}</span>
+            </Button>
+          ))}
         </div>
       </div>
 
-      {/* Time Selection Dropdown */}
+      {/* Time Selection */}
       {selectedDate && (
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center gap-2">
