@@ -326,7 +326,7 @@ const getReverseGeocodedLocation = async (
   }
 
   // Method 3: Use coordinate-based fallback
-  console.log("🔄 Using coordinate-based location detection...");
+  console.log("��� Using coordinate-based location detection...");
   return getCoordinateBasedLocation(latitude, longitude);
 };
 
