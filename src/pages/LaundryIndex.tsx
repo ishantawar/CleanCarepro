@@ -107,11 +107,15 @@ const LaundryIndex = () => {
               console.log("✅ Final location set:", displayLocation);
             } else {
               console.log("🔍 Using coordinate fallback");
-              setCurrentLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+              setCurrentLocation(
+                `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
+              );
             }
           } catch (geocodeError) {
             console.warn("Geocoding failed, using coordinates:", geocodeError);
-            setCurrentLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+            setCurrentLocation(
+              `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
+            );
           }
         } catch (error) {
           console.error("Location processing error:", error);
@@ -126,169 +130,115 @@ const LaundryIndex = () => {
         enableHighAccuracy: false,
         timeout: 10000,
         maximumAge: 600000,
-      }
+      },
     );
 
-      let errorMessage = "Failed to place order. Please try again.";
-      let errorTitle = "Order Failed";
+    let errorMessage = "Failed to place order. Please try again.";
+    let errorTitle = "Order Failed";
 
-      if (error instanceof Error) {
-        if (error.message.includes("User ID not found")) {
-          errorTitle = "Authentication Issue";
-          errorMessage = "Please sign in again to place your order.";
-        } else if (error.message.includes("Network error") || error.message.includes("fetch")) {
-          errorTitle = "Connection Issue";
-          errorMessage = "Please check your internet connection and try again.";
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
-      addNotification(
-        createErrorNotification(errorTitle, errorMessage),
-      );
-    }
-  };
-
-  // Helper function for coordinate-based location detection (fallback)
-  const getCoordinateBasedLocation = (
-    latitude: number,
-    longitude: number,
-  ): string => {
-    console.log(
-      `🎯 Using coordinate-based fallback for: ${latitude}, ${longitude}`,
-    );
-
-    // Check if coordinates are within India
-    if (latitude >= 8 && latitude <= 37 && longitude >= 68 && longitude <= 97) {
-      // Rough approximations for major Indian cities
-      if (
-        latitude >= 28.4 &&
-        latitude <= 28.8 &&
-        longitude >= 76.8 &&
-        longitude <= 77.3
-      ) {
-        return "Delhi";
+    if (error instanceof Error) {
+      if (error.message.includes("User ID not found")) {
+        errorTitle = "Authentication Issue";
+        errorMessage = "Please sign in again to place your order.";
       } else if (
-        latitude >= 18.8 &&
-        latitude <= 19.3 &&
-        longitude >= 72.7 &&
-        longitude <= 73.0
+        error.message.includes("Network error") ||
+        error.message.includes("fetch")
       ) {
-        return "Mumbai";
-      } else if (
-        latitude >= 12.8 &&
-        latitude <= 13.1 &&
-        longitude >= 77.4 &&
-        longitude <= 77.8
-      ) {
-        return "Bangalore";
-      } else if (
-        latitude >= 22.4 &&
-        latitude <= 22.7 &&
-        longitude >= 88.2 &&
-        longitude <= 88.5
-      ) {
-        return "Kolkata";
-      } else if (
-        latitude >= 17.2 &&
-        latitude <= 17.6 &&
-        longitude >= 78.2 &&
-        longitude <= 78.7
-      ) {
-        return "Hyderabad";
-      } else if (
-        latitude >= 13.0 &&
-        latitude <= 13.2 &&
-        longitude >= 80.1 &&
-        longitude <= 80.3
-      ) {
-        return "Chennai";
+        errorTitle = "Connection Issue";
+        errorMessage = "Please check your internet connection and try again.";
       } else {
-        return "India"; // Generic fallback for India
+        errorMessage = error.message;
       }
     }
 
-    // For international coordinates, return a generic location
-    return "Your Location";
+    addNotification(createErrorNotification(errorTitle, errorMessage));
   };
+};
 
-  // Helper function for reverse geocoding with multiple fallbacks
-  const getReverseGeocodedLocation = async (
-    latitude: number,
-    longitude: number,
-  ): Promise<string> => {
-    console.log(
-      `🔄 Attempting reverse geocoding for: ${latitude}, ${longitude}`,
-    );
+// Helper function for coordinate-based location detection (fallback)
+const getCoordinateBasedLocation = (
+  latitude: number,
+  longitude: number,
+): string => {
+  console.log(
+    `🎯 Using coordinate-based fallback for: ${latitude}, ${longitude}`,
+  );
 
-    // Method 1: Try Google Maps API if available
-    const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (googleApiKey) {
-      try {
-        console.log("🗺️ Trying Google Maps API...");
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleApiKey}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
-          },
-        );
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.results && data.results.length > 0) {
-            const result = data.results[0];
-
-            // Extract city from address components
-            const cityComponent = result.address_components?.find(
-              (component: any) =>
-                component.types.includes("locality") ||
-                component.types.includes("administrative_area_level_2"),
-            );
-
-            const stateComponent = result.address_components?.find(
-              (component: any) =>
-                component.types.includes("administrative_area_level_1"),
-            );
-
-            if (cityComponent) {
-              const location =
-                stateComponent &&
-                cityComponent.long_name !== stateComponent.long_name
-                  ? `${cityComponent.long_name}, ${stateComponent.long_name}`
-                  : cityComponent.long_name;
-              console.log("✅ Google Maps success:", location);
-              return location;
-            }
-          }
-        }
-      } catch (error) {
-        console.log("❌ Google Maps geocoding failed:", error);
-      }
+  // Check if coordinates are within India
+  if (latitude >= 8 && latitude <= 37 && longitude >= 68 && longitude <= 97) {
+    // Rough approximations for major Indian cities
+    if (
+      latitude >= 28.4 &&
+      latitude <= 28.8 &&
+      longitude >= 76.8 &&
+      longitude <= 77.3
+    ) {
+      return "Delhi";
+    } else if (
+      latitude >= 18.8 &&
+      latitude <= 19.3 &&
+      longitude >= 72.7 &&
+      longitude <= 73.0
+    ) {
+      return "Mumbai";
+    } else if (
+      latitude >= 12.8 &&
+      latitude <= 13.1 &&
+      longitude >= 77.4 &&
+      longitude <= 77.8
+    ) {
+      return "Bangalore";
+    } else if (
+      latitude >= 22.4 &&
+      latitude <= 22.7 &&
+      longitude >= 88.2 &&
+      longitude <= 88.5
+    ) {
+      return "Kolkata";
+    } else if (
+      latitude >= 17.2 &&
+      latitude <= 17.6 &&
+      longitude >= 78.2 &&
+      longitude <= 78.7
+    ) {
+      return "Hyderabad";
+    } else if (
+      latitude >= 13.0 &&
+      latitude <= 13.2 &&
+      longitude >= 80.1 &&
+      longitude <= 80.3
+    ) {
+      return "Chennai";
+    } else {
+      return "India"; // Generic fallback for India
     }
+  }
 
-    // Method 2: Try OpenStreetMap with better error handling
+  // For international coordinates, return a generic location
+  return "Your Location";
+};
+
+// Helper function for reverse geocoding with multiple fallbacks
+const getReverseGeocodedLocation = async (
+  latitude: number,
+  longitude: number,
+): Promise<string> => {
+  console.log(`🔄 Attempting reverse geocoding for: ${latitude}, ${longitude}`);
+
+  // Method 1: Try Google Maps API if available
+  const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  if (googleApiKey) {
     try {
-      console.log("🌍 Trying OpenStreetMap API...");
+      console.log("🗺️ Trying Google Maps API...");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // Longer timeout for OSM
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=12&addressdetails=1`,
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleApiKey}`,
         {
           method: "GET",
           headers: {
             Accept: "application/json",
-            "User-Agent": "CleanCare-App/1.0",
           },
           signal: controller.signal,
         },
@@ -298,171 +248,264 @@ const LaundryIndex = () => {
 
       if (response.ok) {
         const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          const result = data.results[0];
 
-        if (data.address) {
-          const city =
-            data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            data.address.suburb;
+          // Extract city from address components
+          const cityComponent = result.address_components?.find(
+            (component: any) =>
+              component.types.includes("locality") ||
+              component.types.includes("administrative_area_level_2"),
+          );
 
-          const state = data.address.state;
+          const stateComponent = result.address_components?.find(
+            (component: any) =>
+              component.types.includes("administrative_area_level_1"),
+          );
 
-          if (city) {
+          if (cityComponent) {
             const location =
-              state && city !== state ? `${city}, ${state}` : city;
-            console.log("✅ OpenStreetMap success:", location);
+              stateComponent &&
+              cityComponent.long_name !== stateComponent.long_name
+                ? `${cityComponent.long_name}, ${stateComponent.long_name}`
+                : cityComponent.long_name;
+            console.log("✅ Google Maps success:", location);
             return location;
-          } else if (state) {
-            console.log("✅ OpenStreetMap success (state only):", state);
-            return state;
           }
         }
       }
     } catch (error) {
-      console.log("❌ OpenStreetMap geocoding failed:", error);
+      console.log("❌ Google Maps geocoding failed:", error);
     }
+  }
 
-    // Method 3: Use coordinate-based fallback
-    console.log("🔄 Using coordinate-based location detection...");
-    return getCoordinateBasedLocation(latitude, longitude);
-  };
+  // Method 2: Try OpenStreetMap with better error handling
+  try {
+    console.log("🌍 Trying OpenStreetMap API...");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // Longer timeout for OSM
 
-  const handleLoginSuccess = (user: any) => {
-    setCurrentUser(user);
-    setIsLoggedIn(true);
-    setCurrentView("home");
-    console.log("✅ User logged in successfully:", user.name || user.phone);
-
-    // Add success notification
-    addNotification(
-      createSuccessNotification(
-        "Welcome!",
-        `Hello ${user.name || user.phone}, you're now logged in.`,
-      ),
-    );
-  };
-  const handleLogout = () => {
-    authService.logout();
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-    setCurrentView("home");
-    console.log("✅ User logged out");
-
-    // Add logout notification
-    addNotification(
-      createSuccessNotification(
-        "Goodbye!",
-        "You have been logged out successfully.",
-      ),
-    );
-  };
-
-  const handleViewCart = () => {
-    setCurrentView("cart");
-  };
-
-  const handleViewBookings = () => {
-    if (!currentUser) {
-      // Auto-redirect to auth view
-      console.log("User not authenticated, showing auth view");
-      setPreviousView("bookings");
-      setCurrentView("auth");
-      return;
-    }
-    setCurrentView("bookings");
-  };
-
-  const handleLoginRequired = (fromView: "cart" | "bookings" = "cart") => {
-    setPreviousView(fromView);
-    setCurrentView("auth");
-  };
-
-  const handleProceedToCheckout = async (cartData: any) => {
-    // Check if user is authenticated first
-    if (!currentUser) {
-      console.log("User not authenticated, switching to auth view");
-      setCurrentView("auth");
-      return;
-    }
-
-    console.log("Processing checkout for authenticated user:", cartData);
-
-    try {
-      // Import both booking helpers and service
-      const { BookingService } = await import("../services/bookingService");
-      const { bookingHelpers } = await import(
-        "../integrations/mongodb/bookingHelpers"
-      );
-
-      const bookingService = BookingService.getInstance();
-
-      // Prepare services array for MongoDB
-      const servicesArray =
-        cartData.services?.map((service: any) =>
-          typeof service === "string" ? service : service.name,
-        ) || [];
-
-      // Create booking data for MongoDB backend
-      const mongoBookingData = {
-        customer_id: currentUser._id || currentUser.id,
-        service: servicesArray[0] || "Laundry Service",
-        service_type: "laundry",
-        services: servicesArray,
-        scheduled_date: cartData.pickupDate,
-        scheduled_time: cartData.pickupTime,
-        provider_name: "CleanCare Pro",
-        address:
-          typeof cartData.address === "string"
-            ? cartData.address
-            : cartData.address?.fullAddress || "",
-        coordinates: cartData.address?.coordinates || { lat: 0, lng: 0 },
-        additional_details: cartData.instructions || "",
-        total_price: cartData.totalAmount,
-        discount_amount: 0,
-        final_amount: cartData.totalAmount,
-        special_instructions: cartData.instructions || "",
-        charges_breakdown: {
-          base_price: cartData.totalAmount,
-          tax_amount: 0,
-          service_fee: 0,
-          discount: 0,
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=12&addressdetails=1`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "CleanCare-App/1.0",
         },
+        signal: controller.signal,
+      },
+    );
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.address) {
+        const city =
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          data.address.suburb;
+
+        const state = data.address.state;
+
+        if (city) {
+          const location = state && city !== state ? `${city}, ${state}` : city;
+          console.log("✅ OpenStreetMap success:", location);
+          return location;
+        } else if (state) {
+          console.log("✅ OpenStreetMap success (state only):", state);
+          return state;
+        }
+      }
+    }
+  } catch (error) {
+    console.log("❌ OpenStreetMap geocoding failed:", error);
+  }
+
+  // Method 3: Use coordinate-based fallback
+  console.log("🔄 Using coordinate-based location detection...");
+  return getCoordinateBasedLocation(latitude, longitude);
+};
+
+const handleLoginSuccess = (user: any) => {
+  setCurrentUser(user);
+  setIsLoggedIn(true);
+  setCurrentView("home");
+  console.log("✅ User logged in successfully:", user.name || user.phone);
+
+  // Add success notification
+  addNotification(
+    createSuccessNotification(
+      "Welcome!",
+      `Hello ${user.name || user.phone}, you're now logged in.`,
+    ),
+  );
+};
+const handleLogout = () => {
+  authService.logout();
+  setIsLoggedIn(false);
+  setCurrentUser(null);
+  setCurrentView("home");
+  console.log("✅ User logged out");
+
+  // Add logout notification
+  addNotification(
+    createSuccessNotification(
+      "Goodbye!",
+      "You have been logged out successfully.",
+    ),
+  );
+};
+
+const handleViewCart = () => {
+  setCurrentView("cart");
+};
+
+const handleViewBookings = () => {
+  if (!currentUser) {
+    // Auto-redirect to auth view
+    console.log("User not authenticated, showing auth view");
+    setPreviousView("bookings");
+    setCurrentView("auth");
+    return;
+  }
+  setCurrentView("bookings");
+};
+
+const handleLoginRequired = (fromView: "cart" | "bookings" = "cart") => {
+  setPreviousView(fromView);
+  setCurrentView("auth");
+};
+
+const handleProceedToCheckout = async (cartData: any) => {
+  // Check if user is authenticated first
+  if (!currentUser) {
+    console.log("User not authenticated, switching to auth view");
+    setCurrentView("auth");
+    return;
+  }
+
+  console.log("Processing checkout for authenticated user:", cartData);
+
+  try {
+    // Import both booking helpers and service
+    const { BookingService } = await import("../services/bookingService");
+    const { bookingHelpers } = await import(
+      "../integrations/mongodb/bookingHelpers"
+    );
+
+    const bookingService = BookingService.getInstance();
+
+    // Prepare services array for MongoDB
+    const servicesArray =
+      cartData.services?.map((service: any) =>
+        typeof service === "string" ? service : service.name,
+      ) || [];
+
+    // Create booking data for MongoDB backend
+    const mongoBookingData = {
+      customer_id: currentUser._id || currentUser.id,
+      service: servicesArray[0] || "Laundry Service",
+      service_type: "laundry",
+      services: servicesArray,
+      scheduled_date: cartData.pickupDate,
+      scheduled_time: cartData.pickupTime,
+      provider_name: "CleanCare Pro",
+      address:
+        typeof cartData.address === "string"
+          ? cartData.address
+          : cartData.address?.fullAddress || "",
+      coordinates: cartData.address?.coordinates || { lat: 0, lng: 0 },
+      additional_details: cartData.instructions || "",
+      total_price: cartData.totalAmount,
+      discount_amount: 0,
+      final_amount: cartData.totalAmount,
+      special_instructions: cartData.instructions || "",
+      charges_breakdown: {
+        base_price: cartData.totalAmount,
+        tax_amount: 0,
+        service_fee: 0,
+        discount: 0,
+      },
+    };
+
+    // Save to MongoDB backend first
+    console.log("💾 Saving to MongoDB backend...");
+    const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
+
+    if (mongoResult.data) {
+      console.log("✅ Booking saved to MongoDB:", mongoResult.data._id);
+
+      // Also save using booking service for local storage backup
+      const localBookingData = {
+        userId: currentUser._id || currentUser.id || currentUser.phone,
+        services: servicesArray,
+        totalAmount: cartData.totalAmount,
+        status: "pending" as const,
+        pickupDate: cartData.pickupDate,
+        deliveryDate: cartData.deliveryDate,
+        pickupTime: cartData.pickupTime,
+        deliveryTime: cartData.deliveryTime,
+        address: cartData.address,
+        contactDetails: {
+          phone: cartData.phone || currentUser.phone,
+          name: currentUser.full_name || currentUser.name || "User",
+          instructions: cartData.instructions,
+        },
+        paymentStatus: "pending" as const,
       };
 
-      // Save to MongoDB backend first
-      console.log("💾 Saving to MongoDB backend...");
-      const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
+      await bookingService.createBooking(localBookingData);
 
-      if (mongoResult.data) {
-        console.log("✅ Booking saved to MongoDB:", mongoResult.data._id);
+      // Show success message
+      addNotification(
+        createSuccessNotification(
+          "Order Confirmed!",
+          `Your order has been placed successfully! Booking ID: ${mongoResult.data._id.slice(-6)}`,
+        ),
+      );
 
-        // Also save using booking service for local storage backup
-        const localBookingData = {
-          userId: currentUser._id || currentUser.id || currentUser.phone,
-          services: servicesArray,
-          totalAmount: cartData.totalAmount,
-          status: "pending" as const,
-          pickupDate: cartData.pickupDate,
-          deliveryDate: cartData.deliveryDate,
-          pickupTime: cartData.pickupTime,
-          deliveryTime: cartData.deliveryTime,
-          address: cartData.address,
-          contactDetails: {
-            phone: cartData.phone || currentUser.phone,
-            name: currentUser.full_name || currentUser.name || "User",
-            instructions: cartData.instructions,
-          },
-          paymentStatus: "pending" as const,
-        };
+      // Clear cart
+      localStorage.removeItem("laundry_cart");
 
-        await bookingService.createBooking(localBookingData);
+      // Stay on home page
+      setCurrentView("home");
+    } else {
+      // If MongoDB fails, still try to save locally
+      console.warn(
+        "❌ MongoDB booking failed, saving locally:",
+        mongoResult.error,
+      );
 
-        // Show success message
+      const localBookingData = {
+        userId: currentUser._id || currentUser.id || currentUser.phone,
+        services: servicesArray,
+        totalAmount: cartData.totalAmount,
+        status: "pending" as const,
+        pickupDate: cartData.pickupDate,
+        deliveryDate: cartData.deliveryDate,
+        pickupTime: cartData.pickupTime,
+        deliveryTime: cartData.deliveryTime,
+        address: cartData.address,
+        contactDetails: {
+          phone: cartData.phone || currentUser.phone,
+          name: currentUser.full_name || currentUser.name || "User",
+          instructions: cartData.instructions,
+        },
+        paymentStatus: "pending" as const,
+      };
+
+      const localResult = await bookingService.createBooking(localBookingData);
+
+      if (localResult.success) {
+        // Show success but mention it will sync later
         addNotification(
           createSuccessNotification(
-            "Order Confirmed!",
-            `Your order has been placed successfully! Booking ID: ${mongoResult.data._id.slice(-6)}`,
+            "Order Saved Locally!",
+            "Your order has been saved and will sync when connection is restored.",
           ),
         );
 
@@ -472,78 +515,37 @@ const LaundryIndex = () => {
         // Stay on home page
         setCurrentView("home");
       } else {
-        // If MongoDB fails, still try to save locally
-        console.warn(
-          "❌ MongoDB booking failed, saving locally:",
-          mongoResult.error,
+        throw new Error(
+          mongoResult.error?.message || "Failed to create booking",
         );
-
-        const localBookingData = {
-          userId: currentUser._id || currentUser.id || currentUser.phone,
-          services: servicesArray,
-          totalAmount: cartData.totalAmount,
-          status: "pending" as const,
-          pickupDate: cartData.pickupDate,
-          deliveryDate: cartData.deliveryDate,
-          pickupTime: cartData.pickupTime,
-          deliveryTime: cartData.deliveryTime,
-          address: cartData.address,
-          contactDetails: {
-            phone: cartData.phone || currentUser.phone,
-            name: currentUser.full_name || currentUser.name || "User",
-            instructions: cartData.instructions,
-          },
-          paymentStatus: "pending" as const,
-        };
-
-        const localResult =
-          await bookingService.createBooking(localBookingData);
-
-        if (localResult.success) {
-          // Show success but mention it will sync later
-          addNotification(
-            createSuccessNotification(
-              "Order Saved Locally!",
-              "Your order has been saved and will sync when connection is restored.",
-            ),
-          );
-
-          // Clear cart
-          localStorage.removeItem("laundry_cart");
-
-          // Stay on home page
-          setCurrentView("home");
-        } else {
-          throw new Error(
-            mongoResult.error?.message || "Failed to create booking",
-          );
-        }
       }
-    } catch (error) {
-      console.error("Checkout failed:", error);
-
-      let errorMessage = "Failed to place order. Please try again.";
-      let errorTitle = "Order Failed";
-
-      if (error instanceof Error) {
-        if (error.message.includes("User ID not found")) {
-          errorTitle = "Authentication Issue";
-          errorMessage = "Please sign in again to place your order.";
-        } else if (
-          error.message.includes("Network error") ||
-          error.message.includes("fetch")
-        ) {
-          errorTitle = "Connection Issue";
-          errorMessage = "Please check your internet connection and try again.";
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
-      addNotification(createErrorNotification(errorTitle, errorMessage));
     }
-  };
+  } catch (error) {
+    console.error("Checkout failed:", error);
 
+    let errorMessage = "Failed to place order. Please try again.";
+    let errorTitle = "Order Failed";
+
+    if (error instanceof Error) {
+      if (error.message.includes("User ID not found")) {
+        errorTitle = "Authentication Issue";
+        errorMessage = "Please sign in again to place your order.";
+      } else if (
+        error.message.includes("Network error") ||
+        error.message.includes("fetch")
+      ) {
+        errorTitle = "Connection Issue";
+        errorMessage = "Please check your internet connection and try again.";
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
+    addNotification(createErrorNotification(errorTitle, errorMessage));
+  }
+};
+
+const LaundryIndexComponent = () => {
   return (
     <div className="min-h-screen">
       {currentView === "home" && (
