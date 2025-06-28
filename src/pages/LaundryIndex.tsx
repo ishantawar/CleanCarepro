@@ -542,10 +542,9 @@ const handleProceedToCheckout = async (cartData: any) => {
     }
 
     addNotification(createErrorNotification(errorTitle, errorMessage));
-  }
-};
+    }
+  };
 
-const LaundryIndexComponent = () => {
   return (
     <div className="min-h-screen">
       {currentView === "home" && (
