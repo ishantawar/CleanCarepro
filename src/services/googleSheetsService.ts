@@ -34,6 +34,12 @@ class GoogleSheetsService {
   public static getInstance(): GoogleSheetsService {
     if (!GoogleSheetsService.instance) {
       GoogleSheetsService.instance = new GoogleSheetsService();
+
+      // Validate configuration on first instantiation
+      const warnings = validateGoogleSheetsConfig();
+      if (warnings.length > 0) {
+        console.warn("Google Sheets configuration warnings:", warnings);
+      }
     }
     return GoogleSheetsService.instance;
   }
