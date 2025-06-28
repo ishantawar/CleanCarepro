@@ -105,50 +105,65 @@ const LaundryIndex = () => {
             if (displayLocation && displayLocation.trim()) {
               setCurrentLocation(displayLocation);
               console.log("��� Final location set:", displayLocation);
-            } else {
-              // If no location found, use coordinate-based fallback
-              const fallbackLocation = getCoordinateBasedLocation(
-                latitude,
-                longitude,
-              );
-              setCurrentLocation(fallbackLocation);
-              console.log("🔄 Using coordinate fallback:", fallbackLocation);
-            }
-          } catch (geocodingError) {
-            console.error("❌ All geocoding methods failed:", geocodingError);
-            // Use coordinate-based fallback when geocoding fails
-            const fallbackLocation = getCoordinateBasedLocation(
-              latitude,
-              longitude,
-            );
-            setCurrentLocation(fallbackLocation);
-            console.log("🆘 Emergency fallback:", fallbackLocation);
-          }
-        } catch (error) {
-          console.error("❌ Position processing error:", error);
-          // Fallback to a generic location
-          setCurrentLocation("Your Location");
-        }
-      },
-      (error) => {
-        console.error("Geolocation error:", {
-          code: error.code,
-          message: error.message,
-          PERMISSION_DENIED: error.PERMISSION_DENIED,
-          POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
-          TIMEOUT: error.TIMEOUT,
-        });
+      } else {
+        // Handle different types of errors
+        const isNetworkError = mongoResult.error?.code === "NETWORK_ERROR";
 
-        let locationMessage = "Enable location access";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            locationMessage = "Location access denied";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            locationMessage = "Location unavailable";
-            break;
-          case error.TIMEOUT:
-            locationMessage = "Location request timeout";
+        if (isNetworkError) {
+          console.log("🔄 Backend unavailable, saving locally:", mongoResult.error);
+        } else {
+          console.warn("❌ MongoDB booking failed:", mongoResult.error);
+        }
+
+        const localBookingData = {
+          userId: currentUser._id || currentUser.id || currentUser.phone,
+          services: servicesArray,
+          totalAmount: cartData.totalAmount,
+          status: "pending" as const,
+          pickupDate: cartData.pickupDate,
+          deliveryDate: cartData.deliveryDate,
+          pickupTime: cartData.pickupTime,
+          deliveryTime: cartData.deliveryTime,
+          address: cartData.address,
+          contactDetails: {
+            phone: cartData.phone || currentUser.phone,
+            name: currentUser.full_name || currentUser.name || "User",
+            instructions: cartData.instructions,
+          },
+          paymentStatus: "pending" as const,
+        };
+
+        const localResult = await bookingService.createBooking(localBookingData);
+
+        if (localResult.success) {
+          // Show different messages based on error type
+          if (isNetworkError) {
+            addNotification(
+              createSuccessNotification(
+                "Order Saved Offline!",
+                "Your order has been saved locally and will sync when you're back online.",
+              ),
+            );
+          } else {
+            addNotification(
+              createSuccessNotification(
+                "Order Saved!",
+                "Your order has been saved locally. You can view it in your booking history.",
+              ),
+            );
+          }
+
+          // Clear cart
+          localStorage.removeItem("laundry_cart");
+
+          // Stay on home page
+          setCurrentView("home");
+        } else {
+          throw new Error(
+            mongoResult.error?.message || "Failed to create booking",
+          );
+        }
+      }
             break;
           default:
             locationMessage = "Enable location access";
