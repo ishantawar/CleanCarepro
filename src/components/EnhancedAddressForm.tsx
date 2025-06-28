@@ -235,7 +235,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     setAddress(newAddress);
     setSearchValue(place.formatted_address || "");
     setShowSuggestions(false);
-    onAddressChange(newAddress);
+    if (onAddressChange) {
+      onAddressChange(newAddress);
+    }
   };
 
   const detectCurrentLocation = async () => {
