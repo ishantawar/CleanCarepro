@@ -120,17 +120,7 @@ export const bookingHelpers = {
       }
 
       try {
-        // Check if response exists and has a body that can be read
-        if (!response) {
-          throw new Error("No response received from server");
-        }
-
-        // Check if response has already been consumed
-        if (response.bodyUsed) {
-          throw new Error("Response body already consumed");
-        }
-
-        data = await response.json();
+        data = await safeParseJSON(response);
       } catch (jsonError: any) {
         console.error("Failed to parse response:", jsonError);
         return {
