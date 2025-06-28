@@ -1,6 +1,11 @@
 // Google Sheets Integration Service
 // This service allows easy switching between different Google Sheets
 
+import {
+  GOOGLE_SHEETS_CONFIG,
+  validateGoogleSheetsConfig,
+} from "../config/googleSheets";
+
 interface OrderData {
   orderId: string;
   customerName: string;
@@ -17,33 +22,13 @@ interface OrderData {
 class GoogleSheetsService {
   private static instance: GoogleSheetsService;
 
-  // Configuration - easily changeable
+  // Configuration from config file
   private config = {
-    // Current Google Sheet URL - easily replaceable
-    sheetUrl:
-      "https://docs.google.com/spreadsheets/d/1CGrATwhNTjWbSVMfhvwBLLGtGycXBCjzEQQ_3hnGNs0/edit?usp=sharing",
-
-    // Google Apps Script Web App URL for writing data
-    // You need to create a Google Apps Script that accepts POST requests
-    webAppUrl: "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec",
-
-    // Sheet name where orders will be saved
-    sheetName: "Orders",
-
-    // Column mapping for the sheet
-    columns: {
-      orderId: "A",
-      timestamp: "B",
-      customerName: "C",
-      customerPhone: "D",
-      customerAddress: "E",
-      services: "F",
-      totalAmount: "G",
-      pickupDate: "H",
-      pickupTime: "I",
-      status: "J",
-      coordinates: "K",
-    },
+    sheetUrl: GOOGLE_SHEETS_CONFIG.SHEET_URL,
+    webAppUrl: GOOGLE_SHEETS_CONFIG.WEB_APP_URL,
+    sheetName: GOOGLE_SHEETS_CONFIG.SHEET_NAME,
+    enabled: GOOGLE_SHEETS_CONFIG.ENABLED,
+    headers: GOOGLE_SHEETS_CONFIG.HEADERS,
   };
 
   public static getInstance(): GoogleSheetsService {
@@ -203,12 +188,12 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(data.sheetName || 'Orders');
-    
+
     if (!sheet) {
       return ContentService.createTextOutput(JSON.stringify({error: 'Sheet not found'}))
         .setMimeType(ContentService.MimeType.JSON);
     }
-    
+
     // Add data to the sheet
     sheet.appendRow([
       data.data.orderId,
@@ -223,10 +208,10 @@ function doPost(e) {
       data.data.status,
       data.data.coordinates
     ]);
-    
+
     return ContentService.createTextOutput(JSON.stringify({success: true}))
       .setMimeType(ContentService.MimeType.JSON);
-      
+
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({error: error.toString()}))
       .setMimeType(ContentService.MimeType.JSON);
