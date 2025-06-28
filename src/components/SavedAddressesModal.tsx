@@ -99,6 +99,18 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
   };
 
   const handleAddAddress = (address: AddressData) => {
+    // Check for duplicate addresses by comparing full address
+    const existingAddresses = [...addresses];
+    const isDuplicate = existingAddresses.some(addr =>
+      addr.fullAddress === address.fullAddress && addr.type === address.type
+    );
+
+    if (isDuplicate) {
+      console.log("Address already exists, not adding duplicate");
+      setShowAddForm(false);
+      return;
+    }
+
     const newAddress: AddressData = {
       ...address,
       id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -106,13 +118,9 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
       updatedAt: new Date().toISOString(),
     };
 
-    const existingAddresses = [...addresses];
-
     // Replace existing address of same type (except "other")
     if (address.type !== "other") {
-      const existingIndex = existingAddresses.findIndex(
-        (addr) => addr.type === address.type,
-      );
+      const existingIndex = existingAddresses.findIndex(addr => addr.type === address.type);
       if (existingIndex >= 0) {
         existingAddresses[existingIndex] = newAddress;
         saveAddresses(existingAddresses);
@@ -123,6 +131,8 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
       saveAddresses([...existingAddresses, newAddress]);
     }
 
+    setShowAddForm(false);
+  };
     setShowAddForm(false);
   };
 
