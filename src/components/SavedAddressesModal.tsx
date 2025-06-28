@@ -238,10 +238,12 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
                               {address.label}
                             </h4>
                             <span
-                              className={`text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type)}`}
+                              className={`text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type || "other")}`}
                             >
-                              {address.type.charAt(0).toUpperCase() +
-                                address.type.slice(1)}
+                              {address.type
+                                ? address.type.charAt(0).toUpperCase() +
+                                  address.type.slice(1)
+                                : "Other"}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 leading-relaxed break-words">
