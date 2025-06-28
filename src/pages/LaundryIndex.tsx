@@ -486,9 +486,52 @@ const LaundryIndex = () => {
         // Stay on home page
         setCurrentView("home");
       } else {
-        throw new Error(
-          mongoResult.error?.message || "Failed to create booking in database",
+        // If MongoDB fails, still try to save locally
+        console.warn(
+          "❌ MongoDB booking failed, saving locally:",
+          mongoResult.error,
         );
+
+        const localBookingData = {
+          userId: currentUser._id || currentUser.id || currentUser.phone,
+          services: servicesArray,
+          totalAmount: cartData.totalAmount,
+          status: "pending" as const,
+          pickupDate: cartData.pickupDate,
+          deliveryDate: cartData.deliveryDate,
+          pickupTime: cartData.pickupTime,
+          deliveryTime: cartData.deliveryTime,
+          address: cartData.address,
+          contactDetails: {
+            phone: cartData.phone || currentUser.phone,
+            name: currentUser.full_name || currentUser.name || "User",
+            instructions: cartData.instructions,
+          },
+          paymentStatus: "pending" as const,
+        };
+
+        const localResult =
+          await bookingService.createBooking(localBookingData);
+
+        if (localResult.success) {
+          // Show success but mention it will sync later
+          addNotification(
+            createSuccessNotification(
+              "Order Saved Locally!",
+              "Your order has been saved and will sync when connection is restored.",
+            ),
+          );
+
+          // Clear cart
+          localStorage.removeItem("laundry_cart");
+
+          // Stay on home page
+          setCurrentView("home");
+        } else {
+          throw new Error(
+            mongoResult.error?.message || "Failed to create booking",
+          );
+        }
       }
     } catch (error) {
       console.error("Checkout failed:", error);
