@@ -542,57 +542,55 @@ const handleProceedToCheckout = async (cartData: any) => {
     }
 
     addNotification(createErrorNotification(errorTitle, errorMessage));
-    }
-  };
-
-  return (
-    <div className="min-h-screen">
-      {currentView === "home" && (
-        <ResponsiveLaundryHome
-          currentUser={currentUser}
-          userLocation={currentLocation}
-          onLoginSuccess={handleLoginSuccess}
-          onViewCart={handleViewCart}
-          onViewBookings={handleViewBookings}
-          onLogout={handleLogout}
-        />
-      )}
-
-      {/* Authentication View */}
-      {currentView === "auth" && (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md">
-            <PhoneOtpAuthModal
-              isOpen={true}
-              onClose={() => setCurrentView("home")}
-              onSuccess={(user) => {
-                handleLoginSuccess(user);
-                // Return to the view they were trying to access
-                setCurrentView(previousView);
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {currentView === "bookings" && (
-        <EnhancedBookingHistory
-          currentUser={currentUser}
-          onBack={() => setCurrentView("home")}
-          onLoginRequired={() => handleLoginRequired("bookings")}
-        />
-      )}
-
-      {currentView === "cart" && (
-        <LaundryCart
-          onBack={() => setCurrentView("home")}
-          onProceedToCheckout={handleProceedToCheckout}
-          onLoginRequired={() => handleLoginRequired("cart")}
-          currentUser={currentUser}
-        />
-      )}
-    </div>
-  );
+  }
 };
 
+return (
+  <div className="min-h-screen">
+    {currentView === "home" && (
+      <ResponsiveLaundryHome
+        currentUser={currentUser}
+        userLocation={currentLocation}
+        onLoginSuccess={handleLoginSuccess}
+        onViewCart={handleViewCart}
+        onViewBookings={handleViewBookings}
+        onLogout={handleLogout}
+      />
+    )}
+
+    {/* Authentication View */}
+    {currentView === "auth" && (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <PhoneOtpAuthModal
+            isOpen={true}
+            onClose={() => setCurrentView("home")}
+            onSuccess={(user) => {
+              handleLoginSuccess(user);
+              // Return to the view they were trying to access
+              setCurrentView(previousView);
+            }}
+          />
+        </div>
+      </div>
+    )}
+
+    {currentView === "bookings" && (
+      <EnhancedBookingHistory
+        currentUser={currentUser}
+        onBack={() => setCurrentView("home")}
+        onLoginRequired={() => handleLoginRequired("bookings")}
+      />
+    )}
+
+    {currentView === "cart" && (
+      <LaundryCart
+        onBack={() => setCurrentView("home")}
+        onProceedToCheckout={handleProceedToCheckout}
+        onLoginRequired={() => handleLoginRequired("cart")}
+        currentUser={currentUser}
+      />
+    )}
+  </div>
+);
 export default LaundryIndex;
