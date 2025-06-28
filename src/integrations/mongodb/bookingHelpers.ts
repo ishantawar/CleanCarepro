@@ -75,6 +75,18 @@ export const bookingHelpers = {
         });
       } catch (fetchError: any) {
         console.error("Network fetch failed:", fetchError);
+
+        // Check if it's a CORS or network issue in hosted environment
+        const isHostedEnv =
+          window.location.hostname.includes("fly.dev") ||
+          window.location.hostname.includes("builder.codes");
+
+        if (isHostedEnv) {
+          console.log(
+            "🌐 Hosted environment detected, treating as offline mode",
+          );
+        }
+
         return {
           data: null,
           error: {
