@@ -430,7 +430,7 @@ const LaundryIndex = () => {
           const sheetsService = GoogleSheetsService.getInstance();
 
           await sheetsService.saveOrderToSheet({
-            orderId: mongoResult.data._id,
+            orderId: mongoResult.data._id || `local_${Date.now()}`,
             customerName:
               currentUser.full_name || currentUser.name || "Customer",
             customerPhone: currentUser.phone || "N/A",
