@@ -65,6 +65,9 @@ export const bookingHelpers = {
       let data;
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
         response = await fetch(`${API_BASE_URL}/bookings`, {
           method: "POST",
           headers: getAuthHeaders(),
@@ -72,7 +75,10 @@ export const bookingHelpers = {
             ...bookingData,
             customer_id: customerId, // ✅ use resolved customer ID
           }),
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
       } catch (fetchError: any) {
         console.error("Network fetch failed:", fetchError);
 
