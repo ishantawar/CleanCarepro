@@ -665,37 +665,49 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           </div>
 
           {/* Location detection buttons */}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="default"
-              onClick={detectCurrentLocation}
-              disabled={isDetectingLocation}
-              className="flex-1 bg-green-600 hover:bg-green-700"
-            >
-              {isDetectingLocation ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Detecting...
-                </>
-              ) : (
-                <>
-                  <Navigation className="h-4 w-4 mr-2" />
-                  Detect Location
-                </>
-              )}
-            </Button>
-            {address.coordinates && (
+          <div className="space-y-2">
+            <div className="flex gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 onClick={detectCurrentLocation}
                 disabled={isDetectingLocation}
-                className="px-3"
-                title="Re-request location if denied initially"
+                className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                <Navigation className="h-4 w-4" />
+                {isDetectingLocation ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Detecting...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="h-4 w-4 mr-2" />
+                    {locationDenied ? "Try Location Again" : "Detect Location"}
+                  </>
+                )}
               </Button>
+              {(address.coordinates || locationDenied) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={detectCurrentLocation}
+                  disabled={isDetectingLocation}
+                  className="px-3"
+                  title="Re-request location permission"
+                >
+                  <Navigation className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
+            {locationDenied && (
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm text-orange-800">
+                  📍 Location access was denied. You can manually enter your
+                  address or click "Try Location Again" to re-enable location
+                  detection.
+                </p>
+              </div>
             )}
           </div>
         </div>
