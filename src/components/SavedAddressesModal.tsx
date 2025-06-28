@@ -1,328 +1,407 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   MapPin,
   Plus,
   Edit,
   Trash2,
   Home,
-  Briefcase,
-  Star,
+  Building2,
+  Navigation,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import EnhancedAddressForm from "./EnhancedAddressForm";
-import UserService from "@/services/userService";
 
-interface SavedAddress {
-  id: string;
-  label: string;
-  type: "home" | "work" | "other";
-  flatHouseNo: string;
+interface AddressData {
+  flatNo: string;
+  flatHouseNo?: string;
   street: string;
   landmark: string;
   village: string;
   city: string;
   pincode: string;
+  fullAddress: string;
   coordinates?: { lat: number; lng: number };
-  isDefault?: boolean;
+  label: string;
+  type: "home" | "work" | "other";
+  id?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface SavedAddressesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentUser: any;
+  onSelectAddress: (address: AddressData) => void;
+  currentUser?: any;
 }
 
 const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
   isOpen,
   onClose,
+  onSelectAddress,
   currentUser,
 }) => {
-  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(
+  const [addresses, setAddresses] = useState<AddressData[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<AddressData | null>(
     null,
   );
-  const { toast } = useToast();
-  const userService = UserService.getInstance();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (currentUser?.phone) {
+    if (isOpen) {
       loadSavedAddresses();
     }
-  }, [currentUser?.phone]);
+  }, [isOpen, currentUser]);
 
   const loadSavedAddresses = () => {
-    try {
-      const saved = localStorage.getItem(`savedAddresses_${currentUser.phone}`);
-      if (saved) {
-        setAddresses(JSON.parse(saved));
-      } else {
-        // Start with no saved addresses - they will be added when user places orders
-        setAddresses([]);
-      }
-    } catch (error) {
-      console.error("Error loading saved addresses:", error);
+    if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
+
+    const userId = currentUser._id || currentUser.id || currentUser.phone;
+    const savedAddresses = localStorage.getItem(`addresses_${userId}`);
+
+    if (savedAddresses) {
+      const parsed = JSON.parse(savedAddresses);
+      setAddresses(Array.isArray(parsed) ? parsed : []);
+    } else {
+      setAddresses([]);
     }
   };
 
-  const saveAddresses = (addressList: SavedAddress[]) => {
-    try {
-      localStorage.setItem(
-        `savedAddresses_${currentUser.phone}`,
-        JSON.stringify(addressList),
+  const saveAddresses = (newAddresses: AddressData[]) => {
+    if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
+
+    const userId = currentUser._id || currentUser.id || currentUser.phone;
+    localStorage.setItem(`addresses_${userId}`, JSON.stringify(newAddresses));
+    setAddresses(newAddresses);
+  };
+
+  const handleAddAddress = (address: AddressData) => {
+    const newAddress: AddressData = {
+      ...address,
+      id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const existingAddresses = [...addresses];
+
+    // Replace existing address of same type (except "other")
+    if (address.type !== "other") {
+      const existingIndex = existingAddresses.findIndex(
+        (addr) => addr.type === address.type,
       );
-    } catch (error) {
-      console.error("Error saving addresses:", error);
+      if (existingIndex >= 0) {
+        existingAddresses[existingIndex] = newAddress;
+        saveAddresses(existingAddresses);
+      } else {
+        saveAddresses([...existingAddresses, newAddress]);
+      }
+    } else {
+      saveAddresses([...existingAddresses, newAddress]);
     }
+
+    setShowAddForm(false);
   };
 
-  const handleAddAddress = (addressData: any) => {
-    const newAddress: SavedAddress = {
-      id: Date.now().toString(),
-      label: addressData.label || `Address ${addresses.length + 1}`,
-      type: addressData.type || "other",
-      flatHouseNo: addressData.flatHouseNo,
-      street: addressData.street,
-      landmark: addressData.landmark,
-      village: addressData.village,
-      city: addressData.city,
-      pincode: addressData.pincode,
-      coordinates: addressData.coordinates,
-    };
-
-    const updatedAddresses = [...addresses, newAddress];
-    setAddresses(updatedAddresses);
-    saveAddresses(updatedAddresses);
-    setShowAddressForm(false);
-
-    toast({
-      title: "Success",
-      description: "Address saved successfully",
-    });
-  };
-
-  const handleEditAddress = (address: SavedAddress) => {
-    setEditingAddress(address);
-    setShowAddressForm(true);
-  };
-
-  const handleUpdateAddress = (addressData: any) => {
-    if (!editingAddress) return;
-
-    const updatedAddress: SavedAddress = {
-      ...editingAddress,
-      label: addressData.label || editingAddress.label,
-      type: addressData.type || editingAddress.type,
-      flatHouseNo: addressData.flatHouseNo,
-      street: addressData.street,
-      landmark: addressData.landmark,
-      village: addressData.village,
-      city: addressData.city,
-      pincode: addressData.pincode,
-      coordinates: addressData.coordinates,
-    };
-
+  const handleEditAddress = (address: AddressData) => {
     const updatedAddresses = addresses.map((addr) =>
-      addr.id === editingAddress.id ? updatedAddress : addr,
+      addr.id === address.id
+        ? { ...address, updatedAt: new Date().toISOString() }
+        : addr,
     );
-
-    setAddresses(updatedAddresses);
     saveAddresses(updatedAddresses);
-    setShowAddressForm(false);
     setEditingAddress(null);
-
-    toast({
-      title: "Success",
-      description: "Address updated successfully",
-    });
   };
 
-  const handleDeleteAddress = (addressId: string) => {
-    const updatedAddresses = addresses.filter((addr) => addr.id !== addressId);
-    setAddresses(updatedAddresses);
+  const handleDeleteAddress = (id: string) => {
+    const updatedAddresses = addresses.filter((addr) => addr.id !== id);
     saveAddresses(updatedAddresses);
-
-    toast({
-      title: "Success",
-      description: "Address deleted successfully",
-    });
+    setDeletingId(null);
   };
 
-  const handleSetDefault = (addressId: string) => {
-    const updatedAddresses = addresses.map((addr) => ({
-      ...addr,
-      isDefault: addr.id === addressId,
-    }));
-
-    setAddresses(updatedAddresses);
-    saveAddresses(updatedAddresses);
-
-    toast({
-      title: "Success",
-      description: "Default address updated",
-    });
-  };
-
-  const getAddressTypeIcon = (type: string) => {
+  const getAddressIcon = (type: string) => {
     switch (type) {
       case "home":
-        return <Home className="h-4 w-4" />;
+        return <Home className="h-4 w-4 text-green-600" />;
       case "work":
-        return <Briefcase className="h-4 w-4" />;
+        return <Building2 className="h-4 w-4 text-blue-600" />;
       default:
-        return <MapPin className="h-4 w-4" />;
+        return <MapPin className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getFullAddress = (address: SavedAddress) => {
-    return [
-      address.flatHouseNo,
-      address.street,
-      address.landmark,
-      address.village,
-      address.city,
-      address.pincode,
-    ]
-      .filter(Boolean)
-      .join(", ");
+  const getAddressTypeColor = (type: string) => {
+    switch (type) {
+      case "home":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "work":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
   };
 
-  if (showAddressForm) {
-    return (
-      <Dialog open={isOpen} onOpenChange={() => setShowAddressForm(false)}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingAddress ? "Edit Address" : "Add New Address"}
-            </DialogTitle>
-          </DialogHeader>
-          <EnhancedAddressForm
-            onAddressUpdate={
-              editingAddress ? handleUpdateAddress : handleAddAddress
-            }
-            showLabel={true}
-            initialData={
-              editingAddress
-                ? {
-                    flatHouseNo: editingAddress.flatHouseNo,
-                    street: editingAddress.street,
-                    landmark: editingAddress.landmark,
-                    village: editingAddress.village,
-                    city: editingAddress.city,
-                    pincode: editingAddress.pincode,
-                    label: editingAddress.label,
-                    type: editingAddress.type,
-                  }
-                : undefined
-            }
-          />
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const getAvailableTypes = () => {
+    const usedTypes = addresses.map((addr) => addr.type);
+    const allTypes = [
+      { value: "home", label: "🏠 Home", disabled: usedTypes.includes("home") },
+      {
+        value: "work",
+        label: "🏢 Office",
+        disabled: usedTypes.includes("work"),
+      },
+      { value: "other", label: "📍 Other", disabled: false },
+    ];
+    return allTypes;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-auto p-4 sm:p-6">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <span className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Saved Addresses
-            </span>
-            <Button
-              onClick={() => setShowAddressForm(true)}
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 self-start sm:self-auto"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Address
-            </Button>
+          <DialogTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-blue-600" />
+            Saved Addresses
           </DialogTitle>
+          <DialogDescription>
+            Manage your saved addresses for quick booking
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {addresses.length === 0 ? (
+          {/* Add new address button */}
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              {addresses.length === 0
+                ? "No saved addresses yet"
+                : `${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}`}
+            </p>
+            <Button
+              onClick={() => setShowAddForm(true)}
+              className="bg-green-600 hover:bg-green-700"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Address
+            </Button>
+          </div>
+
+          {/* Address list */}
+          <div className="space-y-3">
+            {addresses.map((address) => (
+              <Card
+                key={address.id}
+                className="border border-gray-200 hover:border-gray-300 transition-colors"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      {getAddressIcon(address.type)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium text-gray-900 truncate">
+                            {address.label}
+                          </h4>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type)}`}
+                          >
+                            {address.type.charAt(0).toUpperCase() +
+                              address.type.slice(1)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                          {address.fullAddress}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                          {address.createdAt && (
+                            <span>
+                              Added:{" "}
+                              {new Date(address.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
+                          {address.coordinates && (
+                            <span className="flex items-center gap-1">
+                              <Navigation className="h-3 w-3" />
+                              Location saved
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingAddress(address)}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Address?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{address.label}"?
+                              This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteAddress(address.id!)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      <Button
+                        onClick={() => {
+                          onSelectAddress(address);
+                          onClose();
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                        size="sm"
+                      >
+                        Select
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {addresses.length === 0 && (
             <div className="text-center py-8">
               <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">No saved addresses yet</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Saved Addresses
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Add your frequently used addresses for quick booking
+              </p>
               <Button
-                onClick={() => setShowAddressForm(true)}
+                onClick={() => setShowAddForm(true)}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Address
               </Button>
             </div>
-          ) : (
-            addresses.map((address) => (
-              <Card
-                key={address.id}
-                className={address.isDefault ? "ring-2 ring-green-500" : ""}
-              >
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        {getAddressTypeIcon(address.type)}
-                        <span className="font-medium text-sm sm:text-base">
-                          {address.label}
-                        </span>
-                        {address.isDefault && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Star className="h-3 w-3 mr-1" />
-                            Default
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {getFullAddress(address)}
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2">
-                      {!address.isDefault && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSetDefault(address.id)}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <Star className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditAddress(address)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteAddress(address.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
           )}
         </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
+
+      {/* Add Address Modal */}
+      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Address</DialogTitle>
+            <DialogDescription>
+              Fill in the address details below
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Address Type Selection */}
+            <div>
+              <Label className="text-sm font-medium">Address Type</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {getAvailableTypes().map((type) => (
+                  <Button
+                    key={type.value}
+                    variant="outline"
+                    disabled={type.disabled}
+                    className={`p-3 h-auto ${type.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    onClick={() => {
+                      // This will be handled by the form
+                    }}
+                  >
+                    {type.label}
+                    {type.disabled && (
+                      <span className="text-xs block text-gray-500">
+                        Already added
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <EnhancedAddressForm
+              onAddressUpdate={handleAddAddress}
+              showLabel={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Address Modal */}
+      <Dialog
+        open={!!editingAddress}
+        onOpenChange={() => setEditingAddress(null)}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Address</DialogTitle>
+            <DialogDescription>
+              Update the address details below
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingAddress && (
+            <EnhancedAddressForm
+              initialAddress={editingAddress}
+              onAddressUpdate={handleEditAddress}
+              showLabel={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
