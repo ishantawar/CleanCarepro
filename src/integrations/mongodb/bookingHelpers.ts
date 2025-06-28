@@ -42,48 +42,65 @@ const getAuthHeaders = () => {
   };
 };
 
-// Helper function to safely parse JSON response using text-first approach
+// Cache to store parsed response data to avoid re-reading
+const responseCache = new WeakMap<Response, Promise<any>>();
+
+// Helper function to safely parse JSON response with caching
 const safeParseJSON = async (response: Response) => {
   if (!response) {
     throw new Error("No response received from server");
   }
 
-  try {
-    // Read as text first, then parse as JSON - this avoids body consumption issues
-    const responseText = await response.text();
+  // Check if we already have this response cached
+  if (responseCache.has(response)) {
+    return await responseCache.get(response);
+  }
 
-    // If empty response, return error object
-    if (!responseText.trim()) {
-      return { error: "Empty response from server" };
-    }
-
-    // Try to parse as JSON
+  // Create a promise for parsing this response
+  const parsePromise = (async () => {
     try {
-      return JSON.parse(responseText);
-    } catch (parseError) {
-      console.error("JSON parse failed for response:", responseText);
+      // Clone the response before reading to avoid consumption issues
+      const responseClone = response.clone();
+      const responseText = await responseClone.text();
 
-      // Check if it looks like HTML (likely an error page)
-      if (
-        responseText.includes("<html") ||
-        responseText.includes("<!DOCTYPE")
-      ) {
-        return {
-          error: "Server returned HTML instead of JSON (likely an error page)",
-        };
+      // If empty response, return error object
+      if (!responseText.trim()) {
+        return { error: "Empty response from server" };
       }
 
-      // Return the raw text as error for debugging
-      return {
-        error: `Invalid JSON response: ${responseText.substring(0, 200)}...`,
-      };
-    }
-  } catch (error: any) {
-    console.error("Failed to read response:", error);
-    throw new Error(`Failed to read response: ${error.message}`);
-  }
-};
+      // Try to parse as JSON
+      try {
+        return JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("JSON parse failed for response:", responseText);
 
+        // Check if it looks like HTML (likely an error page)
+        if (
+          responseText.includes("<html") ||
+          responseText.includes("<!DOCTYPE")
+        ) {
+          return {
+            error:
+              "Server returned HTML instead of JSON (likely an error page)",
+          };
+        }
+
+        // Return the raw text as error for debugging
+        return {
+          error: `Invalid JSON response: ${responseText.substring(0, 200)}...`,
+        };
+      }
+    } catch (error: any) {
+      console.error("Failed to read response:", error);
+      throw new Error(`Failed to read response: ${error.message}`);
+    }
+  })();
+
+  // Cache the promise
+  responseCache.set(response, parsePromise);
+
+  return await parsePromise;
+};
 export const bookingHelpers = {
   // ✅ Create new booking
   async createBooking(bookingData: Partial<Booking>) {
