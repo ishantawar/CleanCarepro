@@ -726,16 +726,21 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           {/* Row 1: House/Flat Number */}
           <div>
             <Label htmlFor="flatNo" className="text-sm font-medium">
-              🏠 Flat/House No. *
+              🏠 Flat/House No. <span className="text-red-500">*</span>
             </Label>
             <Input
               id="flatNo"
               placeholder="e.g., A-101, House No. 45"
               value={address.flatNo}
               onChange={(e) => handleFieldChange("flatNo", e.target.value)}
-              className="mt-1"
+              className={`mt-1 ${!address.flatNo ? "border-red-300 focus:border-red-500" : ""}`}
               required
             />
+            {!address.flatNo && (
+              <p className="text-xs text-red-500 mt-1">
+                Flat/House number is required
+              </p>
+            )}
           </div>
 
           {/* Row 2: Combined Area/Street + City + Pincode */}
