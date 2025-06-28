@@ -1,4 +1,27 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+// API URL configuration with fallback for hosted environment
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+
+  // If we have an environment URL, use it
+  if (envUrl && envUrl !== "") {
+    return envUrl;
+  }
+
+  // For hosted environment, detect if we're on fly.dev and disable backend calls
+  const isHostedEnv =
+    window.location.hostname.includes("fly.dev") ||
+    window.location.hostname.includes("builder.codes");
+
+  if (isHostedEnv) {
+    console.log("🌐 Hosted environment detected - MongoDB backend disabled");
+    return null; // This will cause graceful fallback to local storage
+  }
+
+  // Local development fallback
+  return "http://localhost:3001/api";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface Booking {
   _id?: string;
