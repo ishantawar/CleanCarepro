@@ -493,8 +493,8 @@ const LaundryIndex = () => {
           // Clear cart
           localStorage.removeItem("laundry_cart");
 
-          // Stay on home page
-          setCurrentView("home");
+          // Stay in cart view to show success message
+          // setCurrentView("home"); // Don't redirect, let user decide
         } else {
           throw new Error(
             mongoResult.error?.message || "Failed to create booking",
