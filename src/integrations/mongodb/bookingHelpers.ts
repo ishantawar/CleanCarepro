@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 interface Booking {
   _id?: string;
@@ -62,21 +61,49 @@ export const bookingHelpers = {
         console.log("🔄 User missing MongoDB ID, using phone:", user.phone);
       }
 
-      const response = await fetch(`${API_BASE_URL}/bookings`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          ...bookingData,
-          customer_id: customerId, // ✅ use resolved customer ID
-        }),
-      });
+      let response;
+      let data;
 
-      const data = await response.json();
+      try {
+        response = await fetch(`${API_BASE_URL}/bookings`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            ...bookingData,
+            customer_id: customerId, // ✅ use resolved customer ID
+          }),
+        });
+      } catch (fetchError: any) {
+        console.error("Network fetch failed:", fetchError);
+        return {
+          data: null,
+          error: {
+            message: "Backend unavailable. Order will be saved locally.",
+            code: "NETWORK_ERROR",
+          },
+        };
+      }
+
+      try {
+        data = await response.json();
+      } catch (jsonError: any) {
+        console.error("Failed to parse response:", jsonError);
+        return {
+          data: null,
+          error: {
+            message: "Invalid response from server. Please try again.",
+            code: "PARSE_ERROR",
+          },
+        };
+      }
 
       if (!response.ok) {
         return {
           data: null,
-          error: { message: data.error || "Failed to create booking" },
+          error: {
+            message: data.error || "Failed to create booking",
+            code: "SERVER_ERROR",
+          },
         };
       }
 
@@ -85,7 +112,10 @@ export const bookingHelpers = {
       console.error("Booking creation error:", error);
       return {
         data: null,
-        error: { message: "Network error. Please check your connection." },
+        error: {
+          message: "Unexpected error occurred. Please try again.",
+          code: "UNKNOWN_ERROR",
+        },
       };
     }
   },
