@@ -369,9 +369,28 @@ Total Amount: ₹${finalTotal}
 Confirm this booking?`;
 
     if (confirm(confirmationMessage)) {
-      // Save address for future use before processing order
-      saveAddressAfterBooking(addressData);
-      onProceedToCheckout(orderData);
+      try {
+        console.log("💰 User confirmed order, processing...");
+
+        // Save address for future use before processing order
+        saveAddressAfterBooking(addressData);
+
+        // Call the parent's checkout handler
+        console.log("📤 Calling onProceedToCheckout with order data");
+        onProceedToCheckout(orderData);
+
+        console.log("✅ Checkout initiated successfully");
+      } catch (checkoutError) {
+        console.error("💥 Checkout process failed:", checkoutError);
+        addNotification(
+          createErrorNotification(
+            "Checkout Failed",
+            "Failed to process your order. Please try again.",
+          ),
+        );
+      }
+    } else {
+      console.log("❌ User cancelled the order");
     }
   };
 
@@ -481,7 +500,7 @@ Confirm this booking?`;
                         : service!.category.includes("Women")
                           ? "👗"
                           : service!.category.includes("Woolen")
-                            ? "🧥"
+                            ? "��"
                             : service!.category.includes("Steam")
                               ? "🔥"
                               : service!.category.includes("Iron")
