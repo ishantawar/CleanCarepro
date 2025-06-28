@@ -212,6 +212,7 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
   };
 
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
+  const [showSavedAddresses, setShowSavedAddresses] = useState(false);
 
   const handleProceedToCheckout = () => {
     // Check authentication first before validation
