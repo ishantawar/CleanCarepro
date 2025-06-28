@@ -63,6 +63,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   const [searchValue, setSearchValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const autocompleteRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
