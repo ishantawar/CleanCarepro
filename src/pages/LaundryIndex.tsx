@@ -419,6 +419,35 @@ const LaundryIndex = () => {
       if (mongoResult.data) {
         console.log("✅ Booking saved to MongoDB:", mongoResult.data._id);
 
+        // Also save to Google Sheets
+        try {
+          const GoogleSheetsService = (
+            await import("../services/googleSheetsService")
+          ).default;
+          const sheetsService = GoogleSheetsService.getInstance();
+
+          await sheetsService.saveOrderToSheet({
+            orderId: mongoResult.data._id,
+            customerName:
+              currentUser.full_name || currentUser.name || "Customer",
+            customerPhone: currentUser.phone || "N/A",
+            customerAddress:
+              typeof cartData.address === "string"
+                ? cartData.address
+                : cartData.address?.fullAddress || "N/A",
+            services: servicesArray,
+            totalAmount: cartData.totalAmount,
+            pickupDate: cartData.pickupDate,
+            pickupTime: cartData.pickupTime,
+            status: "pending",
+            createdAt: new Date().toISOString(),
+          });
+
+          console.log("📊 Order data sent to Google Sheets");
+        } catch (sheetsError) {
+          console.error("Failed to save to Google Sheets:", sheetsError);
+        }
+
         // Also save using booking service for local storage backup
         const localBookingData = {
           userId: currentUser._id || currentUser.id || currentUser.phone,
