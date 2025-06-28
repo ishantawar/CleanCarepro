@@ -536,14 +536,20 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   // Alternative place search using Nominatim
   const searchAlternativePlaces = async (query: string) => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, India&limit=5&addressdetails=1`,
         {
           headers: {
             "User-Agent": "LaundaryFlash-App/1.0",
           },
+          signal: controller.signal,
         },
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
