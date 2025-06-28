@@ -71,6 +71,12 @@ class GoogleSheetsService {
    * Save order data to Google Sheets
    */
   public async saveOrderToSheet(orderData: OrderData): Promise<boolean> {
+    // Check if Google Sheets integration is enabled
+    if (!this.config.enabled) {
+      console.log("📊 Google Sheets integration is disabled");
+      return false;
+    }
+
     try {
       // Prepare data for Google Sheets
       const sheetData = {
