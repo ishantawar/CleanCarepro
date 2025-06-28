@@ -60,7 +60,35 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showBookingDebugPanel, setShowBookingDebugPanel] = useState(false);
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const dvhostingSmsService = DVHostingSmsService.getInstance();
+
+  // Function to request location permission again
+  const requestLocationPermission = async () => {
+    setIsRequestingLocation(true);
+    try {
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          });
+        },
+      );
+
+      // Location successful - reload the page to update location
+      window.location.reload();
+    } catch (error) {
+      console.error("Location request failed:", error);
+      // Show a more helpful message to the user
+      alert(
+        "Please enable location access in your browser settings, then refresh the page.",
+      );
+    } finally {
+      setIsRequestingLocation(false);
+    }
+  };
 
   // Add keyboard shortcut for booking debug panel
   useEffect(() => {
