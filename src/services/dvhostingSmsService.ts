@@ -60,7 +60,7 @@ export class DVHostingSmsService {
       }
 
       // For local development, try backend API
-      
+
         console.log(apiBaseUrl)
       this.log("DVHosting SMS: Local environment, trying backend API:", {
         apiBaseUrl,
@@ -688,13 +688,23 @@ export class DVHostingSmsService {
 
       this.log("📤 Saving user to backend:", userData);
 
-      const response = await fetch(`${apiBaseUrl}/auth/save-user`, {
+      // Check if we're in a hosted environment without backend
+      const isHostedEnv = window.location.hostname.includes("fly.dev") ||
+                         window.location.hostname.includes("builder.codes");
+
+      if (isHostedEnv && (!apiBaseUrl || apiBaseUrl === "http://localhost:3001")) {
+        this.log("🌐 No backend available in hosted environment, using localStorage only");
+        // Return empty response to trigger localStorage fallback
+        throw new Error("Backend not available in hosted environment");
+      }
+
+      const response = await fetch(`${apiBaseUrl}/auth/get-user-by-phone`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("cleancare_auth_token")}`,
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({ phone: cleanedPhone }),
+      });
       });
 
       if (response.ok) {
