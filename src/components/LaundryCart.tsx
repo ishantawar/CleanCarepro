@@ -33,6 +33,7 @@ import {
 import EnhancedAddressForm from "./EnhancedAddressForm";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
 import { FormValidation, validateCheckoutForm } from "./FormValidation";
+import SavedAddressesModal from "./SavedAddressesModal";
 
 interface LaundryCartProps {
   onBack: () => void;
