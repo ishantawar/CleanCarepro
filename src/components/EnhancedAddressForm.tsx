@@ -240,6 +240,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
 
   const detectCurrentLocation = async () => {
     setIsDetectingLocation(true);
+    setLocationDenied(false);
+
     try {
       let coordinates: Coordinates;
 
@@ -251,7 +253,17 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           maximumAge: 0, // Don't use cached location
         });
         console.log("📍 Location detected:", coordinates);
+        setLocationDenied(false); // Reset denied state on success
       } catch (locationError) {
+        console.log("Location detection failed:", locationError);
+        // Check if it's a permission denied error
+        if (
+          locationError.message?.includes("denied") ||
+          locationError.code === 1
+        ) {
+          setLocationDenied(true);
+          console.log("Location permission denied by user");
+        }
         // Fallback to default coordinates (28.5600, 76.9989)
         console.log("Using fallback coordinates");
         coordinates = { lat: 28.56, lng: 76.9989 };
