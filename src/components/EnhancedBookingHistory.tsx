@@ -96,13 +96,17 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         currentUser._id || currentUser.id,
       );
 
-      // Try MongoDB first
+      // Try MongoDB first (but it will gracefully fallback if no backend)
       let mongoBookings = [];
-      if (currentUser._id) {
-        const mongoResponse = await bookingHelpers.getUserBookings(
-          currentUser._id,
-        );
-        if (mongoResponse.data && mongoResponse.data.length > 0) {
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+
+      if (userId) {
+        const mongoResponse = await bookingHelpers.getUserBookings(userId);
+        if (
+          mongoResponse.data &&
+          Array.isArray(mongoResponse.data) &&
+          mongoResponse.data.length > 0
+        ) {
           mongoBookings = mongoResponse.data.map((booking: any) => ({
             id: booking._id,
             userId: booking.customer_id,
