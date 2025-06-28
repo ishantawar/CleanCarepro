@@ -243,15 +243,31 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     }
 
     // Validate form and show inline errors
-    const errors = validateCheckoutForm(
-      currentUser,
-      addressData,
-      phoneNumber,
-      selectedDate,
-      selectedTime,
-    );
+    console.log("🔍 Starting form validation...");
+
+    let errors;
+    try {
+      errors = validateCheckoutForm(
+        currentUser,
+        addressData,
+        phoneNumber,
+        selectedDate,
+        selectedTime,
+      );
+      console.log("📋 Validation results:", errors);
+    } catch (validationError) {
+      console.error("❌ Validation function failed:", validationError);
+      addNotification(
+        createErrorNotification(
+          "Validation Error",
+          "There was an error checking your form. Please try again.",
+        ),
+      );
+      return;
+    }
 
     if (errors.length > 0) {
+      console.log("❌ Validation failed with errors:", errors);
       setValidationErrors(errors);
 
       // Scroll to validation errors
@@ -262,6 +278,8 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 
       return;
     }
+
+    console.log("✅ Validation passed, proceeding to checkout...");
 
     // Clear validation errors
     setValidationErrors([]);
@@ -341,7 +359,7 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 Booking Confirmation:
 
 Services: ${services.length} items
-${services.map((s) => `• ${s.name} x${s.quantity} - ₹${s.price * s.quantity}`).join("\n")}
+${services.map((s) => `• ${s.name} x${s.quantity} - ���${s.price * s.quantity}`).join("\n")}
 
 Pickup: ${selectedDate.toLocaleDateString()} at ${selectedTime}
 Delivery: ${deliveryDate.toLocaleDateString()} at ${deliveryTimeString}
