@@ -324,7 +324,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         const parsedAddress = parseAddressString(addressString, coordinates);
         setAddress(parsedAddress);
         setSearchValue(addressString);
-        onAddressChange(parsedAddress);
+        if (onAddressChange) {
+          onAddressChange(parsedAddress);
+        }
       } else {
         // Use coordinates as address
         const coordsAddress = createCoordinatesAddress(coordinates);
