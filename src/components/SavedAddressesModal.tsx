@@ -412,7 +412,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </Dialog>
   );
 };
 
