@@ -651,26 +651,40 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
             )}
           </div>
 
-          {/* Auto-detect button */}
-          <Button
-            type="button"
-            variant="default"
-            onClick={detectCurrentLocation}
-            disabled={isDetectingLocation}
-            className="w-full bg-green-600 hover:bg-green-700"
-          >
-            {isDetectingLocation ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Detecting Location...
-              </>
-            ) : (
-              <>
-                <Navigation className="h-4 w-4 mr-2" />
-                Use My Current Location
-              </>
+          {/* Location detection buttons */}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="default"
+              onClick={detectCurrentLocation}
+              disabled={isDetectingLocation}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {isDetectingLocation ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Detecting...
+                </>
+              ) : (
+                <>
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Detect Location
+                </>
+              )}
+            </Button>
+            {address.coordinates && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={detectCurrentLocation}
+                disabled={isDetectingLocation}
+                className="px-3"
+                title="Re-request location if denied initially"
+              >
+                <Navigation className="h-4 w-4" />
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
 
         {(isLoadingGoogleMaps || isDetectingLocation) && (
