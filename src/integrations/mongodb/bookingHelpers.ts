@@ -137,6 +137,18 @@ export const bookingHelpers = {
         console.log("🔄 User missing MongoDB ID, using phone:", user.phone);
       }
 
+      // Check if backend is available
+      if (!API_BASE_URL) {
+        console.log("🌐 No backend URL configured - saving locally only");
+        return {
+          data: null,
+          error: {
+            message: "Backend unavailable. Order will be saved locally.",
+            code: "NETWORK_ERROR",
+          },
+        };
+      }
+
       let response;
       let data;
 
