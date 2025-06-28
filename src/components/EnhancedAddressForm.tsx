@@ -342,7 +342,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const coordsAddress = createCoordinatesAddress(coordinates);
       setAddress(coordsAddress);
       setSearchValue(coordsAddress.fullAddress);
-      onAddressChange(coordsAddress);
+      if (onAddressChange) {
+        onAddressChange(coordsAddress);
+      }
     }
   };
 
