@@ -482,6 +482,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
 
       setIsSearching(true);
       try {
+        let searchComplete = false;
+
         // Try Google Places API first
         if (window.google && window.google.maps && window.google.maps.places) {
           const service = new window.google.maps.places.AutocompleteService();
@@ -491,23 +493,35 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
               componentRestrictions: { country: "in" },
               types: ["address", "establishment", "geocode"],
             },
-            (predictions, status) => {
+            async (predictions, status) => {
+              if (searchComplete) return; // Prevent duplicate calls
+
               if (
                 status === window.google.maps.places.PlacesServiceStatus.OK &&
-                predictions
+                predictions &&
+                predictions.length > 0
               ) {
                 setSuggestions(predictions.slice(0, 5));
                 setShowSuggestions(true);
+                setIsSearching(false);
+                searchComplete = true;
               } else {
                 // Fallback to alternative search
-                searchAlternativePlaces(searchValue);
+                try {
+                  await searchAlternativePlaces(searchValue);
+                  searchComplete = true;
+                } catch (error) {
+                  console.error("Alternative search error:", error);
+                  setIsSearching(false);
+                  searchComplete = true;
+                }
               }
-              setIsSearching(false);
             },
           );
         } else {
           // Use alternative search method
           await searchAlternativePlaces(searchValue);
+          searchComplete = true;
         }
       } catch (error) {
         console.error("Search error:", error);
