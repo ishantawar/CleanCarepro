@@ -77,12 +77,12 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     }
   }, []);
 
-  // Auto-detect location on mount if no initial address provided
-  useEffect(() => {
-    if (!initialAddress?.fullAddress && !address.fullAddress) {
-      detectCurrentLocation();
-    }
-  }, []);
+  // Don't auto-detect location - only when user clicks the button
+  // useEffect(() => {
+  //   if (!initialAddress?.fullAddress && !address.fullAddress) {
+  //     detectCurrentLocation();
+  //   }
+  // }, []);
 
   // Close suggestions when clicking outside
   useEffect(() => {
