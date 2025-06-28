@@ -359,7 +359,7 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 Booking Confirmation:
 
 Services: ${services.length} items
-${services.map((s) => `• ${s.name} x${s.quantity} - ���${s.price * s.quantity}`).join("\n")}
+${services.map((s) => `• ${s.name} x${s.quantity} - ₹${s.price * s.quantity}`).join("\n")}
 
 Pickup: ${selectedDate.toLocaleDateString()} at ${selectedTime}
 Delivery: ${deliveryDate.toLocaleDateString()} at ${deliveryTimeString}
@@ -712,10 +712,28 @@ Confirm this booking?`;
           )}
 
           <Button
-            onClick={handleProceedToCheckout}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold"
+            onClick={(e) => {
+              console.log("🚀 Button clicked event triggered");
+              e.preventDefault();
+              e.stopPropagation();
+              try {
+                handleProceedToCheckout();
+              } catch (error) {
+                console.error("💥 Checkout handler failed:", error);
+                addNotification(
+                  createErrorNotification(
+                    "Checkout Error",
+                    "An unexpected error occurred. Please try again.",
+                  ),
+                );
+              }
+            }}
+            disabled={cartItems.length === 0}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Proceed to Checkout • ₹{getTotal()}
+            {cartItems.length === 0
+              ? "Add items to cart"
+              : `Proceed to Checkout • ₹${getTotal()}`}
           </Button>
         </div>
       </div>
