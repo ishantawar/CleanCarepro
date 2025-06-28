@@ -727,18 +727,6 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
                   </>
                 )}
               </Button>
-              {(address.coordinates || locationDenied) && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={detectCurrentLocation}
-                  disabled={isDetectingLocation}
-                  className="px-3"
-                  title="Re-request location permission"
-                >
-                  <Navigation className="h-4 w-4" />
-                </Button>
-              )}
             </div>
 
             {locationDenied && (
