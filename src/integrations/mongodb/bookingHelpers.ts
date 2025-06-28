@@ -244,7 +244,7 @@ export const bookingHelpers = {
         headers: getAuthHeaders(),
       });
 
-      const data = await response.json();
+      const data = await safeParseJSON(response);
 
       if (!response.ok) {
         return {
