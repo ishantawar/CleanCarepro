@@ -920,28 +920,28 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                     )}
 
                     {/* Comprehensive Actions */}
-                    <div className="space-y-3 pt-3">
+                    <div className="space-y-2 pt-2">
                       {/* Primary Actions Row */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         {(safeBooking.status === "pending" ||
                           safeBooking.status === "confirmed") && (
                           <>
                             <Button
                               variant="outline"
                               onClick={() => handleEditBooking(safeBooking)}
-                              className="flex-1 rounded-xl border-2 border-green-200 hover:bg-green-50 text-green-600 font-medium py-3"
+                              className="flex-1 rounded-lg border border-green-200 hover:bg-green-50 text-green-600 text-xs py-2"
                             >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Order
+                              <Edit className="mr-1 h-3 w-3" />
+                              Edit
                             </Button>
 
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className="flex-1 rounded-xl border-2 border-red-200 hover:bg-red-50 text-red-600 font-medium py-3"
+                                  className="flex-1 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs py-2"
                                 >
-                                  <XCircle className="mr-2 h-4 w-4" />
+                                  <XCircle className="mr-1 h-3 w-3" />
                                   Cancel
                                 </Button>
                               </AlertDialogTrigger>
