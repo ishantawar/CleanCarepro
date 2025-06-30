@@ -183,9 +183,22 @@ export const bookingHelpers = {
 
         if (customerResponse.ok) {
           const customerData = await safeParseJSON(customerResponse);
-          if (customerData.user && customerData.user._id) {
+          if (
+            customerData &&
+            customerData.success &&
+            customerData.user &&
+            customerData.user._id
+          ) {
             customerId = customerData.user._id;
             console.log("✅ Customer verified/created with ID:", customerId);
+
+            // Update localStorage with proper user data
+            const updatedUser = {
+              ...user,
+              _id: customerData.user._id,
+              id: customerData.user._id,
+            };
+            localStorage.setItem("current_user", JSON.stringify(updatedUser));
           }
         } else {
           console.log(
