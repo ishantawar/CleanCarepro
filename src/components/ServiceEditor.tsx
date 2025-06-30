@@ -86,22 +86,26 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
     setServices(parsedServices);
   }, [selectedServices]);
 
-  // Update parent when services change
+  // Update parent when services change (with debounce to prevent flickering)
   useEffect(() => {
-    const serviceStrings = services.map((service) => ({
-      name: service.name,
-      quantity: service.quantity,
-      price: service.price,
-    }));
-    onServicesChange(serviceStrings);
+    const timer = setTimeout(() => {
+      const serviceStrings = services.map((service) => ({
+        name: service.name,
+        quantity: service.quantity,
+        price: service.price,
+      }));
+      onServicesChange(serviceStrings);
 
-    const servicesTotal = services.reduce(
-      (total, service) => total + service.price * service.quantity,
-      0,
-    );
-    // Pass only services total to parent (delivery charge added separately)
-    onPriceChange(servicesTotal);
-  }, [services, onServicesChange, onPriceChange]);
+      const servicesTotal = services.reduce(
+        (total, service) => total + service.price * service.quantity,
+        0,
+      );
+      // Pass only services total to parent (delivery charge added separately)
+      onPriceChange(servicesTotal);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [services]);
 
   const updateServiceQuantity = (index: number, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -154,10 +158,10 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
           <div className="space-y-3">
             {services.map((service, index) => (
               <Card key={index} className="border-blue-100 bg-blue-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">
+                <CardContent className="p-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 break-words">
                         {service.name}
                       </h4>
                       <p className="text-sm text-gray-600">
@@ -165,7 +169,7 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
@@ -176,7 +180,7 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                           }
                           className="w-8 h-8 p-0"
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-3 w-3" />
                         </Button>
                         <span className="w-8 text-center font-medium">
                           {service.quantity}
@@ -190,11 +194,11 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                           }
                           className="w-8 h-8 p-0"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3 w-3" />
                         </Button>
                       </div>
 
-                      <div className="text-right">
+                      <div className="text-right min-w-fit">
                         <p className="font-semibold text-blue-600">
                           ₹{service.price * service.quantity}
                         </p>
@@ -205,9 +209,9 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => removeService(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 w-8 h-8 p-0"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
@@ -226,30 +230,34 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
         </h3>
 
         {/* Available Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-full">
           {availableServices.map((service) => {
             const isSelected = services.some((s) => s.name === service.name);
 
             return (
               <Card
                 key={service.name}
-                className={`cursor-pointer transition-all hover:shadow-md ${
+                className={`cursor-pointer transition-all hover:shadow-md overflow-hidden ${
                   isSelected
                     ? "border-green-500 bg-green-50"
                     : "hover:border-gray-300"
                 }`}
-                onClick={() => addAvailableService(service.name, service.price)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addAvailableService(service.name, service.price);
+                }}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <h4 className="font-medium text-sm text-gray-900 mb-1 break-words">
                         {service.name}
                       </h4>
-                      <p className="text-xs text-gray-500 mb-2">
+                      <p className="text-xs text-gray-500 mb-2 truncate">
                         {service.category}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-green-600">
                           ₹{service.price}
                         </span>
@@ -258,21 +266,26 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                         </span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center gap-2 ml-2">
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
                       {isSelected && (
                         <Badge
                           variant="secondary"
-                          className="text-xs bg-green-100 text-green-700"
+                          className="text-xs bg-green-100 text-green-700 px-1"
                         >
                           Added
                         </Badge>
                       )}
                       <Button
+                        type="button"
                         size="sm"
                         variant={isSelected ? "secondary" : "outline"}
-                        className="w-8 h-8 p-0"
+                        className="w-7 h-7 p-0 flex-shrink-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
