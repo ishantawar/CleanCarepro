@@ -113,6 +113,86 @@ try {
   console.error("❌ Failed to load WhatsApp Auth routes:", error.message);
 }
 
+// Addresses routes
+try {
+  const addressRoutes = require("./routes/addresses");
+  app.use("/api/addresses", addressRoutes);
+  console.log("🔗 Address routes registered at /api/addresses");
+} catch (error) {
+  console.error("❌ Failed to load Address routes:", error.message);
+}
+
+// Google Sheets integration endpoint
+app.post("/api/sheets/order", async (req, res) => {
+  try {
+    const orderData = req.body;
+
+    // Validate required fields
+    if (
+      !orderData.orderId ||
+      !orderData.customerName ||
+      !orderData.customerPhone
+    ) {
+      return res.status(400).json({ error: "Missing required order data" });
+    }
+
+    // Prepare data for Google Sheets
+    const sheetData = {
+      sheetName: "Orders",
+      data: {
+        orderId: orderData.orderId,
+        timestamp: new Date().toISOString(),
+        customerName: orderData.customerName,
+        customerPhone: orderData.customerPhone,
+        customerAddress: orderData.customerAddress || "",
+        services: Array.isArray(orderData.services)
+          ? orderData.services.join(", ")
+          : orderData.services || "",
+        totalAmount: orderData.totalAmount || 0,
+        pickupDate: orderData.pickupDate || "",
+        pickupTime: orderData.pickupTime || "",
+        status: orderData.status || "pending",
+        paymentStatus: orderData.paymentStatus || "pending",
+        coordinates: orderData.coordinates
+          ? `${orderData.coordinates.lat},${orderData.coordinates.lng}`
+          : "",
+        city: orderData.city || "",
+        pincode: orderData.pincode || "",
+      },
+    };
+
+    // Send to Google Apps Script (if URL is configured)
+    const webAppUrl =
+      process.env.GOOGLE_APPS_SCRIPT_URL ||
+      "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec";
+
+    if (process.env.GOOGLE_SHEETS_ENABLED !== "false") {
+      try {
+        const response = await fetch(webAppUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(sheetData),
+        });
+
+        console.log("📊 Order data sent to Google Sheets:", orderData.orderId);
+      } catch (sheetError) {
+        console.error("❌ Failed to send to Google Sheets:", sheetError);
+        // Don't fail the request if Google Sheets fails
+      }
+    }
+
+    res.json({
+      data: { message: "Order processed successfully" },
+      error: null,
+    });
+  } catch (error) {
+    console.error("Google Sheets endpoint error:", error);
+    res.status(500).json({ error: "Failed to process order data" });
+  }
+});
+
 // Push notification endpoints
 app.post("/api/push/subscribe", (req, res) => {
   // Store push subscription in database
