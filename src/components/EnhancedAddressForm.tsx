@@ -155,7 +155,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     const newAddress: AddressData = {
       flatNo: address.flatNo, // Keep user-entered flat number
       street: "",
-      landmark: address.landmark, // Keep user-entered landmark
+      landmark: "", // Never autofill landmark - keep it empty
       village: "",
       city: "",
       pincode: "",
