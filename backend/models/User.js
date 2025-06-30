@@ -117,9 +117,7 @@ userSchema.statics.phoneExists = async function (phone) {
   return !!user;
 };
 
-// Create indexes
-userSchema.index({ email: 1 });
-userSchema.index({ phone: 1 });
+// Create indexes (excluding email and phone as they already have unique: true which creates indexes)
 userSchema.index({ user_type: 1 });
 userSchema.index({ created_at: -1 });
 
