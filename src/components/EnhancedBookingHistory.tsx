@@ -206,8 +206,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   useEffect(() => {
-    // Clear any cached booking data to ensure fresh load
-    localStorage.removeItem("user_bookings");
+    // Load bookings when user changes (no need to clear local storage)
     loadBookings();
   }, [currentUser]);
 
