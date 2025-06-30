@@ -470,7 +470,9 @@ const LaundryIndex = () => {
           paymentStatus: "pending" as const,
         };
 
-        await bookingService.createBooking(localBookingData);
+        const localResult =
+          await bookingService.createBooking(localBookingData);
+        console.log("📝 Local booking result:", localResult);
 
         // Show success message
         const bookingId = mongoResult.data._id || `local_${Date.now()}`;
