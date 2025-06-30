@@ -644,9 +644,28 @@ export class BookingService {
       const allBookings = JSON.parse(
         localStorage.getItem("user_bookings") || "[]",
       );
-      return allBookings.filter(
+
+      console.log("📱 Loading bookings from localStorage:", {
+        requestedUserId: userId,
+        totalBookings: allBookings.length,
+        allUserIds: allBookings.map((b: any) => b.userId),
+        bookingDetails: allBookings.map((b: any) => ({
+          id: b.id,
+          userId: b.userId,
+          services: b.services,
+          createdAt: b.createdAt,
+        })),
+      });
+
+      const userBookings = allBookings.filter(
         (booking: BookingDetails) => booking.userId === userId,
       );
+
+      console.log(
+        `📋 Found ${userBookings.length} bookings for user ${userId}`,
+      );
+
+      return userBookings;
     } catch (error) {
       console.error("Failed to load bookings from localStorage:", error);
       return [];
