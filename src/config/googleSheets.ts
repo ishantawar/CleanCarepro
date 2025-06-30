@@ -35,8 +35,7 @@ export const GOOGLE_SHEETS_CONFIG = {
   ],
 
   // Enable/disable Google Sheets integration
-  // Temporarily disabled to prevent 503 errors from placeholder URL
-  ENABLED: false,
+  ENABLED: true,
 };
 
 // Helper function to validate configuration
