@@ -651,8 +651,7 @@ const LaundryIndex = () => {
               localStorage.removeItem("laundry_cart");
               localStorage.removeItem("cart_data");
 
-              // Clear cached booking data to ensure fresh load next time
-              localStorage.removeItem("user_bookings");
+              // Note: Do NOT clear user_bookings here as it contains the booking we just created!
 
               setTimeout(() => {
                 setCurrentView("home");
