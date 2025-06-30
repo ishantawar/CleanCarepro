@@ -394,11 +394,6 @@ const LaundryIndex = () => {
 
     try {
       // Use static imports to avoid module loading errors in hosted environment
-      const { BookingService } = await import("../services/bookingService");
-      const { bookingHelpers } = await import(
-        "../integrations/mongodb/bookingHelpers"
-      );
-
       const bookingService = BookingService.getInstance();
 
       // Prepare services array for MongoDB
