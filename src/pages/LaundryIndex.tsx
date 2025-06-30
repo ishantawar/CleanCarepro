@@ -324,8 +324,13 @@ const LaundryIndex = () => {
   const handleLoginSuccess = (user: any) => {
     setCurrentUser(user);
     setIsLoggedIn(true);
-    setCurrentView("home");
+
+    // Return to the previous view instead of always going to home
+    const targetView = previousView || "home";
+    setCurrentView(targetView);
+
     console.log("✅ User logged in successfully:", user.name || user.phone);
+    console.log("📍 Redirecting to:", targetView);
 
     // Add success notification
     addNotification(
