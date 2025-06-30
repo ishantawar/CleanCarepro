@@ -109,7 +109,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
     return () => clearTimeout(timer);
   }, [services]);
 
-
   const updateServiceQuantity = (index: number, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeService(index);
@@ -245,7 +244,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
         {/* Available Services Grid */}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-full">
-
           {availableServices.map((service) => {
             const isSelected = services.some((s) => s.name === service.name);
 
@@ -264,7 +262,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                 }}
               >
                 <CardContent className="p-3">
-
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0 overflow-hidden">
                       <h4 className="font-medium text-sm text-gray-900 mb-1 break-words">
@@ -303,7 +300,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
-
                     </div>
                   </div>
                 </CardContent>
@@ -311,49 +307,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
             );
           })}
         </div>
-
-        {/* Custom Service */}
-        <Card className="border-dashed border-gray-300">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Add Custom Service</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="service-name" className="text-sm">
-                  Service Name
-                </Label>
-                <Input
-                  id="service-name"
-                  placeholder="e.g., Special Cleaning"
-                  value={newServiceName}
-                  onChange={(e) => setNewServiceName(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="service-price" className="text-sm">
-                  Price (₹)
-                </Label>
-                <Input
-                  id="service-price"
-                  type="number"
-                  placeholder="35"
-                  value={newServicePrice}
-                  onChange={(e) => setNewServicePrice(e.target.value)}
-                />
-              </div>
-            </div>
-            <Button
-              type="button"
-              onClick={addCustomService}
-              disabled={!newServiceName.trim()}
-              className="w-full"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Custom Service
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Total */}

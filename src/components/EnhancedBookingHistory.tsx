@@ -838,20 +838,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 </AlertDialogContent>
                               </AlertDialog>
                             )}
-
-                            {canEditBooking(booking) && (
-                              <Button
-                                onClick={() => handleAddServices(booking)}
-                                variant="outline"
-                                className="flex items-center justify-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 py-2"
-                                size="sm"
-                              >
-                                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                                <span className="text-xs sm:text-sm">
-                                  Add Services
-                                </span>
-                              </Button>
-                            )}
                           </div>
 
                           {/* Contact Support */}
