@@ -391,7 +391,7 @@ const LaundryIndex = () => {
     console.log("Processing checkout for authenticated user:", cartData);
 
     try {
-      // Import both booking helpers and service
+      // Use static imports to avoid module loading errors in hosted environment
       const { BookingService } = await import("../services/bookingService");
       const { bookingHelpers } = await import(
         "../integrations/mongodb/bookingHelpers"
