@@ -23,35 +23,57 @@ try {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = productionConfig.PORT;
 
-// Middleware
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://localhost:8080",
-  "https://cleancarepro-git-aimainb2920c220d71-hills-projects-6611101c.vercel.app",
-  "https://cleancare-pro-frontend-production.up.railway.app",
-  "https://cleancarepro.vercel.app",
-  "https://cleancare-pro-api.onrender.com",
-  "https://cleancare-pro-frontend.onrender.com",
-];
-
-// Add environment-specific origins
-if (process.env.ALLOWED_ORIGINS) {
-  allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(","));
-}
-
+// Security middleware
 app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: false,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  helmet({
+    contentSecurityPolicy: false, // Disable for API
+    crossOriginEmbedderPolicy: false,
   }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Compression middleware
+app.use(compression());
+
+// Logging middleware
+if (productionConfig.isProduction()) {
+  app.use(morgan("combined"));
+} else {
+  app.use(morgan("dev"));
+}
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: productionConfig.RATE_LIMIT.WINDOW_MS,
+  max: productionConfig.RATE_LIMIT.MAX_REQUESTS,
+  message: { error: "Too many requests, please try again later" },
+});
+
+const authLimiter = rateLimit({
+  windowMs: productionConfig.RATE_LIMIT.AUTH_WINDOW_MS,
+  max: productionConfig.RATE_LIMIT.AUTH_MAX_REQUESTS,
+  message: {
+    error: "Too many authentication attempts, please try again later",
+  },
+});
+
+app.use(generalLimiter);
+app.use("/api/auth", authLimiter);
+
+// CORS configuration
+app.use(
+  cors({
+    origin: productionConfig.ALLOWED_ORIGINS,
+    credentials: false,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept", "user-id"],
+  }),
+);
+
+// Body parsing middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // MongoDB connection
 const connectDB = async () => {
