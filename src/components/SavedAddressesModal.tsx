@@ -99,17 +99,34 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
   };
 
   const handleAddAddress = (address: AddressData) => {
-    // Check for duplicate addresses by comparing full address
+    // Check for duplicate addresses by comparing full address and key components
     const existingAddresses = [...addresses];
-    const isDuplicate = existingAddresses.some(
-      (addr) =>
-        addr.fullAddress === address.fullAddress && addr.type === address.type,
-    );
+    const isDuplicate = existingAddresses.some(addr => {
+      // Check if same type (except other)
+      if (address.type !== "other" && addr.type === address.type) {
+        return true;
+      }
+
+      // Check if same full address
+      if (addr.fullAddress === address.fullAddress) {
+        return true;
+      }
+
+      // Check if same key components (flat + street + city + pincode)
+      const sameComponents = addr.flatNo === address.flatNo &&
+                           addr.street === address.street &&
+                           addr.city === address.city &&
+                           addr.pincode === address.pincode;
+
+      return sameComponents;
+    });
 
     if (isDuplicate) {
       console.log("Address already exists, not adding duplicate");
+      alert("This address already exists in your saved addresses.");
       setShowAddForm(false);
       return;
+    }
     }
 
     const newAddress: AddressData = {
