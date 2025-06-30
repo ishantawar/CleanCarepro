@@ -333,6 +333,7 @@ const LaundryIndex = () => {
     setCurrentView(targetView);
 
     console.log("✅ User logged in successfully:", user.name || user.phone);
+    console.log("📍 Previous view was:", previousView);
     console.log("📍 Redirecting to:", targetView);
 
     // Add success notification
