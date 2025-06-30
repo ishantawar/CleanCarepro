@@ -34,7 +34,6 @@ import {
   RefreshCw,
   Star,
   ArrowLeft,
-  Plus,
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
 import { adaptiveBookingHelpers } from "@/integrations/adaptive/bookingHelpers";
@@ -56,8 +55,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [addingServicesBooking, setAddingServicesBooking] = useState(null);
-  const [showAddServicesModal, setShowAddServicesModal] = useState(false);
 
   const loadBookings = async () => {
     if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) {
@@ -222,57 +219,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
 
   const handleCancelBooking = async (bookingId: string) => {
     await cancelBooking(bookingId);
-  };
-
-  const handleAddServices = (booking: any) => {
-    setAddingServicesBooking(booking);
-    setShowAddServicesModal(true);
-  };
-
-  const handleSaveAddedServices = async (updatedBooking: any) => {
-    try {
-      // Update the booking with new services
-      const { data, error } = await adaptiveBookingHelpers.updateBooking(
-        updatedBooking._id || updatedBooking.id,
-        updatedBooking,
-      );
-
-      if (error) {
-        addNotification(
-          createErrorNotification(
-            "Update Failed",
-            `Failed to add services: ${error.message}`,
-          ),
-        );
-        return;
-      }
-
-      // Update the bookings list
-      const updatedBookings = bookings.map((booking: any) =>
-        (booking._id || booking.id) ===
-        (updatedBooking._id || updatedBooking.id)
-          ? updatedBooking
-          : booking,
-      );
-
-      setBookings(updatedBookings);
-      setShowAddServicesModal(false);
-      setAddingServicesBooking(null);
-      addNotification(
-        createSuccessNotification(
-          "Services Added",
-          "Services have been added to your booking successfully!",
-        ),
-      );
-    } catch (error) {
-      console.error("Error adding services:", error);
-      addNotification(
-        createErrorNotification(
-          "Update Failed",
-          "Failed to add services. Please try again.",
-        ),
-      );
-    }
   };
 
   const canCancelBooking = (booking: any) => {
@@ -1026,20 +972,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
           }}
           booking={editingBooking}
           onSave={handleSaveEditedBooking}
-        />
-      )}
-
-      {/* Add Services Modal */}
-      {addingServicesBooking && (
-        <EditBookingModal
-          isOpen={showAddServicesModal}
-          onClose={() => {
-            setShowAddServicesModal(false);
-            setAddingServicesBooking(null);
-          }}
-          booking={addingServicesBooking}
-          onSave={handleSaveAddedServices}
-          mode="add-services"
         />
       )}
     </div>

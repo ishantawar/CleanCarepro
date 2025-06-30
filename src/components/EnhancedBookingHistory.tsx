@@ -41,7 +41,6 @@ import {
   RefreshCw,
   Star,
   ArrowLeft,
-  Plus,
   Package,
   CreditCard,
   User,
@@ -67,8 +66,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [addingServicesBooking, setAddingServicesBooking] = useState(null);
-  const [showAddServicesModal, setShowAddServicesModal] = useState(false);
+
   const [cancellingBooking, setCancellingBooking] = useState<string | null>(
     null,
   );
@@ -347,72 +345,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         createErrorNotification(
           "Update Failed",
           "Failed to update booking. Please try again.",
-        ),
-      );
-    }
-  };
-
-  const handleAddServices = (booking: any) => {
-    if (!canEditBooking(booking)) {
-      addNotification(
-        createWarningNotification(
-          "Cannot Add Services",
-          "Services cannot be added to this booking in its current status",
-        ),
-      );
-      return;
-    }
-    setAddingServicesBooking(booking);
-    setShowAddServicesModal(true);
-  };
-
-  const handleSaveAddedServices = async (updatedBooking: any) => {
-    try {
-      const bookingService = BookingService.getInstance();
-      const bookingId = updatedBooking.id || updatedBooking._id;
-
-      const result = await bookingService.updateBooking(
-        bookingId,
-        updatedBooking,
-      );
-
-      if (result.success) {
-        // Update local state
-        setBookings((prev) =>
-          prev.map((booking: any) =>
-            booking.id === bookingId || booking._id === bookingId
-              ? {
-                  ...booking,
-                  ...updatedBooking,
-                  updatedAt: new Date().toISOString(),
-                }
-              : booking,
-          ),
-        );
-
-        setShowAddServicesModal(false);
-        setAddingServicesBooking(null);
-
-        addNotification(
-          createSuccessNotification(
-            "Services Added",
-            "Services have been added to your booking successfully",
-          ),
-        );
-      } else {
-        addNotification(
-          createErrorNotification(
-            "Update Failed",
-            result.error || "Failed to add services",
-          ),
-        );
-      }
-    } catch (error) {
-      console.error("Error adding services:", error);
-      addNotification(
-        createErrorNotification(
-          "Update Failed",
-          "Failed to add services. Please try again.",
         ),
       );
     }
@@ -838,20 +770,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 </AlertDialogContent>
                               </AlertDialog>
                             )}
-
-                            {canEditBooking(booking) && (
-                              <Button
-                                onClick={() => handleAddServices(booking)}
-                                variant="outline"
-                                className="flex items-center justify-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 py-2"
-                                size="sm"
-                              >
-                                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                                <span className="text-xs sm:text-sm">
-                                  Add Services
-                                </span>
-                              </Button>
-                            )}
                           </div>
 
                           {/* Contact Support */}
@@ -901,20 +819,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           }}
           booking={editingBooking}
           onSave={handleSaveEditedBooking}
-        />
-      )}
-
-      {/* Add Services Modal */}
-      {addingServicesBooking && (
-        <EditBookingModal
-          isOpen={showAddServicesModal}
-          onClose={() => {
-            setShowAddServicesModal(false);
-            setAddingServicesBooking(null);
-          }}
-          booking={addingServicesBooking}
-          onSave={handleSaveAddedServices}
-          mode="add-services"
         />
       )}
 
