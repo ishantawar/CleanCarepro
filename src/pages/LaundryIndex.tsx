@@ -494,8 +494,10 @@ const LaundryIndex = () => {
         // Clear cart
         localStorage.removeItem("laundry_cart");
 
-        // Stay in cart view to show success message
-        // setCurrentView("home"); // Don't redirect, let user decide
+        // Redirect to home page after successful booking
+        setTimeout(() => {
+          setCurrentView("home");
+        }, 2000); // Wait 2 seconds to show success message
       } else {
         // If MongoDB fails, still try to save locally
         console.warn(
