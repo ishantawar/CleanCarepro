@@ -179,6 +179,7 @@ const PhoneOtpAuthModal: React.FC<PhoneOtpAuthModalProps> = ({
         }
 
         onSuccess(result.user);
+        onClose();
         resetForm();
       } else {
         setError(result.error || "Invalid OTP");

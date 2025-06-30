@@ -13,11 +13,6 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import {
-  laundryServices,
-  LaundryService,
-  getSortedServices,
-} from "@/data/laundryServices";
 
 interface ServiceItem {
   name: string;
@@ -39,17 +34,24 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
   mode,
 }) => {
   const [services, setServices] = useState<ServiceItem[]>([]);
+  const [newServiceName, setNewServiceName] = useState("");
+  const [newServicePrice, setNewServicePrice] = useState("");
 
-  // Get actual laundry services from the data
-  const availableServices = getSortedServices().map(
-    (service: LaundryService) => ({
-      name: service.name,
-      price: service.price,
-      category: service.category,
-      unit: service.unit,
-      description: service.description,
-    }),
-  );
+  // Laundry services that users can add
+  const availableServices = [
+    { name: "Shirt/T-Shirt", price: 25 },
+    { name: "Trouser/Pant", price: 30 },
+    { name: "Kurta", price: 35 },
+    { name: "Saree", price: 45 },
+    { name: "Dress", price: 40 },
+    { name: "Blazer/Suit", price: 80 },
+    { name: "Jeans", price: 35 },
+    { name: "Bedsheet", price: 50 },
+    { name: "Towel", price: 20 },
+    { name: "Laundry and Fold", price: 70 },
+    { name: "Dry Cleaning", price: 100 },
+    { name: "Iron Only", price: 15 },
+  ];
 
   // Parse selected services into ServiceItem format
   useEffect(() => {
@@ -95,12 +97,11 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
     }));
     onServicesChange(serviceStrings);
 
-    const servicesTotal = services.reduce(
+    const totalPrice = services.reduce(
       (total, service) => total + service.price * service.quantity,
       0,
     );
-    // Pass only services total to parent (delivery charge added separately)
-    onPriceChange(servicesTotal);
+    onPriceChange(totalPrice);
   }, [services, onServicesChange, onPriceChange]);
 
   const updateServiceQuantity = (index: number, newQuantity: number) => {
@@ -133,6 +134,16 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
       const newService = { name: serviceName, quantity: 1, price };
       setServices([...services, newService]);
     }
+  };
+
+  const addCustomService = () => {
+    if (!newServiceName.trim()) return;
+
+    const price = parseFloat(newServicePrice) || 35;
+    const newService = { name: newServiceName.trim(), quantity: 1, price };
+    setServices([...services, newService]);
+    setNewServiceName("");
+    setNewServicePrice("");
   };
 
   return (
@@ -226,7 +237,7 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
         </h3>
 
         {/* Available Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
           {availableServices.map((service) => {
             const isSelected = services.some((s) => s.name === service.name);
 
@@ -235,45 +246,24 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                 key={service.name}
                 className={`cursor-pointer transition-all hover:shadow-md ${
                   isSelected
-                    ? "border-green-500 bg-green-50"
+                    ? "border-blue-500 bg-blue-50"
                     : "hover:border-gray-300"
                 }`}
                 onClick={() => addAvailableService(service.name, service.price)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">
-                        {service.name}
-                      </h4>
-                      <p className="text-xs text-gray-500 mb-2">
-                        {service.category}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-green-600">
-                          ₹{service.price}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {service.unit}
-                        </span>
-                      </div>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{service.name}</h4>
+                      <p className="text-xs text-gray-600">₹{service.price}</p>
                     </div>
-                    <div className="flex flex-col items-center gap-2 ml-2">
+                    <div className="flex items-center gap-2">
                       {isSelected && (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs bg-green-100 text-green-700"
-                        >
+                        <Badge variant="secondary" className="text-xs">
                           Added
                         </Badge>
                       )}
-                      <Button
-                        size="sm"
-                        variant={isSelected ? "secondary" : "outline"}
-                        className="w-8 h-8 p-0"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                      <Plus className="h-4 w-4 text-gray-400" />
                     </div>
                   </div>
                 </CardContent>
@@ -281,44 +271,68 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
             );
           })}
         </div>
+
+        {/* Custom Service */}
+        <Card className="border-dashed border-gray-300">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Add Custom Service</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="service-name" className="text-sm">
+                  Service Name
+                </Label>
+                <Input
+                  id="service-name"
+                  placeholder="e.g., Special Cleaning"
+                  value={newServiceName}
+                  onChange={(e) => setNewServiceName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="service-price" className="text-sm">
+                  Price (₹)
+                </Label>
+                <Input
+                  id="service-price"
+                  type="number"
+                  placeholder="35"
+                  value={newServicePrice}
+                  onChange={(e) => setNewServicePrice(e.target.value)}
+                />
+              </div>
+            </div>
+            <Button
+              type="button"
+              onClick={addCustomService}
+              disabled={!newServiceName.trim()}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Custom Service
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Total */}
       {services.length > 0 && (
         <Card className="bg-green-50 border-green-200">
           <CardContent className="p-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Services Total</span>
-                <span className="text-sm">
-                  ₹
-                  {services.reduce(
-                    (total, service) =>
-                      total + service.price * service.quantity,
-                    0,
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Delivery Charge</span>
-                <span className="text-sm">₹50</span>
-              </div>
-              <hr className="border-gray-300" />
-              <div className="flex justify-between items-center">
-                <span className="font-semibold">Total Amount</span>
-                <span className="text-xl font-bold text-green-600">
-                  ₹
-                  {services.reduce(
-                    (total, service) =>
-                      total + service.price * service.quantity,
-                    0,
-                  ) + 50}
-                </span>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Total Amount</span>
+              <span className="text-xl font-bold text-green-600">
+                ₹
+                {services.reduce(
+                  (total, service) => total + service.price * service.quantity,
+                  0,
+                )}
+              </span>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-sm text-gray-600 mt-1">
               {services.reduce((total, service) => total + service.quantity, 0)}{" "}
-              items • Delivery included
+              items total
             </p>
           </CardContent>
         </Card>

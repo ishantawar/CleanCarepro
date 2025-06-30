@@ -159,34 +159,12 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
     };
   }, []);
 
-  // Load cart from localStorage with refresh mechanism
+  // Load cart from localStorage
   useEffect(() => {
-    const loadCart = () => {
-      const savedCart = localStorage.getItem("laundry_cart");
-      if (savedCart) {
-        try {
-          const parsedCart = JSON.parse(savedCart);
-          setCart(parsedCart);
-        } catch (error) {
-          console.error("Error parsing cart from localStorage:", error);
-          setCart({});
-        }
-      } else {
-        setCart({});
-      }
-    };
-
-    loadCart();
-
-    // Listen for storage changes to refresh cart when it's cleared
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "laundry_cart") {
-        loadCart();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    const savedCart = localStorage.getItem("laundry_cart");
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
   }, []);
 
   // Save cart to localStorage
