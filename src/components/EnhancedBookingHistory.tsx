@@ -823,20 +823,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         />
       )}
 
-      {/* Add Services Modal */}
-      {addingServicesBooking && (
-        <EditBookingModal
-          isOpen={showAddServicesModal}
-          onClose={() => {
-            setShowAddServicesModal(false);
-            setAddingServicesBooking(null);
-          }}
-          booking={addingServicesBooking}
-          onSave={handleSaveAddedServices}
-          mode="add-services"
-        />
-      )}
-
       {/* Contact Support Dialog */}
       <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
         <DialogContent className="sm:max-w-md">
