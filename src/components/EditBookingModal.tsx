@@ -89,9 +89,9 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
     setIsLoading(true);
 
     try {
-      // Calculate delivery charge if needed
-      const deliveryCharge = 0; // No delivery charge for updates
-      const finalAmount = totalPrice;
+      // Calculate delivery charge
+      const deliveryCharge = 50;
+      const finalAmount = totalPrice + deliveryCharge;
 
       const updatedBooking = {
         ...booking,
