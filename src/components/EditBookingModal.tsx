@@ -218,7 +218,10 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="space-y-4 mt-4">
+          <TabsContent
+            value="details"
+            className="space-y-4 mt-4 max-w-full overflow-hidden"
+          >
             {/* Current Services Summary */}
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-sm font-medium text-blue-900 mb-2">
@@ -325,7 +328,10 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="services" className="mt-4">
+          <TabsContent
+            value="services"
+            className="mt-4 max-w-full overflow-hidden"
+          >
             <ServiceEditor
               selectedServices={selectedServices}
               onServicesChange={setSelectedServices}
@@ -335,14 +341,19 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="rounded-xl">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="rounded-xl w-full sm:w-auto"
+            disabled={isLoading}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700 rounded-xl"
+            className="bg-blue-600 hover:bg-blue-700 rounded-xl w-full sm:w-auto"
           >
             {isLoading ? "Saving..." : "Save Changes"}
           </Button>
