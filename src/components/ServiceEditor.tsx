@@ -140,160 +140,201 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Current Services - Compact View */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Selected Services ({services.length})
-          </h3>
-          {services.length > 0 && (
-            <span className="text-sm font-bold text-green-600">
-              ₹
-              {services.reduce(
-                (total, service) => total + service.price * service.quantity,
-                0,
-              )}
-            </span>
-          )}
-        </div>
+    <div className="space-y-6">
+      {/* Current Services */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Package className="h-5 w-5" />
+          Current Services
+        </h3>
 
         {services.length === 0 ? (
-          <p className="text-xs text-gray-500 text-center py-2">
-            No services selected
-          </p>
+          <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+            <Package className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+            <p>No services selected</p>
+            <p className="text-sm">Add services from the options below</p>
+          </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {services.map((service, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between bg-white p-2 rounded border"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {service.name}
-                  </p>
-                  <p className="text-xs text-gray-600">₹{service.price} each</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        updateServiceQuantity(index, service.quantity - 1)
-                      }
-                      className="w-6 h-6 p-0"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="w-6 text-center text-sm font-medium">
-                      {service.quantity}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        updateServiceQuantity(index, service.quantity + 1)
-                      }
-                      className="w-6 h-6 p-0"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
+              <Card key={index} className="border-blue-100 bg-blue-50">
+                <CardContent className="p-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 break-words">
+                        {service.name}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        ₹{service.price} per item
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            updateServiceQuantity(index, service.quantity - 1)
+                          }
+                          className="w-8 h-8 p-0"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-medium">
+                          {service.quantity}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            updateServiceQuantity(index, service.quantity + 1)
+                          }
+                          className="w-8 h-8 p-0"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+
+                      <div className="text-right min-w-fit">
+                        <p className="font-semibold text-blue-600">
+                          ₹{service.price * service.quantity}
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeService(index)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 w-8 h-8 p-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <span className="text-sm font-semibold text-blue-600 min-w-fit">
-                    ₹{service.price * service.quantity}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeService(index)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 w-6 h-6 p-0"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </div>
 
-      {/* Add Services - Compact Grid */}
+      {/* Add Services Section */}
       <div>
-        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-          <Plus className="h-4 w-4" />
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Plus className="h-5 w-5" />
           Add Services
         </h3>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+        {/* Available Services Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-full">
           {availableServices.map((service) => {
             const isSelected = services.some((s) => s.name === service.name);
+
             return (
-              <div
+              <Card
                 key={service.name}
-                className={`p-2 border rounded cursor-pointer transition-all ${
+                className={`cursor-pointer transition-all hover:shadow-md overflow-hidden ${
                   isSelected
                     ? "border-green-500 bg-green-50"
-                    : "border-gray-200 hover:border-gray-300"
+                    : "hover:border-gray-300"
                 }`}
-                onClick={() => addAvailableService(service.name, service.price)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addAvailableService(service.name, service.price);
+                }}
               >
-                <p className="text-xs font-medium text-gray-900 mb-1 line-clamp-2">
-                  {service.name}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-green-600">
-                    ₹{service.price}
-                  </span>
-                  {isSelected && (
-                    <Badge
-                      variant="secondary"
-                      className="text-xs bg-green-100 text-green-700 px-1 py-0"
-                    >
-                      ✓
-                    </Badge>
-                  )}
-                </div>
-              </div>
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <h4 className="font-medium text-sm text-gray-900 mb-1 break-words">
+                        {service.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-2 truncate">
+                        {service.category}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-green-600">
+                          ₹{service.price}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {service.unit}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                      {isSelected && (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-green-100 text-green-700 px-1"
+                        >
+                          Added
+                        </Badge>
+                      )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isSelected ? "secondary" : "outline"}
+                        className="w-7 h-7 p-0 flex-shrink-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
       </div>
 
-      {/* Total Summary - Compact */}
+      {/* Total */}
       {services.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <div className="flex justify-between items-center text-sm">
-            <span>Services Total:</span>
-            <span className="font-semibold">
-              ₹
-              {services.reduce(
-                (total, service) => total + service.price * service.quantity,
-                0,
-              )}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span>Delivery:</span>
-            <span>₹50</span>
-          </div>
-          <hr className="my-2 border-green-300" />
-          <div className="flex justify-between items-center">
-            <span className="font-semibold">Total:</span>
-            <span className="text-lg font-bold text-green-600">
-              ₹
-              {services.reduce(
-                (total, service) => total + service.price * service.quantity,
-                0,
-              ) + 50}
-            </span>
-          </div>
-        </div>
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Services Total</span>
+                <span className="text-sm">
+                  ₹
+                  {services.reduce(
+                    (total, service) =>
+                      total + service.price * service.quantity,
+                    0,
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Delivery Charge</span>
+                <span className="text-sm">₹50</span>
+              </div>
+              <hr className="border-gray-300" />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total Amount</span>
+                <span className="text-xl font-bold text-green-600">
+                  ₹
+                  {services.reduce(
+                    (total, service) =>
+                      total + service.price * service.quantity,
+                    0,
+                  ) + 50}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {services.reduce((total, service) => total + service.quantity, 0)}{" "}
+              items • Delivery included
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
