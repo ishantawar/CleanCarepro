@@ -691,9 +691,12 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                 booking,
               });
 
+              // Only show actionable buttons if booking has a real ID
+              const hasRealId = !!bookingId;
+
               return (
                 <Card
-                  key={bookingId}
+                  key={displayId}
                   className="overflow-hidden border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300"
                 >
                   <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
