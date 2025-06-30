@@ -56,8 +56,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [addingServicesBooking, setAddingServicesBooking] = useState(null);
-  const [showAddServicesModal, setShowAddServicesModal] = useState(false);
 
   const loadBookings = async () => {
     if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) {
@@ -222,11 +220,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
 
   const handleCancelBooking = async (bookingId: string) => {
     await cancelBooking(bookingId);
-  };
-
-  const handleAddServices = (booking: any) => {
-    setAddingServicesBooking(booking);
-    setShowAddServicesModal(true);
   };
 
   const handleSaveAddedServices = async (updatedBooking: any) => {
@@ -1026,20 +1019,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
           }}
           booking={editingBooking}
           onSave={handleSaveEditedBooking}
-        />
-      )}
-
-      {/* Add Services Modal */}
-      {addingServicesBooking && (
-        <EditBookingModal
-          isOpen={showAddServicesModal}
-          onClose={() => {
-            setShowAddServicesModal(false);
-            setAddingServicesBooking(null);
-          }}
-          booking={addingServicesBooking}
-          onSave={handleSaveAddedServices}
-          mode="add-services"
         />
       )}
     </div>
