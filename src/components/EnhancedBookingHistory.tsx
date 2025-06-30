@@ -67,8 +67,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [addingServicesBooking, setAddingServicesBooking] = useState(null);
-  const [showAddServicesModal, setShowAddServicesModal] = useState(false);
+
   const [cancellingBooking, setCancellingBooking] = useState<string | null>(
     null,
   );
@@ -347,72 +346,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         createErrorNotification(
           "Update Failed",
           "Failed to update booking. Please try again.",
-        ),
-      );
-    }
-  };
-
-  const handleAddServices = (booking: any) => {
-    if (!canEditBooking(booking)) {
-      addNotification(
-        createWarningNotification(
-          "Cannot Add Services",
-          "Services cannot be added to this booking in its current status",
-        ),
-      );
-      return;
-    }
-    setAddingServicesBooking(booking);
-    setShowAddServicesModal(true);
-  };
-
-  const handleSaveAddedServices = async (updatedBooking: any) => {
-    try {
-      const bookingService = BookingService.getInstance();
-      const bookingId = updatedBooking.id || updatedBooking._id;
-
-      const result = await bookingService.updateBooking(
-        bookingId,
-        updatedBooking,
-      );
-
-      if (result.success) {
-        // Update local state
-        setBookings((prev) =>
-          prev.map((booking: any) =>
-            booking.id === bookingId || booking._id === bookingId
-              ? {
-                  ...booking,
-                  ...updatedBooking,
-                  updatedAt: new Date().toISOString(),
-                }
-              : booking,
-          ),
-        );
-
-        setShowAddServicesModal(false);
-        setAddingServicesBooking(null);
-
-        addNotification(
-          createSuccessNotification(
-            "Services Added",
-            "Services have been added to your booking successfully",
-          ),
-        );
-      } else {
-        addNotification(
-          createErrorNotification(
-            "Update Failed",
-            result.error || "Failed to add services",
-          ),
-        );
-      }
-    } catch (error) {
-      console.error("Error adding services:", error);
-      addNotification(
-        createErrorNotification(
-          "Update Failed",
-          "Failed to add services. Please try again.",
         ),
       );
     }
