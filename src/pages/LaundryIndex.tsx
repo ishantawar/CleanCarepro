@@ -388,6 +388,7 @@ const LaundryIndex = () => {
     // Check if user is authenticated first
     if (!currentUser) {
       console.log("User not authenticated, switching to auth view");
+      console.log("🔄 Setting previousView to 'cart'");
       setPreviousView("cart");
       setCurrentView("auth");
       return;
