@@ -981,9 +981,23 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                       Keep Booking
                                     </AlertDialogCancel>
                                     <AlertDialogAction
-                                      onClick={() =>
-                                        handleCancelBooking(bookingId)
-                                      }
+                                      onClick={() => {
+                                        console.log(
+                                          "🔥 Cancel button clicked for booking:",
+                                          {
+                                            bookingId,
+                                            hasBookingId: !!bookingId,
+                                            booking,
+                                          },
+                                        );
+                                        if (bookingId) {
+                                          handleCancelBooking(bookingId);
+                                        } else {
+                                          console.error(
+                                            "❌ No valid booking ID for cancellation",
+                                          );
+                                        }
+                                      }}
                                       className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
                                     >
                                       Yes, Cancel Booking
