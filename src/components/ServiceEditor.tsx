@@ -39,24 +39,17 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
   mode,
 }) => {
   const [services, setServices] = useState<ServiceItem[]>([]);
-  const [newServiceName, setNewServiceName] = useState("");
-  const [newServicePrice, setNewServicePrice] = useState("");
 
-  // Laundry services that users can add
-  const availableServices = [
-    { name: "Shirt/T-Shirt", price: 25 },
-    { name: "Trouser/Pant", price: 30 },
-    { name: "Kurta", price: 35 },
-    { name: "Saree", price: 45 },
-    { name: "Dress", price: 40 },
-    { name: "Blazer/Suit", price: 80 },
-    { name: "Jeans", price: 35 },
-    { name: "Bedsheet", price: 50 },
-    { name: "Towel", price: 20 },
-    { name: "Laundry and Fold", price: 70 },
-    { name: "Dry Cleaning", price: 100 },
-    { name: "Iron Only", price: 15 },
-  ];
+  // Get actual laundry services from the data
+  const availableServices = getSortedServices().map(
+    (service: LaundryService) => ({
+      name: service.name,
+      price: service.price,
+      category: service.category,
+      unit: service.unit,
+      description: service.description,
+    }),
+  );
 
   // Parse selected services into ServiceItem format
   useEffect(() => {
