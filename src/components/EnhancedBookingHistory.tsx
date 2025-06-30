@@ -635,25 +635,25 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-6 sm:px-6">
+      <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {onBack && (
                 <Button
                   onClick={onBack}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-gray-600 hover:text-gray-900 p-1 sm:p-2"
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
                   Booking History
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">
                   {bookings.length}{" "}
                   {bookings.length === 1 ? "booking" : "bookings"} found
                 </p>
@@ -704,7 +704,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6">
+      <div className="max-w-4xl mx-auto px-3 py-3 sm:px-6 sm:py-8">
         {bookings.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
@@ -724,7 +724,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-6">
             {bookings.map((booking: any, index) => {
               // Use actual booking ID, not fallback index-based ID for actions
               const bookingId = booking.id || booking._id;
@@ -750,13 +750,13 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                   key={displayId}
                   className="overflow-hidden border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300"
                 >
-                  <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200 p-3 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                       <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-gray-900 mb-2">
+                        <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
                           {booking.service || "Home Service"}
                         </CardTitle>
-                        <p className="text-sm text-blue-600 font-medium">
+                        <p className="text-xs sm:text-sm text-blue-600 font-medium">
                           by {booking.provider_name || "HomeServices Pro"}
                         </p>
                       </div>
@@ -771,7 +771,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                     </div>
                   </CardHeader>
 
-                  <CardContent className="p-6 space-y-6">
+                  <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-6">
                     {/* Services */}
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
