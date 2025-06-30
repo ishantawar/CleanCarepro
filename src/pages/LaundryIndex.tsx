@@ -10,6 +10,8 @@ import {
   createSuccessNotification,
   createErrorNotification,
 } from "@/utils/notificationUtils";
+import { BookingService } from "../services/bookingService";
+import { bookingHelpers } from "../integrations/mongodb/bookingHelpers";
 
 // Helper function for coordinate-based location detection (fallback)
 const getCoordinateBasedLocation = (
