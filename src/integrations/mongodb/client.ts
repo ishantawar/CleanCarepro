@@ -1,11 +1,18 @@
-// MongoDB client configuration and helper exports
+// Production MongoDB client - production-ready implementation
 // This file exports all the helpers that work with the MongoDB backend API
 
-export { authHelpers } from "./authHelpers";
-export { bookingHelpers } from "./bookingHelpers";
-export { riderHelpers } from "./riderHelpers";
+// Import from production implementation
+export {
+  authHelpers,
+  bookingHelpers,
+  addressHelpers,
+  getCurrentUser,
+  isLoggedIn,
+  clearAuthData,
+  sendNotification,
+} from "../production/client";
 
-// Re-export types
+// Re-export types for backward compatibility
 export type * from "./types";
 
 // Configuration
@@ -40,24 +47,8 @@ export const checkBackendHealth = async () => {
 
 // Helper to get auth token
 export const getAuthToken = () => {
-  return localStorage.getItem("auth_token");
+  return localStorage.getItem("cleancare_token");
 };
 
-// Helper to get current user
-export const getCurrentUser = () => {
-  const userStr = localStorage.getItem("current_user");
-  return userStr ? JSON.parse(userStr) : null;
-};
-
-// Helper to check if user is logged in
-export const isLoggedIn = () => {
-  const token = localStorage.getItem("auth_token");
-  const user = localStorage.getItem("current_user");
-  return !!(token && user);
-};
-
-// Helper to clear auth data
-export const clearAuthData = () => {
-  localStorage.removeItem("auth_token");
-  localStorage.removeItem("current_user");
-};
+// Rider helpers (keeping existing implementation for now)
+export { riderHelpers } from "./riderHelpers";
