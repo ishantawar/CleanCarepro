@@ -158,7 +158,67 @@ router.get("/customer/:customerId", async (req, res) => {
     const { customerId } = req.params;
     const { status, limit = 50, offset = 0 } = req.query;
 
-    let query = { customer_id: customerId };
+    // Handle different customer ID formats
+    let customerIds = [];
+
+    // If it's a valid ObjectId, add it
+    if (mongoose.Types.ObjectId.isValid(customerId)) {
+      customerIds.push(customerId);
+    }
+
+    // If it looks like a phone number, find corresponding user IDs
+    if (typeof customerId === "string" && customerId.match(/^\d{10,}$/)) {
+      try {
+        const usersWithPhone = await User.find({ phone: customerId });
+        customerIds.push(...usersWithPhone.map((u) => u._id));
+
+        // Also check CleanCareUser collection
+        try {
+          const CleanCareUser = mongoose.model("CleanCareUser");
+          const cleanCareUsers = await CleanCareUser.find({
+            phone: customerId,
+          });
+          customerIds.push(...cleanCareUsers.map((u) => u._id));
+        } catch (cleanCareError) {
+          console.warn("CleanCareUser lookup failed:", cleanCareError);
+        }
+      } catch (phoneError) {
+        console.warn("Phone lookup failed:", phoneError);
+      }
+    }
+
+    // If customerId starts with "user_", extract phone number
+    if (typeof customerId === "string" && customerId.startsWith("user_")) {
+      const phone = customerId.replace("user_", "");
+      if (phone.match(/^\d{10,}$/)) {
+        try {
+          const usersWithPhone = await User.find({ phone: phone });
+          customerIds.push(...usersWithPhone.map((u) => u._id));
+
+          // Also check CleanCareUser collection
+          try {
+            const CleanCareUser = mongoose.model("CleanCareUser");
+            const cleanCareUsers = await CleanCareUser.find({ phone: phone });
+            customerIds.push(...cleanCareUsers.map((u) => u._id));
+          } catch (cleanCareError) {
+            console.warn("CleanCareUser lookup failed:", cleanCareError);
+          }
+        } catch (phoneError) {
+          console.warn("Phone lookup failed:", phoneError);
+        }
+      }
+    }
+
+    // Remove duplicates
+    customerIds = [...new Set(customerIds.map((id) => id.toString()))];
+
+    console.log("Looking for bookings with customer IDs:", customerIds);
+
+    if (customerIds.length === 0) {
+      return res.json({ bookings: [] });
+    }
+
+    let query = { customer_id: { $in: customerIds } };
     if (status) {
       query.status = status;
     }
@@ -170,6 +230,7 @@ router.get("/customer/:customerId", async (req, res) => {
       .limit(parseInt(limit))
       .skip(parseInt(offset));
 
+    console.log("Found bookings:", bookings.length);
     res.json({ bookings });
   } catch (error) {
     console.error("Bookings fetch error:", error);
