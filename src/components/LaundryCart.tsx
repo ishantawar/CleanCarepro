@@ -301,132 +301,132 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
         );
 
         if (onLoginRequired) {
-        onLoginRequired();
-      } else {
+          onLoginRequired();
+        } else {
+          addNotification(
+            createWarningNotification(
+              "Login Required",
+              "Please sign in to complete your booking",
+            ),
+          );
+        }
+        return;
+      }
+
+      // Validate form and show inline errors
+      console.log("🔍 Starting form validation...");
+
+      let errors;
+      try {
+        errors = validateCheckoutForm(
+          currentUser,
+          addressData,
+          phoneNumber,
+          selectedDate,
+          selectedTime,
+        );
+        console.log("📋 Validation results:", errors);
+      } catch (validationError) {
+        console.error("❌ Validation function failed:", validationError);
         addNotification(
-          createWarningNotification(
-            "Login Required",
-            "Please sign in to complete your booking",
+          createErrorNotification(
+            "Validation Error",
+            "There was an error checking your form. Please try again.",
           ),
         );
-      }
-      return;
-    }
-
-    // Validate form and show inline errors
-    console.log("🔍 Starting form validation...");
-
-    let errors;
-    try {
-      errors = validateCheckoutForm(
-        currentUser,
-        addressData,
-        phoneNumber,
-        selectedDate,
-        selectedTime,
-      );
-      console.log("📋 Validation results:", errors);
-    } catch (validationError) {
-      console.error("❌ Validation function failed:", validationError);
-      addNotification(
-        createErrorNotification(
-          "Validation Error",
-          "There was an error checking your form. Please try again.",
-        ),
-      );
-      return;
-    }
-
-    if (errors.length > 0) {
-      console.log("❌ Validation failed with errors:", errors);
-      setValidationErrors(errors);
-
-      // Scroll to validation errors
-      const errorElement = document.getElementById("validation-errors");
-      if (errorElement) {
-        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
       }
 
-      return;
-    }
+      if (errors.length > 0) {
+        console.log("❌ Validation failed with errors:", errors);
+        setValidationErrors(errors);
 
-    console.log("✅ Validation passed, proceeding to checkout...");
-
-    // Clear validation errors
-    setValidationErrors([]);
-
-    // Structure data to match booking service requirements
-    const cartItems = getCartItems();
-    console.log("Cart items:", cartItems);
-
-    const services = cartItems
-      .map((item) => {
-        if (!item.service) {
-          console.error("Service not found for cart item:", item);
-          return null;
+        // Scroll to validation errors
+        const errorElement = document.getElementById("validation-errors");
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
 
-        // Validate price and quantity
-        const price = Number(item.service.price) || 0;
-        const quantity = Number(item.quantity) || 1;
+        return;
+      }
 
-        if (price === 0) {
-          console.warn("Service has zero price:", item.service);
-        }
+      console.log("✅ Validation passed, proceeding to checkout...");
 
-        return {
-          id: item.service.id,
-          name: item.service.name,
-          category: item.service.category,
-          price: price,
-          quantity: quantity,
-        };
-      })
-      .filter(Boolean);
+      // Clear validation errors
+      setValidationErrors([]);
 
-    console.log("Formatted services:", services);
+      // Structure data to match booking service requirements
+      const cartItems = getCartItems();
+      console.log("Cart items:", cartItems);
 
-    // Calculate delivery time (2 days after pickup)
-    const deliveryDate = new Date(selectedDate);
-    deliveryDate.setDate(deliveryDate.getDate() + 2); // Add 2 days
+      const services = cartItems
+        .map((item) => {
+          if (!item.service) {
+            console.error("Service not found for cart item:", item);
+            return null;
+          }
 
-    // Delivery time same as pickup time
-    const deliveryTimeString = selectedTime;
+          // Validate price and quantity
+          const price = Number(item.service.price) || 0;
+          const quantity = Number(item.quantity) || 1;
 
-    // Calculate total from services to ensure consistency
-    const serviceTotal = services.reduce((total, service) => {
-      const itemTotal = service.price * service.quantity || 0;
-      return total + itemTotal;
-    }, 0);
+          if (price === 0) {
+            console.warn("Service has zero price:", item.service);
+          }
 
-    const deliveryCharge = getDeliveryCharge() || 0;
-    const couponDiscount = getCouponDiscount() || 0;
-    const finalTotal = serviceTotal + deliveryCharge - couponDiscount;
+          return {
+            id: item.service.id,
+            name: item.service.name,
+            category: item.service.category,
+            price: price,
+            quantity: quantity,
+          };
+        })
+        .filter(Boolean);
 
-    console.log("Price breakdown:", {
-      serviceTotal,
-      deliveryCharge,
-      couponDiscount,
-      appliedCoupon: appliedCoupon?.code,
-      finalTotal,
-    });
+      console.log("Formatted services:", services);
 
-    const orderData = {
-      services,
-      totalAmount: finalTotal,
-      pickupDate: selectedDate.toISOString().split("T")[0],
-      deliveryDate: deliveryDate.toISOString().split("T")[0],
-      pickupTime: selectedTime,
-      deliveryTime: deliveryTimeString,
-      address: addressData,
-      phone: phoneNumber || currentUser?.phone,
-      instructions: specialInstructions,
-    };
+      // Calculate delivery time (2 days after pickup)
+      const deliveryDate = new Date(selectedDate);
+      deliveryDate.setDate(deliveryDate.getDate() + 2); // Add 2 days
 
-    console.log("Final order data:", orderData);
+      // Delivery time same as pickup time
+      const deliveryTimeString = selectedTime;
 
-    // Show confirmation dialog
-    const confirmationMessage = `
+      // Calculate total from services to ensure consistency
+      const serviceTotal = services.reduce((total, service) => {
+        const itemTotal = service.price * service.quantity || 0;
+        return total + itemTotal;
+      }, 0);
+
+      const deliveryCharge = getDeliveryCharge() || 0;
+      const couponDiscount = getCouponDiscount() || 0;
+      const finalTotal = serviceTotal + deliveryCharge - couponDiscount;
+
+      console.log("Price breakdown:", {
+        serviceTotal,
+        deliveryCharge,
+        couponDiscount,
+        appliedCoupon: appliedCoupon?.code,
+        finalTotal,
+      });
+
+      const orderData = {
+        services,
+        totalAmount: finalTotal,
+        pickupDate: selectedDate.toISOString().split("T")[0],
+        deliveryDate: deliveryDate.toISOString().split("T")[0],
+        pickupTime: selectedTime,
+        deliveryTime: deliveryTimeString,
+        address: addressData,
+        phone: phoneNumber || currentUser?.phone,
+        instructions: specialInstructions,
+      };
+
+      console.log("Final order data:", orderData);
+
+      // Show confirmation dialog
+      const confirmationMessage = `
 Booking Confirmation:
 
 Services: ${services.length} items
@@ -439,29 +439,40 @@ Total Amount: ₹${finalTotal}
 
 Confirm this booking?`;
 
-    if (confirm(confirmationMessage)) {
-      try {
-        console.log("💰 User confirmed order, processing...");
+      if (confirm(confirmationMessage)) {
+        try {
+          console.log("💰 User confirmed order, processing...");
 
-        // Save address for future use before processing order
-        saveAddressAfterBooking(addressData);
+          // Save address for future use before processing order
+          saveAddressAfterBooking(addressData);
 
-        // Call the parent's checkout handler
-        console.log("📤 Calling onProceedToCheckout with order data");
-        onProceedToCheckout(orderData);
+          // Call the parent's checkout handler
+          console.log("📤 Calling onProceedToCheckout with order data");
+          onProceedToCheckout(orderData);
 
-        console.log("✅ Checkout initiated successfully");
-      } catch (checkoutError) {
-        console.error("💥 Checkout process failed:", checkoutError);
-        addNotification(
-          createErrorNotification(
-            "Checkout Failed",
-            "Failed to process your order. Please try again.",
-          ),
-        );
+          console.log("✅ Checkout initiated successfully");
+        } catch (checkoutError) {
+          console.error("💥 Checkout process failed:", checkoutError);
+          addNotification(
+            createErrorNotification(
+              "Checkout Failed",
+              "Failed to process your order. Please try again.",
+            ),
+          );
+        }
+      } else {
+        console.log("❌ User cancelled the order");
       }
-    } else {
-      console.log("❌ User cancelled the order");
+    } catch (error) {
+      console.error("💥 Checkout failed:", error);
+      addNotification(
+        createErrorNotification(
+          "Checkout Failed",
+          "Unable to process your order. Please try again.",
+        ),
+      );
+    } finally {
+      setIsProcessingCheckout(false);
     }
   };
 
