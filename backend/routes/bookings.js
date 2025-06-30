@@ -24,6 +24,20 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 // Create a new booking
 router.post("/", async (req, res) => {
   try {
+    console.log("📝 Booking creation request received:", {
+      customer_id: req.body.customer_id,
+      service: req.body.service,
+      service_type: req.body.service_type,
+      services: req.body.services,
+      total_price: req.body.total_price,
+      scheduled_date: req.body.scheduled_date,
+      scheduled_time: req.body.scheduled_time,
+      provider_name: req.body.provider_name,
+      address: req.body.address
+        ? `${req.body.address.substring(0, 50)}...`
+        : "missing",
+    });
+
     const {
       customer_id,
       service,
