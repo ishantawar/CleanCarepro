@@ -102,6 +102,11 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
     // Check for duplicate addresses by comparing full address and key components
     const existingAddresses = [...addresses];
     const isDuplicate = existingAddresses.some((addr) => {
+      // Check if same type (except other)
+      if (address.type !== "other" && addr.type === address.type) {
+        return true;
+      }
+
       // Check if same full address
       if (addr.fullAddress === address.fullAddress) {
         return true;
