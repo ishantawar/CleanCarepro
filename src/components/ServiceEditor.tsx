@@ -13,6 +13,11 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
+import {
+  laundryServices,
+  LaundryService,
+  getSortedServices,
+} from "@/data/laundryServices";
 
 interface ServiceItem {
   name: string;
