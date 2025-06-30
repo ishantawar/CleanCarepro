@@ -34,8 +34,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
   mode,
 }) => {
   const [services, setServices] = useState<ServiceItem[]>([]);
-  const [newServiceName, setNewServiceName] = useState("");
-  const [newServicePrice, setNewServicePrice] = useState("");
 
   // Laundry services that users can add
   const availableServices = [
@@ -139,16 +137,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
       const newService = { name: serviceName, quantity: 1, price };
       setServices([...services, newService]);
     }
-  };
-
-  const addCustomService = () => {
-    if (!newServiceName.trim()) return;
-
-    const price = parseFloat(newServicePrice) || 35;
-    const newService = { name: newServiceName.trim(), quantity: 1, price };
-    setServices([...services, newService]);
-    setNewServiceName("");
-    setNewServicePrice("");
   };
 
   return (
