@@ -229,6 +229,22 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     // Check authentication first before validation
     if (!currentUser) {
       console.log("❌ User not authenticated, redirecting to login");
+
+      // Save current cart state for post-login restore
+      const currentCartState = {
+        addressData,
+        phoneNumber,
+        selectedDate: selectedDate?.toISOString(),
+        selectedTime,
+        specialInstructions,
+        appliedCoupon,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(
+        "checkout_form_state",
+        JSON.stringify(currentCartState),
+      );
+
       if (onLoginRequired) {
         onLoginRequired();
       } else {
@@ -500,7 +516,7 @@ Confirm this booking?`;
                         : service!.category.includes("Women")
                           ? "👗"
                           : service!.category.includes("Woolen")
-                            ? "��"
+                            ? "🧥"
                             : service!.category.includes("Steam")
                               ? "🔥"
                               : service!.category.includes("Iron")
