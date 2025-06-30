@@ -807,6 +807,41 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           </div>
         </div>
 
+        {/* Address Category (moved to bottom) */}
+        {showLabel && (
+          <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+            <div>
+              <Label htmlFor="type" className="text-sm font-medium">
+                📂 Address Category <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="type"
+                value={address.type}
+                onChange={(e) => {
+                  e.preventDefault(); // Prevent form submission
+                  const selectedType = e.target.value;
+                  handleFieldChange("type", selectedType);
+                  // Auto-generate label based on type
+                  const autoLabel =
+                    selectedType === "home"
+                      ? "Home"
+                      : selectedType === "office"
+                        ? "Office"
+                        : "Other";
+                  handleFieldChange("label", autoLabel);
+                }}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                required
+              >
+                <option value="">Select address category</option>
+                <option value="home">🏠 Home</option>
+                <option value="office">🏢 Office</option>
+                <option value="other">📍 Other</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         {/* Location Status */}
         {address.coordinates && (
           <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
