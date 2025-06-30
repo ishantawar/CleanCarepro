@@ -48,6 +48,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
+import { bookingHelpers } from "../integrations/mongodb/bookingHelpers";
 import EditBookingModal from "./EditBookingModal";
 
 interface EnhancedBookingHistoryProps {
