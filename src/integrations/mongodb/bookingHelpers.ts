@@ -7,10 +7,17 @@ const getApiBaseUrl = () => {
     return envUrl;
   }
 
+  // Try the backend URL - update to correct endpoint
+  if (
+    window.location.hostname.includes("vercel.app") ||
+    window.location.hostname.includes("builder.codes")
+  ) {
+    // Use the correct render.com backend URL
+    return "https://cleancarepro-xrqa.onrender.com/api";
+  }
+
   // For hosted environment, detect if we're on fly.dev and disable backend calls
-  const isHostedEnv =
-    window.location.hostname.includes("fly.dev") ||
-    window.location.hostname.includes("builder.codes");
+  const isHostedEnv = window.location.hostname.includes("fly.dev");
 
   if (isHostedEnv) {
     console.log("🌐 Hosted environment detected - MongoDB backend disabled");
