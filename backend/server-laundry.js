@@ -240,13 +240,48 @@ app.post("/api/push/unsubscribe", (req, res) => {
   res.json({ success: true });
 });
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({
+// Health check endpoint with comprehensive monitoring
+app.get("/api/health", async (req, res) => {
+  const healthCheck = {
     status: "ok",
     timestamp: new Date().toISOString(),
     service: "CleanCare Pro API",
-  });
+    version: "1.0.0",
+    environment: productionConfig.NODE_ENV,
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    database: "unknown",
+    features: productionConfig.FEATURES,
+  };
+
+  // Check database connection
+  try {
+    if (mongoose.connection.readyState === 1) {
+      healthCheck.database = "connected";
+    } else {
+      healthCheck.database = "disconnected";
+      healthCheck.status = "degraded";
+    }
+  } catch (error) {
+    healthCheck.database = "error";
+    healthCheck.status = "unhealthy";
+  }
+
+  // Check memory usage
+  const memoryUsage = process.memoryUsage();
+  if (memoryUsage.heapUsed > productionConfig.MEMORY_THRESHOLD) {
+    healthCheck.status = "degraded";
+    healthCheck.warning = "High memory usage";
+  }
+
+  const statusCode =
+    healthCheck.status === "ok"
+      ? 200
+      : healthCheck.status === "degraded"
+        ? 200
+        : 503;
+
+  res.status(statusCode).json(healthCheck);
 });
 
 // Test endpoint
