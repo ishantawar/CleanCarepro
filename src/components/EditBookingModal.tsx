@@ -196,9 +196,21 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
                   </p>
                 )}
               </div>
-              <p className="text-blue-900 font-semibold mt-2">
-                Total: ₹{totalPrice + 5} (includes ₹5 delivery)
-              </p>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span>Services Total:</span>
+                  <span>₹{totalPrice}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span>Delivery Charge:</span>
+                  <span>₹50</span>
+                </div>
+                <hr className="border-blue-300" />
+                <div className="flex justify-between font-semibold">
+                  <span>Total Amount:</span>
+                  <span>₹{totalPrice + 50}</span>
+                </div>
+              </div>
             </div>
 
             {/* Date */}
