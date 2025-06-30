@@ -3,11 +3,24 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
 
-// Load environment variables in order of preference
-dotenv.config({ path: ".env.development" }); // Development credentials
-dotenv.config({ path: ".env.local" }); // User-specific overrides
-dotenv.config(); // Default .env file
+// Load environment variables
+dotenv.config();
+
+// Load production configuration
+const productionConfig = require("./config/production");
+
+// Validate configuration
+try {
+  productionConfig.validateConfig();
+} catch (error) {
+  console.error("❌ Configuration Error:", error.message);
+  process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
