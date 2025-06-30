@@ -690,10 +690,13 @@ export class DVHostingSmsService {
     try {
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
 
+      // Clean the phone number
+      const cleanedPhone = this.cleanPhone(user.phone);
+
       // Prepare user data for backend
       const userData = {
-        phone: user.phone,
-        full_name: user.name || `User ${user.phone.slice(-4)}`,
+        phone: cleanedPhone,
+        full_name: user.name || `User ${cleanedPhone.slice(-4)}`,
         email: user.email || "",
         user_type: "customer",
         is_verified: true,
