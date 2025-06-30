@@ -429,7 +429,7 @@ const LaundryIndex = () => {
           ).default;
           const sheetsService = GoogleSheetsService.getInstance();
 
-          await sheetsService.saveOrderToSheet({
+          const orderData = {
             orderId: mongoResult.data._id || `local_${Date.now()}`,
             customerName:
               currentUser.full_name || currentUser.name || "Customer",
@@ -444,11 +444,19 @@ const LaundryIndex = () => {
             pickupTime: cartData.pickupTime,
             status: "pending",
             createdAt: new Date().toISOString(),
-          });
+          };
 
-          console.log("📊 Order data sent to Google Sheets");
+          const sheetsResult = await sheetsService.saveOrderToSheet(orderData);
+
+          if (sheetsResult) {
+            console.log("📊 Order data successfully sent to Google Sheets");
+          } else {
+            console.log(
+              "📊 Order data saved locally for later sync to Google Sheets",
+            );
+          }
         } catch (sheetsError) {
-          console.error("Failed to save to Google Sheets:", sheetsError);
+          console.error("❌ Failed to save to Google Sheets:", sheetsError);
         }
 
         // Also save using booking service for local storage backup
