@@ -893,76 +893,88 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
-                      {canEditBooking(booking) && (
-                        <Button
-                          onClick={() => handleEditBooking(booking)}
-                          variant="outline"
-                          className="flex items-center gap-2 border-green-200 text-green-600 hover:bg-green-50"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit Order
-                        </Button>
-                      )}
+                    <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
+                      {/* Primary Actions Row */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {canEditBooking(booking) && (
+                          <Button
+                            onClick={() => handleEditBooking(booking)}
+                            variant="outline"
+                            className="flex items-center justify-center gap-2 border-green-200 text-green-600 hover:bg-green-50 py-2"
+                            size="sm"
+                          >
+                            <Edit className="h-4 w-4" />
+                            <span className="text-sm">Edit Order</span>
+                          </Button>
+                        )}
 
-                      {canCancelBooking(booking) && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                              disabled={cancellingBooking === bookingId}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {cancellingBooking === bookingId
-                                ? "Cancelling..."
-                                : "Cancel"}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Cancel Booking?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to cancel this booking?
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>
-                                Keep Booking
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleCancelBooking(bookingId)}
-                                className="bg-red-600 hover:bg-red-700"
+                        {canEditBooking(booking) && (
+                          <Button
+                            onClick={() => handleAddServices(booking)}
+                            variant="outline"
+                            className="flex items-center justify-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 py-2"
+                            size="sm"
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span className="text-sm">Add Services</span>
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Secondary Actions Row */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {canCancelBooking(booking) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="flex items-center justify-center gap-2 border-red-200 text-red-600 hover:bg-red-50 py-2"
+                                disabled={cancellingBooking === bookingId}
+                                size="sm"
                               >
-                                Yes, Cancel Booking
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                                <Trash2 className="h-4 w-4" />
+                                <span className="text-sm">
+                                  {cancellingBooking === bookingId
+                                    ? "Cancelling..."
+                                    : "Cancel"}
+                                </span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="mx-4">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Cancel Booking?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to cancel this booking?
+                                  This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                <AlertDialogCancel className="w-full sm:w-auto">
+                                  Keep Booking
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleCancelBooking(bookingId)}
+                                  className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+                                >
+                                  Yes, Cancel Booking
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
 
-                      {canEditBooking(booking) && (
                         <Button
-                          onClick={() => handleAddServices(booking)}
+                          onClick={() => handleContactSupport(bookingId)}
                           variant="outline"
-                          className="flex items-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+                          className="flex items-center justify-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50 py-2"
+                          size="sm"
                         >
-                          <Plus className="h-4 w-4" />
-                          Add More Services
+                          <MessageCircle className="h-4 w-4" />
+                          <span className="text-sm">Contact Support</span>
                         </Button>
-                      )}
-
-                      <Button
-                        onClick={() => handleContactSupport(bookingId)}
-                        variant="outline"
-                        className="flex items-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Contact Support
-                      </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
