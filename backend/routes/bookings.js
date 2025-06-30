@@ -57,18 +57,29 @@ router.post("/", async (req, res) => {
     } = req.body;
 
     // Validation
-    if (
-      !customer_id ||
-      !service ||
-      !service_type ||
-      !services ||
-      !scheduled_date ||
-      !scheduled_time ||
-      !provider_name ||
-      !address ||
-      !total_price
-    ) {
-      return res.status(400).json({ error: "Missing required fields" });
+    const requiredFields = {
+      customer_id,
+      service,
+      service_type,
+      services,
+      scheduled_date,
+      scheduled_time,
+      provider_name,
+      address,
+      total_price,
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      console.log("❌ Missing required fields:", missingFields);
+      return res.status(400).json({
+        error: "Missing required fields",
+        missing: missingFields,
+        received: Object.keys(req.body),
+      });
     }
 
     if (!Array.isArray(services) || services.length === 0) {
