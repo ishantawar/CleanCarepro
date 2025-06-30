@@ -721,8 +721,7 @@ const LaundryIndex = () => {
               onClose={() => setCurrentView("home")}
               onSuccess={(user) => {
                 handleLoginSuccess(user);
-                // Return to the view they were trying to access
-                setCurrentView(previousView);
+                // handleLoginSuccess already sets the view to previousView, no need to set it again
               }}
             />
           </div>
