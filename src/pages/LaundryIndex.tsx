@@ -515,6 +515,7 @@ const LaundryIndex = () => {
 
         const localResult =
           await bookingService.createBooking(localBookingData);
+        console.log("📝 Fallback local booking result:", localResult);
 
         if (localResult.success) {
           // Show success but mention it will sync later
@@ -531,8 +532,11 @@ const LaundryIndex = () => {
           // Stay in cart view to show success message
           // setCurrentView("home"); // Don't redirect, let user decide
         } else {
+          console.error("❌ Local booking also failed:", localResult.error);
           throw new Error(
-            mongoResult.error?.message || "Failed to create booking",
+            localResult.error ||
+              mongoResult.error?.message ||
+              "Failed to create booking",
           );
         }
       }
