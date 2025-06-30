@@ -45,11 +45,20 @@ export const GOOGLE_SHEETS_CONFIG = {
 export const validateGoogleSheetsConfig = () => {
   const warnings = [];
 
-  if (GOOGLE_SHEETS_CONFIG.WEB_APP_URL.includes("YOUR_SCRIPT_ID")) {
+  // Check if we're in a hosted environment
+  const isHostedEnv =
+    typeof window !== "undefined" &&
+    (window.location.hostname.includes("fly.dev") ||
+      window.location.hostname.includes("builder.codes"));
+
+  if (
+    GOOGLE_SHEETS_CONFIG.WEB_APP_URL.includes("YOUR_SCRIPT_ID") &&
+    !isHostedEnv
+  ) {
     warnings.push("⚠️ Google Apps Script Web App URL not configured");
   }
 
-  if (!GOOGLE_SHEETS_CONFIG.ENABLED) {
+  if (!GOOGLE_SHEETS_CONFIG.ENABLED && !isHostedEnv) {
     warnings.push("ℹ️ Google Sheets integration is disabled");
   }
 
