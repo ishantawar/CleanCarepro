@@ -282,7 +282,7 @@ export class BookingService {
     try {
       const mongoBookings = await this.mongoService.getUserBookings(userId);
       if (mongoBookings && mongoBookings.length > 0) {
-        console.log("✅ Bookings loaded from MongoDB:", mongoBookings.length);
+        console.log("��� Bookings loaded from MongoDB:", mongoBookings.length);
         // Transform MongoDB bookings to match frontend format
         const transformedBookings = mongoBookings.map((booking) =>
           this.transformBackendBooking(booking),
@@ -554,31 +554,44 @@ export class BookingService {
         updatedAt: new Date().toISOString(),
       };
 
-      // Update in localStorage first (reliable mode)
-      const updatedBooking = this.updateBookingInLocalStorage(
+      // Try to update in localStorage first
+      const localUpdatedBooking = this.updateBookingInLocalStorage(
         bookingId,
         updatedData,
       );
 
-      if (updatedBooking) {
-        console.log("💾 Booking updated in localStorage:", bookingId);
-        return {
-          success: true,
-          message: "Booking updated successfully",
-          booking: updatedBooking,
-        };
-      } else {
-        throw new Error("Booking not found");
+      // Try to sync with backend if booking exists
+      try {
+        const backendResult = await this.syncBookingUpdateToBackend(
+          bookingId,
+          updatedData,
+        );
+        if (backendResult.success) {
+          console.log("✅ Backend update successful");
+          return {
+            success: true,
+            message: "Booking updated successfully",
+            booking: backendResult.booking || localUpdatedBooking,
+          };
+        }
+      } catch (backendError) {
+        console.warn(
+          "⚠️ Backend update failed, falling back to localStorage:",
+          backendError,
+        );
       }
 
-      // Note: Backend sync disabled to prevent fetch errors
-      // When backend becomes available, uncomment the sync logic below
-      /*
-      // Try to sync update with backend in background
-      this.syncBookingUpdateToBackend(bookingId, updatedData).catch(error => {
-        console.warn("Background sync failed:", error);
-      });
-      */
+      // If backend fails but localStorage succeeds, still return success
+      if (localUpdatedBooking) {
+        console.log("💾 Booking updated in localStorage only:", bookingId);
+        return {
+          success: true,
+          message: "Booking updated successfully (offline mode)",
+          booking: localUpdatedBooking,
+        };
+      }
+
+      throw new Error("Booking not found in localStorage or backend");
     } catch (error) {
       console.error("❌ Failed to update booking:", error);
       return {
@@ -663,10 +676,19 @@ export class BookingService {
       );
       const bookingIndex = allBookings.findIndex(
         (booking: BookingDetails) =>
-          booking.id === bookingId || (booking as any)._id === bookingId,
+          booking.id === bookingId ||
+          (booking as any)._id === bookingId ||
+          // Handle cases where bookingId might be the display format
+          booking.id?.toString() === bookingId ||
+          (booking as any)._id?.toString() === bookingId,
       );
 
       if (bookingIndex === -1) {
+        console.warn("🔍 Booking not found in localStorage:", bookingId);
+        console.log(
+          "📋 Available bookings:",
+          allBookings.map((b) => ({ id: b.id, _id: (b as any)._id })),
+        );
         return null;
       }
 
@@ -678,6 +700,81 @@ export class BookingService {
     } catch (error) {
       console.error("Failed to update booking in localStorage:", error);
       return null;
+    }
+  }
+
+  /**
+   * Get current user
+   */
+  private getCurrentUser(): any {
+    const authService = DVHostingSmsService.getInstance();
+    return authService.getCurrentUser();
+  }
+
+  /**
+   * Sync booking update to backend
+   */
+  private async syncBookingUpdateToBackend(
+    bookingId: string,
+    updates: Partial<BookingDetails>,
+  ): Promise<{ success: boolean; booking?: any; error?: string }> {
+    try {
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+
+      // For status updates, use the specific status update endpoint
+      if (updates.status) {
+        // Get proper user ID for backend
+        const userId =
+          currentUser._id ||
+          currentUser.id ||
+          (currentUser.phone ? `user_${currentUser.phone}` : null);
+
+        console.log("🔄 Syncing booking update to backend:", {
+          bookingId,
+          status: updates.status,
+          userId,
+          currentUser,
+        });
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/bookings/${bookingId}/status`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: updates.status,
+              user_id: userId,
+              user_type: "customer",
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        return {
+          success: true,
+          booking: data.booking,
+        };
+      }
+
+      // For other updates, we'd need a general update endpoint
+      // For now, return success to indicate localStorage update is sufficient
+      return { success: false, error: "General update endpoint not available" };
+    } catch (error) {
+      console.error("Backend sync error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   }
 
