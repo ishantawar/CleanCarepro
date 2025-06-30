@@ -561,18 +561,38 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                 </p>
               </div>
             </div>
-            <Button
-              onClick={refreshBookings}
-              variant="outline"
-              size="sm"
-              disabled={refreshing}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={refreshBookings}
+                variant="outline"
+                size="sm"
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+
+              {/* Debug button */}
+              <Button
+                onClick={() => {
+                  console.log("🗑️ Clearing localStorage bookings...");
+                  localStorage.removeItem("user_bookings");
+                  console.log(
+                    "📊 LocalStorage after clear:",
+                    localStorage.getItem("user_bookings"),
+                  );
+                  refreshBookings();
+                }}
+                variant="outline"
+                size="sm"
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                Clear Local
+              </Button>
+            </div>
           </div>
         </div>
       </div>
