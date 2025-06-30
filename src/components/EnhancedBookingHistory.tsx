@@ -257,7 +257,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   const handleCancelBooking = async (bookingId: string) => {
+    console.log("🗑️ Attempting to cancel booking:", {
+      bookingId,
+      idType: typeof bookingId,
+      idValid: !!bookingId,
+    });
+
     if (!bookingId) {
+      console.error("❌ No booking ID provided for cancellation");
       addNotification(createErrorNotification("Error", "Invalid booking ID"));
       return;
     }
@@ -266,6 +273,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
     try {
       const bookingService = BookingService.getInstance();
+      console.log(
+        "📞 Calling BookingService.cancelBooking with ID:",
+        bookingId,
+      );
       const result = await bookingService.cancelBooking(bookingId);
 
       if (result.success) {
