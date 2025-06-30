@@ -68,6 +68,29 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   const autocompleteRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Update address when initialAddress prop changes (for autofill)
+  useEffect(() => {
+    if (initialAddress) {
+      console.log("📍 Autofilling address from saved data:", initialAddress);
+      const updatedAddress = {
+        flatNo: initialAddress.flatNo || initialAddress.flatHouseNo || "",
+        flatHouseNo: initialAddress.flatNo || initialAddress.flatHouseNo || "",
+        street: initialAddress.street || "",
+        landmark: initialAddress.landmark || "",
+        village: initialAddress.village || "",
+        city: initialAddress.city || "",
+        pincode: initialAddress.pincode || "",
+        fullAddress: initialAddress.fullAddress || "",
+        label: initialAddress.label || "",
+        type: initialAddress.type || "other",
+        coordinates: initialAddress.coordinates,
+      };
+      setAddress(updatedAddress);
+      setSearchValue(initialAddress.fullAddress || "");
+      console.log("✅ Address autofilled successfully");
+    }
+  }, [initialAddress]);
+
   // Load Google Maps API
   useEffect(() => {
     if (window.google && window.google.maps) {
