@@ -77,6 +77,15 @@ class GoogleSheetsService {
       return false;
     }
 
+    // Log setup instructions if needed
+    if (this.config.webAppUrl.includes("YOUR_APPS_SCRIPT")) {
+      console.log("🔧 Google Apps Script Setup Required!");
+      console.log("📋 Copy this code to script.google.com:");
+      console.log(this.generateAppsScriptCode());
+      console.log("🔗 Then update WEB_APP_URL in src/config/googleSheets.ts");
+      return false;
+    }
+
     try {
       // Prepare data for Google Sheets
       const sheetData = {

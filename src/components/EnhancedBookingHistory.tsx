@@ -48,6 +48,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
+import { bookingHelpers } from "../integrations/mongodb/bookingHelpers";
 import EditBookingModal from "./EditBookingModal";
 
 interface EnhancedBookingHistoryProps {
@@ -85,10 +86,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
     try {
       setLoading(true);
 
-      // Import MongoDB helpers
-      const { bookingHelpers } = await import(
-        "../integrations/mongodb/bookingHelpers"
-      );
+      // Use static imports to avoid module loading errors
       const bookingService = BookingService.getInstance();
 
       console.log(
@@ -96,10 +94,18 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         currentUser._id || currentUser.id,
       );
 
-      // Try MongoDB first (but it will gracefully fallback if no backend)
-      let mongoBookings = [];
+      let allBookings = [];
       const userId = currentUser._id || currentUser.id || currentUser.phone;
 
+      console.log("🔍 Loading bookings for user:", {
+        user: currentUser,
+        resolvedUserId: userId,
+        _id: currentUser._id,
+        id: currentUser.id,
+        phone: currentUser.phone,
+      });
+
+      // Try MongoDB first (but it will gracefully fallback if no backend)
       if (userId) {
         const mongoResponse = await bookingHelpers.getUserBookings(userId);
         if (
@@ -107,7 +113,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           Array.isArray(mongoResponse.data) &&
           mongoResponse.data.length > 0
         ) {
-          mongoBookings = mongoResponse.data.map((booking: any) => ({
+          const mongoBookings = mongoResponse.data.map((booking: any) => ({
             id: booking._id,
             userId: booking.customer_id,
             services: booking.services || [booking.service],
@@ -129,12 +135,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
             updatedAt: booking.updated_at || booking.updatedAt,
           }));
           console.log("✅ Loaded bookings from MongoDB:", mongoBookings.length);
-          setBookings(mongoBookings);
-          return;
+          allBookings = [...allBookings, ...mongoBookings];
         }
       }
 
-      // Fallback to BookingService
+      // Also try BookingService for local bookings
       console.log("Loading bookings from BookingService...");
       const response = await bookingService.getCurrentUserBookings();
 
@@ -143,11 +148,27 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           "✅ Bookings loaded from BookingService:",
           response.bookings.length,
         );
-        setBookings(response.bookings);
-      } else {
-        console.log("No bookings found or error:", response.error);
-        setBookings([]);
+        // Merge local bookings, avoiding duplicates
+        const localBookings = response.bookings.filter(
+          (localBooking: any) =>
+            !allBookings.some(
+              (mongoBooking: any) =>
+                mongoBooking.id === localBooking.id ||
+                mongoBooking.id === localBooking._id,
+            ),
+        );
+        allBookings = [...allBookings, ...localBookings];
       }
+
+      // Sort bookings by creation date (newest first)
+      allBookings.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.created_at || Date.now());
+        const dateB = new Date(b.createdAt || b.created_at || Date.now());
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      console.log("✅ Total bookings loaded:", allBookings.length);
+      setBookings(allBookings);
     } catch (error) {
       console.error("Error loading bookings:", error);
       setBookings([]);
@@ -165,9 +186,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   const refreshBookings = async () => {
     setRefreshing(true);
     try {
-      // Clear local cache first
-      localStorage.removeItem("user_bookings");
-
+      // Load fresh bookings without clearing local storage first
+      // (loadBookings will merge local and remote data appropriately)
       await loadBookings();
       addNotification(
         createSuccessNotification(
@@ -186,6 +206,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   useEffect(() => {
+    // Load bookings when user changes (no need to clear local storage)
     loadBookings();
   }, [currentUser]);
 
@@ -234,7 +255,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   const handleCancelBooking = async (bookingId: string) => {
+    console.log("🗑️ Attempting to cancel booking:", {
+      bookingId,
+      idType: typeof bookingId,
+      idValid: !!bookingId,
+    });
+
     if (!bookingId) {
+      console.error("❌ No booking ID provided for cancellation");
       addNotification(createErrorNotification("Error", "Invalid booking ID"));
       return;
     }
@@ -243,6 +271,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
     try {
       const bookingService = BookingService.getInstance();
+      console.log(
+        "📞 Calling BookingService.cancelBooking with ID:",
+        bookingId,
+      );
       const result = await bookingService.cancelBooking(bookingId);
 
       if (result.success) {
@@ -302,8 +334,22 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
   const handleSaveEditedBooking = async (updatedBooking: any) => {
     try {
+      console.log("📝 handleSaveEditedBooking called with:", {
+        updatedBooking,
+        bookingId: updatedBooking.id,
+        bookingMongoId: updatedBooking._id,
+      });
+
       const bookingService = BookingService.getInstance();
-      const bookingId = updatedBooking.id || updatedBooking._id;
+
+      // Ensure booking ID is a string, not an object
+      let bookingId = updatedBooking.id || updatedBooking._id;
+      if (typeof bookingId === "object") {
+        console.error("❌ Booking ID is an object:", bookingId);
+        bookingId = JSON.stringify(bookingId);
+      }
+
+      console.log("🔍 Using booking ID for edit:", bookingId);
 
       const result = await bookingService.updateBooking(
         bookingId,
@@ -368,8 +414,36 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
   const handleSaveAddedServices = async (updatedBooking: any) => {
     try {
+      console.log("💾 handleSaveAddedServices called with:", {
+        updatedBooking,
+        bookingId: updatedBooking.id,
+        bookingMongoId: updatedBooking._id,
+        bookingKeys: Object.keys(updatedBooking),
+      });
+
       const bookingService = BookingService.getInstance();
-      const bookingId = updatedBooking.id || updatedBooking._id;
+
+      // Ensure booking ID is a string, not an object
+      let bookingId = updatedBooking.id || updatedBooking._id;
+      if (typeof bookingId === "object") {
+        console.error("❌ Booking ID is an object:", bookingId);
+        bookingId = JSON.stringify(bookingId);
+      }
+
+      console.log("��� Extracted booking ID:", {
+        bookingId,
+        type: typeof bookingId,
+        length: bookingId?.length,
+      });
+
+      // Check localStorage before update
+      const currentBookings = JSON.parse(
+        localStorage.getItem("user_bookings") || "[]",
+      );
+      console.log("📊 Current localStorage state:", {
+        totalBookings: currentBookings.length,
+        bookingIds: currentBookings.map((b: any) => b.id || b._id),
+      });
 
       const result = await bookingService.updateBooking(
         bookingId,
@@ -424,7 +498,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "Date TBD";
+    if (!dateStr) {
+      // Return today's date if no date provided
+      const today = new Date();
+      return today.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+    }
 
     try {
       let date;
@@ -435,7 +517,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         date = new Date(dateStr);
       }
 
-      if (isNaN(date.getTime())) return "Date TBD";
+      if (isNaN(date.getTime())) {
+        // Fallback to today's date if parsing fails
+        const today = new Date();
+        return today.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        });
+      }
 
       return date.toLocaleDateString("en-US", {
         weekday: "short",
@@ -444,25 +534,66 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
       });
     } catch (error) {
       console.error("Error parsing date:", dateStr, error);
-      return "Date TBD";
+      // Return today's date as fallback
+      const today = new Date();
+      return today.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
     }
   };
 
   const calculateTotal = (booking: any) => {
-    if (booking.totalAmount) return booking.totalAmount;
-    if (booking.total_price) return booking.total_price;
-    if (booking.final_amount) return booking.final_amount;
+    // First try explicit total amounts
+    if (booking.totalAmount && booking.totalAmount > 0)
+      return booking.totalAmount;
+    if (booking.total_price && booking.total_price > 0)
+      return booking.total_price;
+    if (booking.final_amount && booking.final_amount > 0)
+      return booking.final_amount;
 
     // Calculate from services if available
     if (Array.isArray(booking.services)) {
-      return booking.services.reduce((total: number, service: any) => {
-        const price = service.price || service.amount || 0;
-        const quantity = service.quantity || 1;
-        return total + price * quantity;
-      }, 0);
+      const servicesTotal = booking.services.reduce(
+        (total: number, service: any) => {
+          const price =
+            service.price || service.amount || getServicePrice(service);
+          const quantity = service.quantity || 1;
+          return total + price * quantity;
+        },
+        0,
+      );
+
+      // Add delivery charge if services total > 0
+      return servicesTotal > 0 ? servicesTotal + 50 : servicesTotal;
     }
 
-    return 0;
+    // Fallback: return at least delivery charge if booking exists
+    return 50;
+  };
+
+  const getServicePrice = (service: any) => {
+    // Helper to get service price from service name
+    const serviceName =
+      typeof service === "string" ? service : service.name || service.service;
+
+    // Common service prices mapping
+    const servicePrices: { [key: string]: number } = {
+      "Laundry and Fold": 70,
+      "Laundry and Iron": 120,
+      "Jacket (Full/Half Sleeves)": 300,
+      "Shirt/T-Shirt": 90,
+      "Trouser/Jeans": 120,
+      Kurta: 140,
+      "Saree (Simple/Silk)": 210,
+      Dress: 330,
+      "Lehenga (2+ Pieces)": 450,
+      "Sweater/Sweatshirt": 200,
+      "Long Coat": 400,
+    };
+
+    return servicePrices[serviceName] || 100; // Default price
   };
 
   if (!currentUser) {
@@ -526,20 +657,48 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                   {bookings.length}{" "}
                   {bookings.length === 1 ? "booking" : "bookings"} found
                 </p>
+                {/* Debug info */}
+                <p className="text-xs text-gray-500 mt-1">
+                  User ID:{" "}
+                  {currentUser?._id ||
+                    currentUser?.id ||
+                    currentUser?.phone ||
+                    "No ID"}
+                </p>
               </div>
             </div>
-            <Button
-              onClick={refreshBookings}
-              variant="outline"
-              size="sm"
-              disabled={refreshing}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={refreshBookings}
+                variant="outline"
+                size="sm"
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+
+              {/* Debug button */}
+              <Button
+                onClick={() => {
+                  console.log("🗑️ Clearing localStorage bookings...");
+                  localStorage.removeItem("user_bookings");
+                  console.log(
+                    "📊 LocalStorage after clear:",
+                    localStorage.getItem("user_bookings"),
+                  );
+                  refreshBookings();
+                }}
+                variant="outline"
+                size="sm"
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                Clear Local
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -567,15 +726,28 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         ) : (
           <div className="space-y-6">
             {bookings.map((booking: any, index) => {
-              const bookingId = booking.id || booking._id || `booking_${index}`;
+              // Use actual booking ID, not fallback index-based ID for actions
+              const bookingId = booking.id || booking._id;
+              const displayId = bookingId || `booking_${index}`;
               const services = Array.isArray(booking.services)
                 ? booking.services
                 : [booking.service || "Home Service"];
               const total = calculateTotal(booking);
 
+              console.log("🔍 Rendering booking:", {
+                index,
+                bookingId,
+                displayId,
+                hasRealId: !!bookingId,
+                booking,
+              });
+
+              // Only show actionable buttons if booking has a real ID
+              const hasRealId = !!bookingId;
+
               return (
                 <Card
-                  key={bookingId}
+                  key={displayId}
                   className="overflow-hidden border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300"
                 >
                   <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
@@ -607,31 +779,44 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         Booked Services
                       </h4>
                       <div className="space-y-2">
-                        {services.map((service: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100"
-                          >
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {typeof service === "object"
-                                  ? service.name || service.service
-                                  : service}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Qty:{" "}
-                                {typeof service === "object"
-                                  ? service.quantity || 1
-                                  : 1}
-                              </p>
+                        {services.map((service: any, idx: number) => {
+                          const serviceName =
+                            typeof service === "object"
+                              ? service.name || service.service
+                              : service;
+                          const quantity =
+                            typeof service === "object"
+                              ? service.quantity || 1
+                              : 1;
+                          const price =
+                            typeof service === "object" && service.price
+                              ? service.price
+                              : getServicePrice(service);
+
+                          return (
+                            <div
+                              key={idx}
+                              className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-blue-50 rounded-lg border border-blue-100 gap-2"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">
+                                  {serviceName}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Qty: {quantity}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-blue-600">
+                                  ₹{price * quantity}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  ₹{price} each
+                                </p>
+                              </div>
                             </div>
-                            {typeof service === "object" && service.price && (
-                              <p className="font-semibold text-blue-600">
-                                ₹{service.price}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -713,7 +898,16 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           <span className="text-sm text-gray-600">
                             Services Total
                           </span>
-                          <span className="font-medium">₹{total}</span>
+                          <span className="font-medium">
+                            ₹{Math.max(0, total - 50)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">
+                            Delivery Charge
+                          </span>
+                          <span className="font-medium">₹50</span>
                         </div>
 
                         {booking.discount_amount &&
@@ -739,7 +933,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-2">
                           <span className="text-xs text-gray-500">
                             Payment Status
                           </span>
@@ -750,6 +944,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 ? "default"
                                 : "secondary"
                             }
+                            className="w-fit"
                           >
                             {(
                               booking.payment_status ||
@@ -762,76 +957,124 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
-                      {canEditBooking(booking) && (
-                        <Button
-                          onClick={() => handleEditBooking(booking)}
-                          variant="outline"
-                          className="flex items-center gap-2 border-green-200 text-green-600 hover:bg-green-50"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit Order
-                        </Button>
-                      )}
-
-                      {canCancelBooking(booking) && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                              disabled={cancellingBooking === bookingId}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {cancellingBooking === bookingId
-                                ? "Cancelling..."
-                                : "Cancel"}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Cancel Booking?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to cancel this booking?
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>
-                                Keep Booking
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleCancelBooking(bookingId)}
-                                className="bg-red-600 hover:bg-red-700"
+                    <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
+                      {hasRealId ? (
+                        <>
+                          {/* Primary Actions Row */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {canEditBooking(booking) && (
+                              <Button
+                                onClick={() => handleEditBooking(booking)}
+                                variant="outline"
+                                className="flex items-center justify-center gap-2 border-green-200 text-green-600 hover:bg-green-50 py-2"
+                                size="sm"
                               >
-                                Yes, Cancel Booking
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                                <Edit className="h-4 w-4" />
+                                <span className="text-sm">Edit Order</span>
+                              </Button>
+                            )}
 
-                      {canEditBooking(booking) && (
-                        <Button
-                          onClick={() => handleAddServices(booking)}
-                          variant="outline"
-                          className="flex items-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Add More Services
-                        </Button>
-                      )}
+                            {canEditBooking(booking) && (
+                              <Button
+                                onClick={() => handleAddServices(booking)}
+                                variant="outline"
+                                className="flex items-center justify-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 py-2"
+                                size="sm"
+                              >
+                                <Plus className="h-4 w-4" />
+                                <span className="text-sm">Add Services</span>
+                              </Button>
+                            )}
+                          </div>
 
-                      <Button
-                        onClick={() => handleContactSupport(bookingId)}
-                        variant="outline"
-                        className="flex items-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Contact Support
-                      </Button>
+                          {/* Secondary Actions Row */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {canCancelBooking(booking) && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="flex items-center justify-center gap-2 border-red-200 text-red-600 hover:bg-red-50 py-2"
+                                    disabled={cancellingBooking === bookingId}
+                                    size="sm"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="text-sm">
+                                      {cancellingBooking === bookingId
+                                        ? "Cancelling..."
+                                        : "Cancel"}
+                                    </span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="mx-4">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Cancel Booking?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to cancel this
+                                      booking? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                    <AlertDialogCancel className="w-full sm:w-auto">
+                                      Keep Booking
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        console.log(
+                                          "🔥 Cancel button clicked for booking:",
+                                          {
+                                            bookingId,
+                                            hasBookingId: !!bookingId,
+                                            booking,
+                                          },
+                                        );
+                                        if (bookingId) {
+                                          handleCancelBooking(bookingId);
+                                        } else {
+                                          console.error(
+                                            "❌ No valid booking ID for cancellation",
+                                          );
+                                        }
+                                      }}
+                                      className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+                                    >
+                                      Yes, Cancel Booking
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+
+                            <Button
+                              onClick={() => handleContactSupport(displayId)}
+                              variant="outline"
+                              className="flex items-center justify-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50 py-2"
+                              size="sm"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              <span className="text-sm">Contact Support</span>
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-800">
+                            This booking was created in demo mode. Actions are
+                            limited.
+                          </p>
+                          <Button
+                            onClick={() => handleContactSupport(displayId)}
+                            variant="outline"
+                            className="mt-2 flex items-center justify-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50 py-2 w-full"
+                            size="sm"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            <span className="text-sm">Contact Support</span>
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
