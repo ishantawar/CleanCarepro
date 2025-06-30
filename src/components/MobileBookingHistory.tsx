@@ -637,32 +637,33 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                     {safeBooking.services &&
                       Array.isArray(safeBooking.services) &&
                       safeBooking.services.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-gray-900 text-xs">
-                            Booked Services
-                          </h4>
-                          {safeBooking.services.map(
-                            (service: any, idx: number) => (
-                              <div
-                                key={idx}
-                                className="flex justify-between items-center p-2 bg-blue-50 rounded-lg border border-blue-100"
-                              >
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-900 text-xs">
-                                    <SafeText>{service.name}</SafeText>
-                                  </p>
-                                  <p className="text-xs text-gray-600">
-                                    Qty: {service.quantity}
-                                  </p>
-                                </div>
-                                {service.price > 0 && (
-                                  <p className="font-semibold text-blue-600 text-xs">
-                                    ₹{service.price}
-                                  </p>
-                                )}
-                              </div>
-                            ),
-                          )}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="font-semibold text-gray-900 text-xs">
+                              Services ({safeBooking.services.length})
+                            </h4>
+                            <span className="text-xs text-blue-600 font-medium">
+                              ₹
+                              {safeBooking.totalAmount ||
+                                safeBooking.total_price ||
+                                0}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {safeBooking.services.map(
+                              (service: any, idx: number) => (
+                                <Badge
+                                  key={idx}
+                                  variant="secondary"
+                                  className="bg-white text-gray-700 border border-blue-200 text-xs px-1.5 py-0.5"
+                                >
+                                  <SafeText>{service.name}</SafeText>
+                                  {service.quantity > 1 &&
+                                    ` x${service.quantity}`}
+                                </Badge>
+                              ),
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -986,16 +987,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
 
                       {/* Secondary Actions Row */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button
-                          variant="ghost"
-                          className="rounded-xl border border-blue-200 hover:bg-blue-50 text-blue-600 font-medium py-3 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                          onClick={() => handleAddServices(safeBooking)}
-                          aria-label={`Add more services to booking ${safeBooking.service || "Home Service"}`}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add More Services
-                        </Button>
-
                         <Button
                           variant="ghost"
                           className="rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium py-3"

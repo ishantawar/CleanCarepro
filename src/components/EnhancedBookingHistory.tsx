@@ -788,33 +788,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                             typeof service === "object"
                               ? service.quantity || 1
                               : 1;
-                          const price =
-                            typeof service === "object" && service.price
-                              ? service.price
-                              : getServicePrice(service);
 
                           return (
-                            <div
+                            <Badge
                               key={idx}
-                              className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-blue-50 rounded-lg border border-blue-100 gap-2"
+                              variant="secondary"
+                              className="bg-white text-gray-700 border border-blue-200 text-xs px-2 py-1"
                             >
-                              <div className="flex-1">
-                                <p className="font-medium text-gray-900">
-                                  {serviceName}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  Qty: {quantity}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-semibold text-blue-600">
-                                  ₹{price * quantity}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  ₹{price} each
-                                </p>
-                              </div>
-                            </div>
+                              {serviceName} {quantity > 1 && `x${quantity}`}
+                            </Badge>
                           );
                         })}
                       </div>
@@ -971,18 +953,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               >
                                 <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                 <span>Edit Order</span>
-                              </Button>
-                            )}
-
-                            {canEditBooking(booking) && (
-                              <Button
-                                onClick={() => handleAddServices(booking)}
-                                variant="outline"
-                                className="flex items-center justify-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 py-2"
-                                size="sm"
-                              >
-                                <Plus className="h-4 w-4" />
-                                <span className="text-sm">Add Services</span>
                               </Button>
                             )}
                           </div>

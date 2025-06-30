@@ -65,11 +65,11 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 
   const authService = OTPAuthService.getInstance();
 
-  // Load saved form data on component mount
+  // Load saved form data on component mount (excluding date autofill)
   useEffect(() => {
     const savedFormData = getBookingFormData();
 
-    if (savedFormData.selectedDate) setSelectedDate(savedFormData.selectedDate);
+    // Don't autofill date - let user select fresh
     if (savedFormData.selectedTime) setSelectedTime(savedFormData.selectedTime);
     if (savedFormData.additionalDetails)
       setSpecialInstructions(savedFormData.additionalDetails);
@@ -542,7 +542,7 @@ Confirm this booking?`;
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm px-3 sm:px-4 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white shadow-sm px-3 sm:px-4 py-4 flex items-center sticky top-0 z-10">
         <div className="flex items-center gap-2 sm:gap-4">
           <Button variant="ghost" onClick={onBack} className="p-0 h-8 w-8">
             <ArrowLeft className="h-5 w-5" />
@@ -551,14 +551,6 @@ Confirm this booking?`;
             Cart ({cartItems.length} items)
           </h1>
         </div>
-
-        <Button
-          variant="ghost"
-          onClick={clearCart}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          Clear All
-        </Button>
       </div>
 
       <div className="p-3 sm:p-4 space-y-4 pb-32">
