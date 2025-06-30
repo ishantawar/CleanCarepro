@@ -212,10 +212,11 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         // Pincode
         newAddress.pincode = longName;
       } else if (types.includes("premise") || types.includes("establishment")) {
-        // Landmark/Building name
-        if (!newAddress.landmark) {
-          newAddress.landmark = longName;
+        // Building name - don't use for landmark, but can use for flat number if empty
+        if (!newAddress.flatNo && types.includes("premise")) {
+          newAddress.flatNo = longName;
         }
+        // Never autofill landmark from location
       }
     });
 
