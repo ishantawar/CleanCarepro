@@ -439,10 +439,18 @@ export class BookingService {
    */
   private async syncBookingToBackend(booking: BookingDetails): Promise<void> {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Skip backend sync if no API URL configured (fly.dev environment)
+      if (!this.apiBaseUrl) {
+        console.log(
+          "🌐 Skipping backend sync - no API URL configured (hosted environment)",
+        );
+        return;
+      }
 
-      // Transform booking data to match backend schema
+      console.log("🔄 Syncing booking to backend:", booking.id);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       const backendBooking = {
         customer_id: booking.userId,
         service: Array.isArray(booking.services)
