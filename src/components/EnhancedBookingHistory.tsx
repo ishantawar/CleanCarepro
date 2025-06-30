@@ -821,15 +821,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                     </div>
 
                     {/* Schedule */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-green-600" />
-                          <span className="font-medium text-gray-900">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+                      <div className="p-2 sm:p-4 bg-green-50 rounded-lg border border-green-100">
+                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                          <span className="font-medium text-gray-900 text-sm sm:text-base">
                             Pickup
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900">
                           {formatDate(
                             booking.pickupDate || booking.scheduled_date,
                           )}
@@ -841,14 +841,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         </p>
                       </div>
 
-                      <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-emerald-600" />
-                          <span className="font-medium text-gray-900">
+                      <div className="p-2 sm:p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600" />
+                          <span className="font-medium text-gray-900 text-sm sm:text-base">
                             Delivery
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900">
                           {formatDate(booking.deliveryDate) || "Date TBD"}
                         </p>
                         <p className="text-xs text-emerald-600">
@@ -957,20 +957,20 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
+                    <div className="flex flex-col gap-2 sm:gap-3 pt-2 sm:pt-4 border-t border-gray-200">
                       {hasRealId ? (
                         <>
                           {/* Primary Actions Row */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                             {canEditBooking(booking) && (
                               <Button
                                 onClick={() => handleEditBooking(booking)}
                                 variant="outline"
-                                className="flex items-center justify-center gap-2 border-green-200 text-green-600 hover:bg-green-50 py-2"
+                                className="flex items-center justify-center gap-1 sm:gap-2 border-green-200 text-green-600 hover:bg-green-50 py-1.5 sm:py-2 text-xs sm:text-sm"
                                 size="sm"
                               >
-                                <Edit className="h-4 w-4" />
-                                <span className="text-sm">Edit Order</span>
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span>Edit Order</span>
                               </Button>
                             )}
 
