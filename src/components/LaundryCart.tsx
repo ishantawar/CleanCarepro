@@ -21,6 +21,8 @@ import {
   User,
   Phone,
   Calendar,
+  Loader2,
+  CreditCard,
 } from "lucide-react";
 import { laundryServices, LaundryService } from "@/data/laundryServices";
 import { OTPAuthService } from "@/services/otpAuthService";
@@ -812,12 +814,22 @@ Confirm this booking?`;
                 );
               }
             }}
-            disabled={cartItems.length === 0}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={cartItems.length === 0 || isProcessingCheckout}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {cartItems.length === 0
-              ? "Add items to cart"
-              : `Proceed to Checkout • ₹${getTotal()}`}
+            {isProcessingCheckout ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : cartItems.length === 0 ? (
+              "Add items to cart"
+            ) : (
+              <>
+                <CreditCard className="h-4 w-4" />
+                Proceed to Checkout • ₹{getTotal()}
+              </>
+            )}
           </Button>
         </div>
       </div>
