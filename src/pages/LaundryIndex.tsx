@@ -598,6 +598,9 @@ const LaundryIndex = () => {
           localStorage.removeItem("laundry_cart");
           localStorage.removeItem("cart_data");
 
+          // Clear cached booking data to ensure fresh load next time
+          localStorage.removeItem("user_bookings");
+
           // Redirect to home page after successful booking
           setTimeout(() => {
             setCurrentView("home");
