@@ -528,19 +528,55 @@ const LaundryIndex = () => {
         console.log("📝 Fallback local booking result:", localResult);
 
         if (localResult.success) {
+          // Also save to Google Sheets even when MongoDB fails
+          try {
+            const GoogleSheetsService = (
+              await import("../services/googleSheetsService")
+            ).default;
+            const sheetsService = GoogleSheetsService.getInstance();
+
+            const orderData = {
+              orderId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              customerName:
+                currentUser.full_name || currentUser.name || "Customer",
+              customerPhone: currentUser.phone || "N/A",
+              customerAddress:
+                typeof cartData.address === "string"
+                  ? cartData.address
+                  : cartData.address?.fullAddress || "N/A",
+              services: servicesArray,
+              totalAmount: cartData.totalAmount,
+              pickupDate: cartData.pickupDate,
+              pickupTime: cartData.pickupTime,
+              status: "pending",
+              createdAt: new Date().toISOString(),
+            };
+
+            const sheetsResult =
+              await sheetsService.saveOrderToSheet(orderData);
+            console.log("📊 Fallback Google Sheets save result:", sheetsResult);
+          } catch (sheetsError) {
+            console.error(
+              "❌ Failed to save to Google Sheets (fallback):",
+              sheetsError,
+            );
+          }
+
           // Show success but mention it will sync later
           addNotification(
             createSuccessNotification(
-              "Order Saved Locally!",
-              "Your order has been saved and will sync when connection is restored.",
+              "Order Saved!",
+              "Your order has been saved successfully!",
             ),
           );
 
           // Clear cart
           localStorage.removeItem("laundry_cart");
 
-          // Stay in cart view to show success message
-          // setCurrentView("home"); // Don't redirect, let user decide
+          // Redirect to home page after successful booking
+          setTimeout(() => {
+            setCurrentView("home");
+          }, 2000); // Wait 2 seconds to show success message
         } else {
           console.error("❌ Local booking also failed:", localResult.error);
           throw new Error(
