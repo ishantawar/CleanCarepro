@@ -103,6 +103,31 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     // Pre-fill user data
     if (currentUser) {
       setPhoneNumber(currentUser.phone || "");
+
+      // Restore checkout form state after login
+      const savedState = localStorage.getItem("checkout_form_state");
+      if (savedState) {
+        try {
+          const state = JSON.parse(savedState);
+          // Only restore if saved within last 30 minutes
+          if (Date.now() - state.timestamp < 30 * 60 * 1000) {
+            if (state.addressData) setAddressData(state.addressData);
+            if (state.phoneNumber && !phoneNumber)
+              setPhoneNumber(state.phoneNumber);
+            if (state.selectedDate)
+              setSelectedDate(new Date(state.selectedDate));
+            if (state.selectedTime) setSelectedTime(state.selectedTime);
+            if (state.specialInstructions)
+              setSpecialInstructions(state.specialInstructions);
+            if (state.appliedCoupon) setAppliedCoupon(state.appliedCoupon);
+
+            console.log("✅ Restored checkout form state after login");
+          }
+          localStorage.removeItem("checkout_form_state");
+        } catch (error) {
+          console.error("Failed to restore checkout state:", error);
+        }
+      }
     }
   }, [currentUser]);
 
