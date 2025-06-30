@@ -10,11 +10,10 @@ export const GOOGLE_SHEETS_CONFIG = {
   // Instructions:
   // 1. Go to script.google.com
   // 2. Create new project
-  // 3. Copy the Apps Script code from GoogleSheetsService.generateAppsScriptCode()
-  // 4. Deploy as web app
+  // 3. Copy the Apps Script code from console logs when you place an order
+  // 4. Deploy as web app (execute as "Me", access for "Anyone")
   // 5. Copy the web app URL here
-  WEB_APP_URL:
-    "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec",
+  WEB_APP_URL: "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
 
   // Sheet configuration
   SHEET_NAME: "Orders",
