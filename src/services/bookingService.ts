@@ -676,10 +676,19 @@ export class BookingService {
       );
       const bookingIndex = allBookings.findIndex(
         (booking: BookingDetails) =>
-          booking.id === bookingId || (booking as any)._id === bookingId,
+          booking.id === bookingId ||
+          (booking as any)._id === bookingId ||
+          // Handle cases where bookingId might be the display format
+          booking.id?.toString() === bookingId ||
+          (booking as any)._id?.toString() === bookingId,
       );
 
       if (bookingIndex === -1) {
+        console.warn("🔍 Booking not found in localStorage:", bookingId);
+        console.log(
+          "📋 Available bookings:",
+          allBookings.map((b) => ({ id: b.id, _id: (b as any)._id })),
+        );
         return null;
       }
 
