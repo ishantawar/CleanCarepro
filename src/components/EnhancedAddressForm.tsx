@@ -357,7 +357,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     return {
       flatNo: address.flatNo || "", // Keep user input
       street: parts[1] || "",
-      landmark: address.landmark || "", // Keep user input
+      landmark: "", // Never autofill landmark
       village: parts[2] || parts[1] || "",
       city: parts[parts.length - 3] || parts[parts.length - 2] || "",
       pincode: extractPincode(addressString) || "",
