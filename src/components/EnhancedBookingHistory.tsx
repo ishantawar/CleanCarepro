@@ -834,7 +834,16 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           <span className="text-sm text-gray-600">
                             Services Total
                           </span>
-                          <span className="font-medium">₹{total}</span>
+                          <span className="font-medium">
+                            ₹{Math.max(0, total - 50)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">
+                            Delivery Charge
+                          </span>
+                          <span className="font-medium">₹50</span>
                         </div>
 
                         {booking.discount_amount &&
@@ -860,7 +869,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-2">
                           <span className="text-xs text-gray-500">
                             Payment Status
                           </span>
@@ -871,6 +880,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 ? "default"
                                 : "secondary"
                             }
+                            className="w-fit"
                           >
                             {(
                               booking.payment_status ||
