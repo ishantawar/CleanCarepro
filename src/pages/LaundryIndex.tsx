@@ -579,6 +579,55 @@ const LaundryIndex = () => {
           }, 2000); // Wait 2 seconds to show success message
         } else {
           console.error("❌ Local booking also failed:", localResult.error);
+
+          // Still try to save to Google Sheets as last resort
+          try {
+            const GoogleSheetsService = (
+              await import("../services/googleSheetsService")
+            ).default;
+            const sheetsService = GoogleSheetsService.getInstance();
+
+            const orderData = {
+              orderId: `backup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              customerName:
+                currentUser.full_name || currentUser.name || "Customer",
+              customerPhone: currentUser.phone || "N/A",
+              customerAddress:
+                typeof cartData.address === "string"
+                  ? cartData.address
+                  : cartData.address?.fullAddress || "N/A",
+              services: servicesArray,
+              totalAmount: cartData.totalAmount,
+              pickupDate: cartData.pickupDate,
+              pickupTime: cartData.pickupTime,
+              status: "pending",
+              createdAt: new Date().toISOString(),
+            };
+
+            const sheetsResult =
+              await sheetsService.saveOrderToSheet(orderData);
+
+            if (sheetsResult) {
+              console.log("📊 Order saved to Google Sheets as backup");
+              addNotification(
+                createSuccessNotification(
+                  "Order Saved to Backup!",
+                  "Your order has been saved to our backup system and will be processed manually.",
+                ),
+              );
+              localStorage.removeItem("laundry_cart");
+              setTimeout(() => {
+                setCurrentView("home");
+              }, 2000);
+              return; // Exit early since we saved to sheets
+            }
+          } catch (sheetsError) {
+            console.error(
+              "❌ Failed to save to Google Sheets (backup):",
+              sheetsError,
+            );
+          }
+
           throw new Error(
             localResult.error ||
               mongoResult.error?.message ||
