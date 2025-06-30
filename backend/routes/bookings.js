@@ -68,8 +68,51 @@ router.post("/", async (req, res) => {
         .json({ error: "Total price must be greater than 0" });
     }
 
-    // Verify customer exists
-    const customer = await User.findById(customer_id);
+    // Verify customer exists - handle both ObjectId and phone-based lookup
+    let customer;
+
+    // Try to find by ObjectId first
+    if (mongoose.Types.ObjectId.isValid(customer_id)) {
+      customer = await User.findById(customer_id);
+    }
+
+    // If not found and customer_id looks like a phone number, try to find by phone
+    if (
+      !customer &&
+      typeof customer_id === "string" &&
+      customer_id.match(/^\d{10,}$/)
+    ) {
+      customer = await User.findOne({ phone: customer_id });
+    }
+
+    // If still not found, try to find user in CleanCareUser collection
+    if (!customer) {
+      try {
+        const CleanCareUser = mongoose.model("CleanCareUser");
+        const cleanCareUser = await CleanCareUser.findById(customer_id);
+        if (cleanCareUser) {
+          // Create corresponding User record for booking
+          customer = new User({
+            email:
+              cleanCareUser.email || `${cleanCareUser.phone}@cleancare.com`,
+            password: "temp_password_123", // Temporary password for booking system
+            full_name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+            phone: cleanCareUser.phone,
+            user_type: "customer",
+            is_verified: cleanCareUser.isVerified || false,
+            phone_verified: cleanCareUser.isVerified || false,
+          });
+          await customer.save();
+          console.log(
+            "✅ Created User record from CleanCareUser:",
+            customer._id,
+          );
+        }
+      } catch (cleanCareError) {
+        console.warn("Failed to lookup CleanCareUser:", cleanCareError);
+      }
+    }
+
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
