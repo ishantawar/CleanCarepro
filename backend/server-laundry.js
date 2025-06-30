@@ -43,32 +43,18 @@ app.use(express.urlencoded({ extended: true }));
 // MongoDB connection
 const connectDB = async () => {
   try {
-    // Check if real credentials are provided (not placeholders)
-    const username = process.env.MONGODB_USERNAME;
-    const password = process.env.MONGODB_PASSWORD;
-    const cluster = process.env.MONGODB_CLUSTER;
-
-    if (
-      !username ||
-      !password ||
-      !cluster ||
-      username === "your_mongodb_username" ||
-      password === "your_mongodb_password" ||
-      cluster === "your_cluster.mongodb.net"
-    ) {
-      console.log(
-        "⚠️ MongoDB credentials not configured - running in mock mode",
-      );
-      return;
-    }
-
+    // Use the provided MongoDB URI directly
     const mongoURI =
       process.env.MONGODB_URI ||
-      `mongodb+srv://${username}:${password}@${cluster}/${process.env.MONGODB_DATABASE}?retryWrites=true&w=majority`;
+      process.env.DB_URI ||
+      "mongodb+srv://sunflower110001:fV4LhLpWlKj5Vx87@cluster0.ic8p792.mongodb.net/cleancare_pro?retryWrites=true&w=majority";
 
     await mongoose.connect(mongoURI);
 
-    console.log("✅ MongoDB connected successfully");
+    console.log(
+      "✅ MongoDB connected successfully to:",
+      mongoURI.replace(/\/\/[^:]+:[^@]+@/, "//***:***@"),
+    );
   } catch (error) {
     console.error("❌ MongoDB connection error:", error.message);
     console.log("⚠️ Running in mock mode without database");

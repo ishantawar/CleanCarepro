@@ -172,13 +172,11 @@ router.post(
 
     const token = generateToken(user._id);
     res.setHeader("Content-Type", "application/json");
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Verified",
-        data: { user, token, expiresIn: 2592000 },
-      });
+    res.status(200).json({
+      success: true,
+      message: "Verified",
+      data: { user, token, expiresIn: 2592000 },
+    });
   },
 );
 
@@ -249,6 +247,73 @@ router.post("/save-user", async (req, res) => {
   }
 });
 
+// Register/Create user (for frontend compatibility)
+router.post("/register", async (req, res) => {
+  try {
+    const {
+      phone,
+      full_name,
+      name,
+      email,
+      user_type = "customer",
+      is_verified = true,
+      phone_verified = true,
+    } = req.body;
+
+    if (!phone) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Phone number is required" });
+    }
+
+    const cleanedPhone = cleanPhone(phone);
+    if (!isValidPhone(cleanedPhone)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid phone number" });
+    }
+
+    let user = await User.findOne({ phone: cleanedPhone });
+
+    if (!user) {
+      // Create new user
+      user = new User({
+        phone: cleanedPhone,
+        name: full_name || name || `User ${cleanedPhone.slice(-4)}`,
+        email: email || "",
+        isVerified: is_verified,
+      });
+    } else {
+      // Update existing user
+      if (full_name || name) user.name = full_name || name;
+      if (email) user.email = email;
+      user.isVerified = is_verified;
+      user.lastLogin = new Date();
+    }
+
+    await user.save();
+    log("User registered/updated:", user.phone);
+
+    res.setHeader("Content-Type", "application/json");
+    res.status(200).json({
+      success: true,
+      message: "User registered successfully",
+      user: {
+        _id: user._id,
+        phone: user.phone,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    log("Error registering user:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
 // Get user by phone number
 router.post("/get-user-by-phone", async (req, res) => {
   try {
@@ -295,13 +360,11 @@ router.post("/get-user-by-phone", async (req, res) => {
 
 router.get("/health", (req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res
-    .status(200)
-    .json({
-      success: true,
-      status: "healthy",
-      timestamp: new Date().toISOString(),
-    });
+  res.status(200).json({
+    success: true,
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 module.exports = router;

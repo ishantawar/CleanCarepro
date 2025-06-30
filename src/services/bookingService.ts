@@ -49,7 +49,7 @@ export class BookingService {
       window.location.hostname.includes("builder.codes")
     ) {
       // Use external backend for hosted environments
-      this.apiBaseUrl = "https://cleancarepro-xrqa.onrender.com/api";
+      this.apiBaseUrl = "https://cleancarepro-1.onrender.com/api";
     } else if (window.location.hostname.includes("fly.dev")) {
       // Disable backend sync for fly.dev environments
       this.apiBaseUrl = "";

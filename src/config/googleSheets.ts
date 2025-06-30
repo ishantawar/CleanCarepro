@@ -4,7 +4,7 @@
 export const GOOGLE_SHEETS_CONFIG = {
   // Main Google Sheet URL - CHANGE THIS TO USE A DIFFERENT SHEET
   SHEET_URL:
-    "https://docs.google.com/spreadsheets/d/1CGrATwhNTjWbSVMfhvwBLLGtGycXBCjzEQQ_3hnGNs0/edit?usp=sharing",
+    "https://docs.google.com/spreadsheets/d/1kQeHBoXgSLI7nDJyCA-rUqmkQhnWjRHSawm6hzTAj1s/edit?usp=sharing",
 
   // Google Apps Script Web App URL (you need to create this)
   // Instructions:
@@ -13,7 +13,8 @@ export const GOOGLE_SHEETS_CONFIG = {
   // 3. Copy the Apps Script code from GoogleSheetsService.generateAppsScriptCode()
   // 4. Deploy as web app
   // 5. Copy the web app URL here
-  WEB_APP_URL: "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec",
+  WEB_APP_URL:
+    "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec",
 
   // Sheet configuration
   SHEET_NAME: "Orders",
@@ -34,11 +35,8 @@ export const GOOGLE_SHEETS_CONFIG = {
   ],
 
   // Enable/disable Google Sheets integration
-  // Automatically disabled in hosted environments where WEB_APP_URL is not configured
-  ENABLED:
-    typeof window !== "undefined" &&
-    !window.location.hostname.includes("fly.dev") &&
-    !window.location.hostname.includes("builder.codes"),
+  // Temporarily disabled to prevent 503 errors from placeholder URL
+  ENABLED: false,
 };
 
 // Helper function to validate configuration
