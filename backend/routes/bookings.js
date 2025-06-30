@@ -94,10 +94,16 @@ router.post("/", async (req, res) => {
       });
     }
 
-    if (total_price <= 0) {
-      return res
-        .status(400)
-        .json({ error: "Total price must be greater than 0" });
+    if (isNaN(total_price) || total_price <= 0) {
+      console.log("❌ Total price validation failed:", {
+        total_price,
+        type: typeof total_price,
+      });
+      return res.status(400).json({
+        error: "Total price must be greater than 0",
+        totalPriceReceived: total_price,
+        totalPriceType: typeof total_price,
+      });
     }
 
     // Verify customer exists - handle both ObjectId and phone-based lookup
