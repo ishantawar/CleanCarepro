@@ -373,8 +373,7 @@ const LaundryIndex = () => {
       return;
     }
 
-    // Clear any cached booking data to ensure fresh load
-    localStorage.removeItem("user_bookings");
+    // Navigate to bookings view (bookings will be loaded fresh from storage)
     setCurrentView("bookings");
   };
 
