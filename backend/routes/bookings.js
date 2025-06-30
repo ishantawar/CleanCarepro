@@ -164,8 +164,35 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // If customer not found, create a basic customer record
+    if (!customer && actualCustomerId.match(/^\d{10,}$/)) {
+      console.log(`👤 Creating new customer with phone: ${actualCustomerId}`);
+
+      customer = new User({
+        email: `${actualCustomerId}@cleancare.com`,
+        password: "temp_password_123", // Temporary password
+        full_name: `User ${actualCustomerId.slice(-4)}`,
+        phone: actualCustomerId,
+        user_type: "customer",
+        is_verified: true,
+        phone_verified: true,
+      });
+
+      try {
+        await customer.save();
+        console.log("✅ Auto-created customer:", customer._id);
+      } catch (createError) {
+        console.error("Failed to auto-create customer:", createError);
+        return res
+          .status(500)
+          .json({ error: "Failed to create customer record" });
+      }
+    }
+
     if (!customer) {
-      return res.status(404).json({ error: "Customer not found" });
+      return res
+        .status(404)
+        .json({ error: "Customer not found and could not be created" });
     }
 
     // Create booking
