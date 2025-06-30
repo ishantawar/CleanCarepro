@@ -36,18 +36,48 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
 
   // Laundry services that users can add
   const availableServices = [
-    { name: "Shirt/T-Shirt", price: 25 },
-    { name: "Trouser/Pant", price: 30 },
-    { name: "Kurta", price: 35 },
-    { name: "Saree", price: 45 },
-    { name: "Dress", price: 40 },
-    { name: "Blazer/Suit", price: 80 },
-    { name: "Jeans", price: 35 },
-    { name: "Bedsheet", price: 50 },
-    { name: "Towel", price: 20 },
-    { name: "Laundry and Fold", price: 70 },
-    { name: "Dry Cleaning", price: 100 },
-    { name: "Iron Only", price: 15 },
+    {
+      name: "Shirt/T-Shirt",
+      price: 25,
+      category: "Clothing",
+      unit: "per piece",
+    },
+    {
+      name: "Trouser/Pant",
+      price: 30,
+      category: "Clothing",
+      unit: "per piece",
+    },
+    { name: "Kurta", price: 35, category: "Clothing", unit: "per piece" },
+    { name: "Saree", price: 45, category: "Clothing", unit: "per piece" },
+    { name: "Dress", price: 40, category: "Clothing", unit: "per piece" },
+    {
+      name: "Blazer/Suit",
+      price: 80,
+      category: "Formal Wear",
+      unit: "per piece",
+    },
+    { name: "Jeans", price: 35, category: "Clothing", unit: "per piece" },
+    { name: "Bedsheet", price: 50, category: "Home Linen", unit: "per piece" },
+    { name: "Towel", price: 20, category: "Home Linen", unit: "per piece" },
+    {
+      name: "Laundry and Fold",
+      price: 70,
+      category: "Service Package",
+      unit: "per kg",
+    },
+    {
+      name: "Dry Cleaning",
+      price: 100,
+      category: "Special Service",
+      unit: "per piece",
+    },
+    {
+      name: "Iron Only",
+      price: 15,
+      category: "Express Service",
+      unit: "per piece",
+    },
   ];
 
   // Parse selected services into ServiceItem format
@@ -283,6 +313,7 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          addAvailableService(service.name, service.price);
                         }}
                       >
                         <Plus className="h-3 w-3" />
