@@ -403,34 +403,9 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Address Type Selection */}
-            <div>
-              <Label className="text-sm font-medium">Address Type</Label>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {getAvailableTypes().map((type) => (
-                  <Button
-                    key={type.value}
-                    variant="outline"
-                    disabled={type.disabled}
-                    className={`p-3 h-auto ${type.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-                    onClick={() => {
-                      // This will be handled by the form
-                    }}
-                  >
-                    {type.label}
-                    {type.disabled && (
-                      <span className="text-xs block text-gray-500">
-                        Already added
-                      </span>
-                    )}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
             <EnhancedAddressForm
               onAddressUpdate={handleAddAddress}
-              showLabel={true}
+              showLabel={false}
             />
           </div>
         </DialogContent>
