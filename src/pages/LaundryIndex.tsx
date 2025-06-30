@@ -405,9 +405,23 @@ const LaundryIndex = () => {
           typeof service === "string" ? service : service.name,
         ) || [];
 
+      // Debug current user structure
+      console.log("🔍 Current user for booking:", {
+        user: currentUser,
+        _id: currentUser._id,
+        id: currentUser.id,
+        phone: currentUser.phone,
+        name: currentUser.name || currentUser.full_name,
+      });
+
+      // Get user ID with fallback
+      const userId =
+        currentUser._id || currentUser.id || currentUser.phone || "unknown";
+      console.log("👤 Using user ID for booking:", userId);
+
       // Create booking data for MongoDB backend
       const mongoBookingData = {
-        customer_id: currentUser._id || currentUser.id,
+        customer_id: userId,
         service: servicesArray[0] || "Laundry Service",
         service_type: "laundry",
         services: servicesArray,
@@ -431,6 +445,8 @@ const LaundryIndex = () => {
           discount: 0,
         },
       };
+
+      console.log("📋 MongoDB booking data:", mongoBookingData);
 
       // Save to MongoDB backend first
       console.log("💾 Saving to MongoDB backend...");
