@@ -89,12 +89,28 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
     setIsLoading(true);
 
     try {
+      console.log("💾 EditBookingModal handleSave called with:", {
+        originalBooking: booking,
+        bookingId: booking?.id,
+        bookingMongoId: booking?._id,
+        bookingKeys: booking ? Object.keys(booking) : [],
+      });
+
       // Calculate delivery charge
       const deliveryCharge = 50;
       const finalAmount = totalPrice + deliveryCharge;
 
+      // Ensure we preserve the booking ID correctly
+      const bookingId = booking?.id || booking?._id;
+      if (!bookingId) {
+        throw new Error("No valid booking ID found in original booking object");
+      }
+
       const updatedBooking = {
         ...booking,
+        // Explicitly preserve the ID fields
+        id: booking.id,
+        _id: booking._id,
         scheduled_date: formData.scheduled_date,
         pickupDate: formData.scheduled_date, // Also update pickupDate
         scheduled_time: formData.scheduled_time,
