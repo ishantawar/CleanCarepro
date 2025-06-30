@@ -81,6 +81,18 @@ const getReverseGeocodedLocation = async (
 ): Promise<string> => {
   console.log(`🔄 Attempting reverse geocoding for: ${latitude}, ${longitude}`);
 
+  // Check if we're in a hosted environment where external APIs might fail
+  const isHostedEnv =
+    window.location.hostname.includes("fly.dev") ||
+    window.location.hostname.includes("builder.codes");
+
+  if (isHostedEnv) {
+    console.log(
+      "🌐 Hosted environment - using coordinates instead of geocoding",
+    );
+    return `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  }
+
   // Method 1: Try Google Maps API if available
   const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   if (googleApiKey) {
