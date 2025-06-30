@@ -333,12 +333,22 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
                             // Ensure all address fields are properly formatted for autofill
                             const formattedAddress = {
                               ...address,
+                              // Ensure flatNo/flatHouseNo compatibility
+                              flatNo:
+                                address.flatNo || address.flatHouseNo || "",
                               flatHouseNo:
-                                address.flatNo || address.flatHouseNo,
+                                address.flatNo || address.flatHouseNo || "",
+                              // Ensure all required fields are present
+                              street: address.street || "",
+                              landmark: address.landmark || "",
+                              village: address.village || "",
+                              city: address.city || "",
+                              pincode: address.pincode || "",
+                              // Generate fullAddress if not present
                               fullAddress:
                                 address.fullAddress ||
                                 [
-                                  address.flatNo,
+                                  address.flatNo || address.flatHouseNo,
                                   address.street,
                                   address.landmark &&
                                     `Near ${address.landmark}`,
@@ -348,7 +358,13 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
                                 ]
                                   .filter(Boolean)
                                   .join(", "),
+                              // Ensure coordinates are preserved
+                              coordinates: address.coordinates || null,
                             };
+                            console.log(
+                              "📤 Sending formatted address:",
+                              formattedAddress,
+                            );
                             onSelectAddress(formattedAddress);
                             onClose();
                           }}
