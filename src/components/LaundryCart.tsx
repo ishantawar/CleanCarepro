@@ -93,12 +93,35 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     appliedCoupon,
   ]);
 
-  // Load cart from localStorage
+  // Load cart from localStorage and refresh on component mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("laundry_cart");
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
+    const loadCart = () => {
+      const savedCart = localStorage.getItem("laundry_cart");
+      if (savedCart) {
+        try {
+          const parsedCart = JSON.parse(savedCart);
+          setCart(parsedCart);
+        } catch (error) {
+          console.error("Error parsing cart from localStorage:", error);
+          setCart({});
+        }
+      } else {
+        setCart({});
+      }
+    };
+
+    loadCart();
+
+    // Add event listener for storage changes (when cart is cleared from other components)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "laundry_cart") {
+        loadCart();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
     // Pre-fill user data
     if (currentUser) {
