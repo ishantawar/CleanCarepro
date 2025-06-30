@@ -607,7 +607,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         Booked Services
                       </h4>
                       <div className="space-y-2">
-
                         {services.map((service: any, idx: number) => {
                           const serviceName =
                             typeof service === "object"
@@ -837,65 +836,49 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               </AlertDialog>
                             )}
 
-
-                      {canCancelBooking(booking) && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                              disabled={cancellingBooking === bookingId}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {cancellingBooking === bookingId
-                                ? "Cancelling..."
-                                : "Cancel"}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Cancel Booking?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to cancel this booking?
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>
-                                Keep Booking
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleCancelBooking(bookingId)}
-                                className="bg-red-600 hover:bg-red-700"
+                            {canEditBooking(booking) && (
+                              <Button
+                                onClick={() => handleAddServices(booking)}
+                                variant="outline"
+                                className="flex items-center justify-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 py-2"
+                                size="sm"
                               >
-                                Yes, Cancel Booking
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="text-xs sm:text-sm">
+                                  Add Services
+                                </span>
+                              </Button>
+                            )}
+                          </div>
 
-                      {canEditBooking(booking) && (
-                        <Button
-                          onClick={() => handleAddServices(booking)}
-                          variant="outline"
-                          className="flex items-center gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Add More Services
-                        </Button>
+                          {/* Contact Support */}
+                          <Button
+                            onClick={() => handleContactSupport(bookingId)}
+                            variant="outline"
+                            className="flex items-center justify-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50 py-2"
+                            size="sm"
+                          >
+                            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm">
+                              Contact Support
+                            </span>
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-3">
+                          <Button
+                            onClick={() => handleContactSupport(bookingId)}
+                            variant="outline"
+                            className="flex items-center justify-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50 py-2"
+                            size="sm"
+                          >
+                            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm">
+                              Contact Support
+                            </span>
+                          </Button>
+                        </div>
                       )}
-
-                      <Button
-                        onClick={() => handleContactSupport(bookingId)}
-                        variant="outline"
-                        className="flex items-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Contact Support
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>

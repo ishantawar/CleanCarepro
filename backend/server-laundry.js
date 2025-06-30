@@ -3,51 +3,84 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
 
-// Load environment variables in order of preference
-dotenv.config({ path: ".env.development" }); // Development credentials
-dotenv.config({ path: ".env.local" }); // User-specific overrides
-dotenv.config(); // Default .env file
+// Load environment variables
+dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+// Load production configuration
+const productionConfig = require("./config/production");
 
-// Middleware
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://localhost:8080",
-  "https://cleancarepro-git-aimainb2920c220d71-hills-projects-6611101c.vercel.app",
-  "https://cleancare-pro-frontend-production.up.railway.app",
-  "https://cleancarepro.vercel.app",
-  "https://cleancare-pro-api.onrender.com",
-  "https://cleancare-pro-frontend.onrender.com",
-];
-
-// Add environment-specific origins
-if (process.env.ALLOWED_ORIGINS) {
-  allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(","));
+// Validate configuration
+try {
+  productionConfig.validateConfig();
+} catch (error) {
+  console.error("❌ Configuration Error:", error.message);
+  process.exit(1);
 }
 
+const app = express();
+const PORT = productionConfig.PORT;
+
+// Security middleware
 app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: false,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  helmet({
+    contentSecurityPolicy: false, // Disable for API
+    crossOriginEmbedderPolicy: false,
   }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// MongoDB connection
+// Compression middleware
+app.use(compression());
+
+// Logging middleware
+if (productionConfig.isProduction()) {
+  app.use(morgan("combined"));
+} else {
+  app.use(morgan("dev"));
+}
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: productionConfig.RATE_LIMIT.WINDOW_MS,
+  max: productionConfig.RATE_LIMIT.MAX_REQUESTS,
+  message: { error: "Too many requests, please try again later" },
+});
+
+const authLimiter = rateLimit({
+  windowMs: productionConfig.RATE_LIMIT.AUTH_WINDOW_MS,
+  max: productionConfig.RATE_LIMIT.AUTH_MAX_REQUESTS,
+  message: {
+    error: "Too many authentication attempts, please try again later",
+  },
+});
+
+app.use(generalLimiter);
+app.use("/api/auth", authLimiter);
+
+// CORS configuration
+app.use(
+  cors({
+    origin: productionConfig.ALLOWED_ORIGINS,
+    credentials: false,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept", "user-id"],
+  }),
+);
+
+// Body parsing middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// MongoDB connection with production configuration
 const connectDB = async () => {
   try {
-    // Use the provided MongoDB URI directly
-    const mongoURI =
-      process.env.MONGODB_URI ||
-      process.env.DB_URI ||
-      "mongodb+srv://sunflower110001:fV4LhLpWlKj5Vx87@cluster0.ic8p792.mongodb.net/cleancare_pro?retryWrites=true&w=majority";
+    // Use production MongoDB URI
+    const mongoURI = productionConfig.MONGODB_URI;
+    ("mongodb+srv://sunflower110001:fV4LhLpWlKj5Vx87@cluster0.ic8p792.mongodb.net/cleancare_pro?retryWrites=true&w=majority");
 
     await mongoose.connect(mongoURI);
 
@@ -113,6 +146,86 @@ try {
   console.error("❌ Failed to load WhatsApp Auth routes:", error.message);
 }
 
+// Addresses routes
+try {
+  const addressRoutes = require("./routes/addresses");
+  app.use("/api/addresses", addressRoutes);
+  console.log("🔗 Address routes registered at /api/addresses");
+} catch (error) {
+  console.error("❌ Failed to load Address routes:", error.message);
+}
+
+// Google Sheets integration endpoint
+app.post("/api/sheets/order", async (req, res) => {
+  try {
+    const orderData = req.body;
+
+    // Validate required fields
+    if (
+      !orderData.orderId ||
+      !orderData.customerName ||
+      !orderData.customerPhone
+    ) {
+      return res.status(400).json({ error: "Missing required order data" });
+    }
+
+    // Prepare data for Google Sheets
+    const sheetData = {
+      sheetName: "Orders",
+      data: {
+        orderId: orderData.orderId,
+        timestamp: new Date().toISOString(),
+        customerName: orderData.customerName,
+        customerPhone: orderData.customerPhone,
+        customerAddress: orderData.customerAddress || "",
+        services: Array.isArray(orderData.services)
+          ? orderData.services.join(", ")
+          : orderData.services || "",
+        totalAmount: orderData.totalAmount || 0,
+        pickupDate: orderData.pickupDate || "",
+        pickupTime: orderData.pickupTime || "",
+        status: orderData.status || "pending",
+        paymentStatus: orderData.paymentStatus || "pending",
+        coordinates: orderData.coordinates
+          ? `${orderData.coordinates.lat},${orderData.coordinates.lng}`
+          : "",
+        city: orderData.city || "",
+        pincode: orderData.pincode || "",
+      },
+    };
+
+    // Send to Google Apps Script (if URL is configured)
+    const webAppUrl =
+      process.env.GOOGLE_APPS_SCRIPT_URL ||
+      "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec";
+
+    if (process.env.GOOGLE_SHEETS_ENABLED !== "false") {
+      try {
+        const response = await fetch(webAppUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(sheetData),
+        });
+
+        console.log("📊 Order data sent to Google Sheets:", orderData.orderId);
+      } catch (sheetError) {
+        console.error("❌ Failed to send to Google Sheets:", sheetError);
+        // Don't fail the request if Google Sheets fails
+      }
+    }
+
+    res.json({
+      data: { message: "Order processed successfully" },
+      error: null,
+    });
+  } catch (error) {
+    console.error("Google Sheets endpoint error:", error);
+    res.status(500).json({ error: "Failed to process order data" });
+  }
+});
+
 // Push notification endpoints
 app.post("/api/push/subscribe", (req, res) => {
   // Store push subscription in database
@@ -127,13 +240,48 @@ app.post("/api/push/unsubscribe", (req, res) => {
   res.json({ success: true });
 });
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({
+// Health check endpoint with comprehensive monitoring
+app.get("/api/health", async (req, res) => {
+  const healthCheck = {
     status: "ok",
     timestamp: new Date().toISOString(),
     service: "CleanCare Pro API",
-  });
+    version: "1.0.0",
+    environment: productionConfig.NODE_ENV,
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    database: "unknown",
+    features: productionConfig.FEATURES,
+  };
+
+  // Check database connection
+  try {
+    if (mongoose.connection.readyState === 1) {
+      healthCheck.database = "connected";
+    } else {
+      healthCheck.database = "disconnected";
+      healthCheck.status = "degraded";
+    }
+  } catch (error) {
+    healthCheck.database = "error";
+    healthCheck.status = "unhealthy";
+  }
+
+  // Check memory usage
+  const memoryUsage = process.memoryUsage();
+  if (memoryUsage.heapUsed > productionConfig.MEMORY_THRESHOLD) {
+    healthCheck.status = "degraded";
+    healthCheck.warning = "High memory usage";
+  }
+
+  const statusCode =
+    healthCheck.status === "ok"
+      ? 200
+      : healthCheck.status === "degraded"
+        ? 200
+        : 503;
+
+  res.status(statusCode).json(healthCheck);
 });
 
 // Test endpoint
@@ -144,29 +292,118 @@ app.get("/api/test", (req, res) => {
   });
 });
 
-// Error handling middleware
+// Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error("Error:", err);
-  res.status(500).json({
+  console.error("💥 Global Error Handler:", err);
+
+  // Log error details in production
+  if (productionConfig.isProduction()) {
+    console.error("Error Stack:", err.stack);
+    console.error("Request Details:", {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      body: req.body,
+    });
+  }
+
+  // Return appropriate error response
+  const statusCode = err.statusCode || 500;
+  const message = productionConfig.isProduction()
+    ? "Internal server error"
+    : err.message || "Something went wrong";
+
+  res.status(statusCode).json({
     success: false,
-    message: "Internal server error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    message,
+    error: productionConfig.isDevelopment() ? err.stack : undefined,
+    timestamp: new Date().toISOString(),
   });
 });
 
-// Handle 404
+// Handle 404 routes
 app.use("*", (req, res) => {
   res.status(404).json({
     success: false,
-    message: "Route not found",
+    message: `Route ${req.originalUrl} not found`,
+    availableRoutes: [
+      "/api/health",
+      "/api/test",
+      "/api/auth",
+      "/api/bookings",
+      "/api/addresses",
+      "/api/location",
+      "/api/whatsapp",
+      "/api/sheets/order",
+    ],
   });
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server with error handling
+const server = app.listen(PORT, () => {
   console.log(`🚀 CleanCare Pro server running on port ${PORT}`);
+  console.log(`📱 Environment: ${productionConfig.NODE_ENV}`);
   console.log(`📱 API available at: http://localhost:${PORT}/api`);
   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔒 Security: Helmet enabled`);
+  console.log(`⚡ Compression: Enabled`);
+  console.log(`🛡️  Rate limiting: Enabled`);
+
+  if (productionConfig.FEATURES.SMS_VERIFICATION) {
+    console.log(`📱 SMS Service: DVHosting`);
+  }
+
+  if (productionConfig.GOOGLE_SHEETS_ENABLED) {
+    console.log(`📊 Google Sheets: Enabled`);
+  }
+});
+
+// Graceful shutdown handling
+const gracefulShutdown = (signal) => {
+  console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+
+  server.close((err) => {
+    if (err) {
+      console.error("❌ Error during server shutdown:", err);
+      process.exit(1);
+    }
+
+    console.log("✅ HTTP server closed");
+
+    // Close database connection
+    mongoose.connection.close(false, (err) => {
+      if (err) {
+        console.error("❌ Error closing MongoDB connection:", err);
+        process.exit(1);
+      }
+
+      console.log("✅ MongoDB connection closed");
+      console.log("👋 Graceful shutdown completed");
+      process.exit(0);
+    });
+  });
+
+  // Force shutdown after 30 seconds
+  setTimeout(() => {
+    console.error("⚠️  Forced shutdown after 30 seconds");
+    process.exit(1);
+  }, 30000);
+};
+
+// Handle shutdown signals
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.error("💥 Uncaught Exception:", err);
+  gracefulShutdown("uncaughtException");
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("💥 Unhandled Rejection at:", promise, "reason:", reason);
+  gracefulShutdown("unhandledRejection");
 });
 
 // Graceful shutdown
