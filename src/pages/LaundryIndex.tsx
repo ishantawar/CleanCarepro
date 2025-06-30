@@ -369,6 +369,9 @@ const LaundryIndex = () => {
       setCurrentView("auth");
       return;
     }
+
+    // Clear any cached booking data to ensure fresh load
+    localStorage.removeItem("user_bookings");
     setCurrentView("bookings");
   };
 
