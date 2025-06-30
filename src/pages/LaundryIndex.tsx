@@ -497,7 +497,7 @@ const LaundryIndex = () => {
 
         // Also save using booking service for local storage backup
         const localBookingData = {
-          userId: currentUser._id || currentUser.id || currentUser.phone,
+          userId: userId, // Use same resolved user ID
           services: servicesArray,
           totalAmount: cartData.totalAmount,
           status: "pending" as const,
