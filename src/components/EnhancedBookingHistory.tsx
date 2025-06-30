@@ -41,7 +41,6 @@ import {
   RefreshCw,
   Star,
   ArrowLeft,
-  Plus,
   Package,
   CreditCard,
   User,
