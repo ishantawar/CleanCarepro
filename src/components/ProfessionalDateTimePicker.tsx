@@ -110,20 +110,8 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
       {/* Date Selection */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            Select Date
-          </Label>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="text-xs px-2 py-1 h-auto"
-            >
-              All Dates
-            </Button>
-          </div>
+          <Label className="text-sm font-medium flex items-center gap-2" />
+          <div className="flex items-center gap-2" />
         </div>
 
         {/* Dropdown for extended date selection */}
