@@ -13,7 +13,7 @@ const getApiBaseUrl = () => {
     window.location.hostname.includes("builder.codes")
   ) {
     // Use the correct render.com backend URL
-    return "https://cleancarepro-1.onrender.com/api";
+    return "https://cleancarepro-95it.onrender.com/api";
   }
 
   // For hosted environment, detect if we're on fly.dev and disable backend calls
@@ -183,9 +183,22 @@ export const bookingHelpers = {
 
         if (customerResponse.ok) {
           const customerData = await safeParseJSON(customerResponse);
-          if (customerData.user && customerData.user._id) {
+          if (
+            customerData &&
+            customerData.success &&
+            customerData.user &&
+            customerData.user._id
+          ) {
             customerId = customerData.user._id;
             console.log("✅ Customer verified/created with ID:", customerId);
+
+            // Update localStorage with proper user data
+            const updatedUser = {
+              ...user,
+              _id: customerData.user._id,
+              id: customerData.user._id,
+            };
+            localStorage.setItem("current_user", JSON.stringify(updatedUser));
           }
         } else {
           console.log(
@@ -206,13 +219,98 @@ export const bookingHelpers = {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
+        // Ensure services is properly formatted as array
+        let servicesArray = [];
+        if (Array.isArray(bookingData.services)) {
+          servicesArray = bookingData.services.filter((s) => s && s.trim());
+        } else if (
+          typeof bookingData.services === "string" &&
+          bookingData.services.trim()
+        ) {
+          servicesArray = [bookingData.services.trim()];
+        } else if (bookingData.service) {
+          servicesArray = [bookingData.service];
+        }
+
+        // Fallback to default service if none provided
+        if (servicesArray.length === 0) {
+          servicesArray = ["Home Service"];
+        }
+
+        // Extract address string properly
+        let addressString = "";
+        if (typeof bookingData.address === "string") {
+          addressString = bookingData.address;
+        } else if (bookingData.address?.fullAddress) {
+          addressString = bookingData.address.fullAddress;
+        } else if (bookingData.address?.street || bookingData.address?.city) {
+          addressString =
+            `${bookingData.address.street || ""}, ${bookingData.address.city || ""}`.replace(
+              /^,\s*/,
+              "",
+            );
+        } else if (typeof bookingData.address === "object") {
+          addressString = JSON.stringify(bookingData.address);
+        } else {
+          addressString = "Address not provided";
+        }
+
+        // Transform booking data to match backend schema exactly
+        const transformedBookingData = {
+          customer_id: customerId,
+          service: servicesArray.join(", "),
+          service_type: bookingData.service_type || "home-service",
+          services: servicesArray,
+          scheduled_date:
+            bookingData.pickupDate ||
+            bookingData.scheduled_date ||
+            new Date().toISOString().split("T")[0],
+          scheduled_time:
+            bookingData.pickupTime || bookingData.scheduled_time || "10:00",
+          provider_name: bookingData.provider_name || "CleanCare Pro",
+          address: addressString,
+          coordinates: (typeof bookingData.address === "object" &&
+            bookingData.address?.coordinates) ||
+            bookingData.coordinates || { lat: 0, lng: 0 },
+          additional_details:
+            bookingData.contactDetails?.instructions ||
+            bookingData.additional_details ||
+            bookingData.instructions ||
+            "",
+          total_price: Number(
+            bookingData.totalAmount || bookingData.total_price || 0,
+          ),
+          discount_amount: Number(bookingData.discount_amount || 0),
+          final_amount: Number(
+            bookingData.totalAmount ||
+              bookingData.final_amount ||
+              bookingData.total_price ||
+              0,
+          ),
+          special_instructions:
+            bookingData.contactDetails?.instructions ||
+            bookingData.additional_details ||
+            bookingData.instructions ||
+            "",
+          charges_breakdown: {
+            base_price: Number(
+              bookingData.totalAmount || bookingData.total_price || 0,
+            ),
+            tax_amount: Number(bookingData.tax_amount || 0),
+            service_fee: Number(bookingData.service_fee || 0),
+            discount: Number(bookingData.discount_amount || 0),
+          },
+        };
+
+        console.log(
+          "📤 Sending booking data to backend:",
+          transformedBookingData,
+        );
+
         response = await fetch(`${API_BASE_URL}/bookings`, {
           method: "POST",
           headers: getAuthHeaders(),
-          body: JSON.stringify({
-            ...bookingData,
-            customer_id: customerId, // ✅ use resolved customer ID
-          }),
+          body: JSON.stringify(transformedBookingData),
           signal: controller.signal,
         });
 
@@ -240,7 +338,7 @@ export const bookingHelpers = {
           window.location.hostname.includes("localhost");
 
         if (isHostedEnv) {
-          console.log("🌐 Environment detected, treating as offline mode");
+          console.log("��� Environment detected, treating as offline mode");
         }
 
         return {

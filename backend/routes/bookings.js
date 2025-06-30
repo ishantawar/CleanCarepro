@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
 const User = require("../models/User");
 
@@ -23,6 +24,20 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 // Create a new booking
 router.post("/", async (req, res) => {
   try {
+    console.log("📝 Booking creation request received:", {
+      customer_id: req.body.customer_id,
+      service: req.body.service,
+      service_type: req.body.service_type,
+      services: req.body.services,
+      total_price: req.body.total_price,
+      scheduled_date: req.body.scheduled_date,
+      scheduled_time: req.body.scheduled_time,
+      provider_name: req.body.provider_name,
+      address: req.body.address
+        ? `${req.body.address.substring(0, 50)}...`
+        : "missing",
+    });
+
     const {
       customer_id,
       service,
@@ -42,34 +57,100 @@ router.post("/", async (req, res) => {
     } = req.body;
 
     // Validation
-    if (
-      !customer_id ||
-      !service ||
-      !service_type ||
-      !services ||
-      !scheduled_date ||
-      !scheduled_time ||
-      !provider_name ||
-      !address ||
-      !total_price
-    ) {
-      return res.status(400).json({ error: "Missing required fields" });
+    const requiredFields = {
+      customer_id,
+      service,
+      service_type,
+      services,
+      scheduled_date,
+      scheduled_time,
+      provider_name,
+      address,
+      total_price,
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      console.log("❌ Missing required fields:", missingFields);
+      return res.status(400).json({
+        error: "Missing required fields",
+        missing: missingFields,
+        received: Object.keys(req.body),
+      });
     }
 
     if (!Array.isArray(services) || services.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "At least one service must be selected" });
+      console.log("❌ Services validation failed:", {
+        services,
+        type: typeof services,
+      });
+      return res.status(400).json({
+        error: "At least one service must be selected",
+        servicesReceived: services,
+        servicesType: typeof services,
+      });
     }
 
-    if (total_price <= 0) {
-      return res
-        .status(400)
-        .json({ error: "Total price must be greater than 0" });
+    if (isNaN(total_price) || total_price <= 0) {
+      console.log("❌ Total price validation failed:", {
+        total_price,
+        type: typeof total_price,
+      });
+      return res.status(400).json({
+        error: "Total price must be greater than 0",
+        totalPriceReceived: total_price,
+        totalPriceType: typeof total_price,
+      });
     }
 
-    // Verify customer exists
-    const customer = await User.findById(customer_id);
+    // Verify customer exists - handle both ObjectId and phone-based lookup
+    let customer;
+
+    // Try to find by ObjectId first
+    if (mongoose.Types.ObjectId.isValid(customer_id)) {
+      customer = await User.findById(customer_id);
+    }
+
+    // If not found and customer_id looks like a phone number, try to find by phone
+    if (
+      !customer &&
+      typeof customer_id === "string" &&
+      customer_id.match(/^\d{10,}$/)
+    ) {
+      customer = await User.findOne({ phone: customer_id });
+    }
+
+    // If still not found, try to find user in CleanCareUser collection
+    if (!customer) {
+      try {
+        const CleanCareUser = mongoose.model("CleanCareUser");
+        const cleanCareUser = await CleanCareUser.findById(customer_id);
+        if (cleanCareUser) {
+          // Create corresponding User record for booking
+          customer = new User({
+            email:
+              cleanCareUser.email || `${cleanCareUser.phone}@cleancare.com`,
+            password: "temp_password_123", // Temporary password for booking system
+            full_name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+            phone: cleanCareUser.phone,
+            user_type: "customer",
+            is_verified: cleanCareUser.isVerified || false,
+            phone_verified: cleanCareUser.isVerified || false,
+          });
+          await customer.save();
+          console.log(
+            "✅ Created User record from CleanCareUser:",
+            customer._id,
+          );
+        }
+      } catch (cleanCareError) {
+        console.warn("Failed to lookup CleanCareUser:", cleanCareError);
+      }
+    }
+
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
@@ -94,9 +175,11 @@ router.post("/", async (req, res) => {
     });
 
     await booking.save();
+    console.log("✅ Booking saved to database:", booking._id);
 
     // Populate customer data
     await booking.populate("customer_id", "full_name phone email");
+    console.log("✅ Booking populated with customer data");
 
     res.status(201).json({
       message: "Booking created successfully",
@@ -114,7 +197,67 @@ router.get("/customer/:customerId", async (req, res) => {
     const { customerId } = req.params;
     const { status, limit = 50, offset = 0 } = req.query;
 
-    let query = { customer_id: customerId };
+    // Handle different customer ID formats
+    let customerIds = [];
+
+    // If it's a valid ObjectId, add it
+    if (mongoose.Types.ObjectId.isValid(customerId)) {
+      customerIds.push(customerId);
+    }
+
+    // If it looks like a phone number, find corresponding user IDs
+    if (typeof customerId === "string" && customerId.match(/^\d{10,}$/)) {
+      try {
+        const usersWithPhone = await User.find({ phone: customerId });
+        customerIds.push(...usersWithPhone.map((u) => u._id));
+
+        // Also check CleanCareUser collection
+        try {
+          const CleanCareUser = mongoose.model("CleanCareUser");
+          const cleanCareUsers = await CleanCareUser.find({
+            phone: customerId,
+          });
+          customerIds.push(...cleanCareUsers.map((u) => u._id));
+        } catch (cleanCareError) {
+          console.warn("CleanCareUser lookup failed:", cleanCareError);
+        }
+      } catch (phoneError) {
+        console.warn("Phone lookup failed:", phoneError);
+      }
+    }
+
+    // If customerId starts with "user_", extract phone number
+    if (typeof customerId === "string" && customerId.startsWith("user_")) {
+      const phone = customerId.replace("user_", "");
+      if (phone.match(/^\d{10,}$/)) {
+        try {
+          const usersWithPhone = await User.find({ phone: phone });
+          customerIds.push(...usersWithPhone.map((u) => u._id));
+
+          // Also check CleanCareUser collection
+          try {
+            const CleanCareUser = mongoose.model("CleanCareUser");
+            const cleanCareUsers = await CleanCareUser.find({ phone: phone });
+            customerIds.push(...cleanCareUsers.map((u) => u._id));
+          } catch (cleanCareError) {
+            console.warn("CleanCareUser lookup failed:", cleanCareError);
+          }
+        } catch (phoneError) {
+          console.warn("Phone lookup failed:", phoneError);
+        }
+      }
+    }
+
+    // Remove duplicates
+    customerIds = [...new Set(customerIds.map((id) => id.toString()))];
+
+    console.log("Looking for bookings with customer IDs:", customerIds);
+
+    if (customerIds.length === 0) {
+      return res.json({ bookings: [] });
+    }
+
+    let query = { customer_id: { $in: customerIds } };
     if (status) {
       query.status = status;
     }
@@ -126,6 +269,7 @@ router.get("/customer/:customerId", async (req, res) => {
       .limit(parseInt(limit))
       .skip(parseInt(offset));
 
+    console.log("Found bookings:", bookings.length);
     res.json({ bookings });
   } catch (error) {
     console.error("Bookings fetch error:", error);
