@@ -102,6 +102,11 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
     // Check for duplicate addresses by comparing full address and key components
     const existingAddresses = [...addresses];
     const isDuplicate = existingAddresses.some((addr) => {
+      // Check if same type (except other)
+      if (address.type !== "other" && addr.type === address.type) {
+        return true;
+      }
+
       // Check if same full address
       if (addr.fullAddress === address.fullAddress) {
         return true;
@@ -324,43 +329,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
 
                         <Button
                           onClick={() => {
-                            console.log("📍 Selecting address:", address);
-                            // Ensure all address fields are properly formatted for autofill
-                            const formattedAddress = {
-                              ...address,
-                              // Ensure flatNo/flatHouseNo compatibility
-                              flatNo:
-                                address.flatNo || address.flatHouseNo || "",
-                              flatHouseNo:
-                                address.flatNo || address.flatHouseNo || "",
-                              // Ensure all required fields are present
-                              street: address.street || "",
-                              landmark: address.landmark || "",
-                              village: address.village || "",
-                              city: address.city || "",
-                              pincode: address.pincode || "",
-                              // Generate fullAddress if not present
-                              fullAddress:
-                                address.fullAddress ||
-                                [
-                                  address.flatNo || address.flatHouseNo,
-                                  address.street,
-                                  address.landmark &&
-                                    `Near ${address.landmark}`,
-                                  address.village,
-                                  address.city,
-                                  address.pincode,
-                                ]
-                                  .filter(Boolean)
-                                  .join(", "),
-                              // Ensure coordinates are preserved
-                              coordinates: address.coordinates || null,
-                            };
-                            console.log(
-                              "📤 Sending formatted address:",
-                              formattedAddress,
-                            );
-                            onSelectAddress(formattedAddress);
+                            onSelectAddress(address);
                             onClose();
                           }}
                           className="bg-green-600 hover:bg-green-700"
@@ -414,9 +383,34 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Address Type Selection */}
+            <div>
+              <Label className="text-sm font-medium">Address Type</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {getAvailableTypes().map((type) => (
+                  <Button
+                    key={type.value}
+                    variant="outline"
+                    disabled={type.disabled}
+                    className={`p-3 h-auto ${type.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    onClick={() => {
+                      // This will be handled by the form
+                    }}
+                  >
+                    {type.label}
+                    {type.disabled && (
+                      <span className="text-xs block text-gray-500">
+                        Already added
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <EnhancedAddressForm
               onAddressUpdate={handleAddAddress}
-              showLabel={false}
+              showLabel={true}
             />
           </div>
         </DialogContent>
