@@ -175,9 +175,11 @@ router.post("/", async (req, res) => {
     });
 
     await booking.save();
+    console.log("✅ Booking saved to database:", booking._id);
 
     // Populate customer data
     await booking.populate("customer_id", "full_name phone email");
+    console.log("✅ Booking populated with customer data");
 
     res.status(201).json({
       message: "Booking created successfully",
