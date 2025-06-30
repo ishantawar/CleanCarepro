@@ -688,7 +688,19 @@ export class DVHostingSmsService {
    */
   async saveUserToBackend(user: any): Promise<boolean> {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+      // Use the same URL detection as booking helpers
+      let apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+      if (!apiBaseUrl || apiBaseUrl === "") {
+        if (
+          window.location.hostname.includes("vercel.app") ||
+          window.location.hostname.includes("builder.codes")
+        ) {
+          apiBaseUrl = "https://cleancarepro-xrqa.onrender.com/api";
+        } else {
+          apiBaseUrl = "http://localhost:3001/api";
+        }
+      }
 
       // Clean the phone number
       const cleanedPhone = this.cleanPhone(user.phone);
