@@ -75,14 +75,12 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// MongoDB connection
+// MongoDB connection with production configuration
 const connectDB = async () => {
   try {
-    // Use the provided MongoDB URI directly
-    const mongoURI =
-      process.env.MONGODB_URI ||
-      process.env.DB_URI ||
-      "mongodb+srv://sunflower110001:fV4LhLpWlKj5Vx87@cluster0.ic8p792.mongodb.net/cleancare_pro?retryWrites=true&w=majority";
+    // Use production MongoDB URI
+    const mongoURI = productionConfig.MONGODB_URI;
+    ("mongodb+srv://sunflower110001:fV4LhLpWlKj5Vx87@cluster0.ic8p792.mongodb.net/cleancare_pro?retryWrites=true&w=majority");
 
     await mongoose.connect(mongoURI);
 
