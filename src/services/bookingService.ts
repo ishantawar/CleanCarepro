@@ -683,18 +683,33 @@ export class BookingService {
       const allBookings = JSON.parse(
         localStorage.getItem("user_bookings") || "[]",
       );
+
+      console.log("🔍 Looking for booking to update:", {
+        searchingForId: bookingId,
+        totalBookings: allBookings.length,
+        allBookingIds: allBookings.map((b: any) => ({ id: b.id, _id: b._id })),
+      });
+
       const bookingIndex = allBookings.findIndex(
         (booking: BookingDetails) =>
           booking.id === bookingId || (booking as any)._id === bookingId,
       );
 
       if (bookingIndex === -1) {
+        console.error("❌ Booking not found in localStorage:", {
+          searchedId: bookingId,
+          availableBookings: allBookings.map((b: any) => ({
+            id: b.id,
+            _id: b._id,
+            createdAt: b.createdAt,
+          })),
+        });
         return null;
       }
 
       allBookings[bookingIndex] = { ...allBookings[bookingIndex], ...updates };
       localStorage.setItem("user_bookings", JSON.stringify(allBookings));
-      console.log("💾 Booking updated in localStorage");
+      console.log("💾 Booking updated in localStorage:", bookingIndex);
 
       return allBookings[bookingIndex];
     } catch (error) {
