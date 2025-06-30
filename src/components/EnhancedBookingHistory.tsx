@@ -715,31 +715,44 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         Booked Services
                       </h4>
                       <div className="space-y-2">
-                        {services.map((service: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100"
-                          >
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {typeof service === "object"
-                                  ? service.name || service.service
-                                  : service}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Qty:{" "}
-                                {typeof service === "object"
-                                  ? service.quantity || 1
-                                  : 1}
-                              </p>
+                        {services.map((service: any, idx: number) => {
+                          const serviceName =
+                            typeof service === "object"
+                              ? service.name || service.service
+                              : service;
+                          const quantity =
+                            typeof service === "object"
+                              ? service.quantity || 1
+                              : 1;
+                          const price =
+                            typeof service === "object" && service.price
+                              ? service.price
+                              : getServicePrice(service);
+
+                          return (
+                            <div
+                              key={idx}
+                              className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-blue-50 rounded-lg border border-blue-100 gap-2"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">
+                                  {serviceName}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  Qty: {quantity}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-blue-600">
+                                  ₹{price * quantity}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  ₹{price} each
+                                </p>
+                              </div>
                             </div>
-                            {typeof service === "object" && service.price && (
-                              <p className="font-semibold text-blue-600">
-                                ₹{service.price}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
