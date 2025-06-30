@@ -83,9 +83,15 @@ router.post("/", async (req, res) => {
     }
 
     if (!Array.isArray(services) || services.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "At least one service must be selected" });
+      console.log("❌ Services validation failed:", {
+        services,
+        type: typeof services,
+      });
+      return res.status(400).json({
+        error: "At least one service must be selected",
+        servicesReceived: services,
+        servicesType: typeof services,
+      });
     }
 
     if (total_price <= 0) {
