@@ -96,10 +96,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         currentUser._id || currentUser.id,
       );
 
-      // Try MongoDB first (but it will gracefully fallback if no backend)
-      let mongoBookings = [];
+      let allBookings = [];
       const userId = currentUser._id || currentUser.id || currentUser.phone;
 
+      // Try MongoDB first (but it will gracefully fallback if no backend)
       if (userId) {
         const mongoResponse = await bookingHelpers.getUserBookings(userId);
         if (
@@ -107,7 +107,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           Array.isArray(mongoResponse.data) &&
           mongoResponse.data.length > 0
         ) {
-          mongoBookings = mongoResponse.data.map((booking: any) => ({
+          const mongoBookings = mongoResponse.data.map((booking: any) => ({
             id: booking._id,
             userId: booking.customer_id,
             services: booking.services || [booking.service],
@@ -129,12 +129,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
             updatedAt: booking.updated_at || booking.updatedAt,
           }));
           console.log("✅ Loaded bookings from MongoDB:", mongoBookings.length);
-          setBookings(mongoBookings);
-          return;
+          allBookings = [...allBookings, ...mongoBookings];
         }
       }
 
-      // Fallback to BookingService
+      // Also try BookingService for local bookings
       console.log("Loading bookings from BookingService...");
       const response = await bookingService.getCurrentUserBookings();
 
@@ -143,11 +142,27 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           "✅ Bookings loaded from BookingService:",
           response.bookings.length,
         );
-        setBookings(response.bookings);
-      } else {
-        console.log("No bookings found or error:", response.error);
-        setBookings([]);
+        // Merge local bookings, avoiding duplicates
+        const localBookings = response.bookings.filter(
+          (localBooking: any) =>
+            !allBookings.some(
+              (mongoBooking: any) =>
+                mongoBooking.id === localBooking.id ||
+                mongoBooking.id === localBooking._id,
+            ),
+        );
+        allBookings = [...allBookings, ...localBookings];
       }
+
+      // Sort bookings by creation date (newest first)
+      allBookings.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.created_at || Date.now());
+        const dateB = new Date(b.createdAt || b.created_at || Date.now());
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      console.log("✅ Total bookings loaded:", allBookings.length);
+      setBookings(allBookings);
     } catch (error) {
       console.error("Error loading bookings:", error);
       setBookings([]);
