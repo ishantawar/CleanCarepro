@@ -134,16 +134,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
     }
   };
 
-  const addCustomService = () => {
-    if (!newServiceName.trim()) return;
-
-    const price = parseFloat(newServicePrice) || 35;
-    const newService = { name: newServiceName.trim(), quantity: 1, price };
-    setServices([...services, newService]);
-    setNewServiceName("");
-    setNewServicePrice("");
-  };
-
   return (
     <div className="space-y-6">
       {/* Current Services */}
