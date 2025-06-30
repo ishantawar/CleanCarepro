@@ -163,6 +163,42 @@ export const bookingHelpers = {
         };
       }
 
+      // First, ensure customer exists in backend
+      try {
+        const customerResponse = await fetch(`${API_BASE_URL}/auth/register`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            phone: user.phone,
+            full_name:
+              user.name ||
+              user.full_name ||
+              `User ${user.phone?.slice(-4) || "Unknown"}`,
+            email: user.email || "",
+            user_type: "customer",
+            is_verified: true,
+            phone_verified: true,
+          }),
+        });
+
+        if (customerResponse.ok) {
+          const customerData = await safeParseJSON(customerResponse);
+          if (customerData.user && customerData.user._id) {
+            customerId = customerData.user._id;
+            console.log("✅ Customer verified/created with ID:", customerId);
+          }
+        } else {
+          console.log(
+            "⚠️ Customer creation/verification failed, using phone as ID",
+          );
+        }
+      } catch (customerError) {
+        console.log(
+          "⚠️ Customer creation error, proceeding with phone as ID:",
+          customerError,
+        );
+      }
+
       let response;
       let data;
 
