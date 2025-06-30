@@ -761,7 +761,28 @@ export class DVHostingSmsService {
    */
   async restoreUserFromBackend(phone: string): Promise<any | null> {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+      // Check if we're in a hosted environment without backend
+      const isHostedEnv =
+        window.location.hostname.includes("fly.dev") ||
+        window.location.hostname.includes("builder.codes");
+
+      if (isHostedEnv) {
+        this.log(
+          "🌐 Hosted environment detected - skipping backend user restore",
+        );
+        return null; // Skip backend calls in hosted environments
+      }
+
+      // Use the same URL detection as other services
+      let apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+      if (!apiBaseUrl || apiBaseUrl === "") {
+        if (window.location.hostname.includes("vercel.app")) {
+          apiBaseUrl = "https://cleancarepro-xrqa.onrender.com/api";
+        } else {
+          apiBaseUrl = "http://localhost:3001/api";
+        }
+      }
 
       this.log("🔄 Restoring user from backend:", phone);
 
@@ -784,7 +805,10 @@ export class DVHostingSmsService {
       this.log("⚠️ User not found in backend");
       return null;
     } catch (error) {
-      this.log("⚠️ Backend user restore error:", error);
+      this.log(
+        "⚠️ Backend user restore error - using localStorage only:",
+        error,
+      );
       return null;
     }
   }
