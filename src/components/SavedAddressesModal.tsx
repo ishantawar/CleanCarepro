@@ -329,7 +329,27 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
 
                         <Button
                           onClick={() => {
-                            onSelectAddress(address);
+                            console.log("📍 Selecting address:", address);
+                            // Ensure all address fields are properly formatted for autofill
+                            const formattedAddress = {
+                              ...address,
+                              flatHouseNo:
+                                address.flatNo || address.flatHouseNo,
+                              fullAddress:
+                                address.fullAddress ||
+                                [
+                                  address.flatNo,
+                                  address.street,
+                                  address.landmark &&
+                                    `Near ${address.landmark}`,
+                                  address.village,
+                                  address.city,
+                                  address.pincode,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", "),
+                            };
+                            onSelectAddress(formattedAddress);
                             onClose();
                           }}
                           className="bg-green-600 hover:bg-green-700"
