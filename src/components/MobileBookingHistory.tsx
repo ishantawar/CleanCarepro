@@ -609,12 +609,12 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
               return (
                 <Card
                   key={safeBooking.id || index}
-                  className="border-0 shadow-xl rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm hover:shadow-2xl transition-all duration-300"
+                  className="border-0 shadow-lg rounded-xl overflow-hidden bg-white/95 backdrop-blur-sm hover:shadow-xl transition-all duration-300"
                 >
-                  <CardHeader className="pb-3 p-4 sm:p-6 bg-gradient-to-r from-green-50 to-emerald-50">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                  <CardHeader className="pb-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base sm:text-lg font-bold text-gray-900 mb-1 truncate">
+                        <CardTitle className="text-sm sm:text-base font-bold text-gray-900 mb-1 truncate">
                           {safeBooking.service}
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-green-600 truncate font-medium">
