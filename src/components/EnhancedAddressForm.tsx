@@ -819,6 +819,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
                 value={address.type}
                 onChange={(e) => {
                   e.preventDefault(); // Prevent form submission
+                  e.stopPropagation(); // Stop event bubbling
                   const selectedType = e.target.value;
                   handleFieldChange("type", selectedType);
                   // Auto-generate label based on type
@@ -829,6 +830,11 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
                         ? "Office"
                         : "Other";
                   handleFieldChange("label", autoLabel);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault(); // Prevent Enter key submission
+                  }
                 }}
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 required
