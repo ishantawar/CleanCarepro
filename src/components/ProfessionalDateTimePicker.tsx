@@ -170,14 +170,6 @@ const ProfessionalDateTimePicker: React.FC<ProfessionalDateTimePickerProps> = ({
               >
                 Today
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="text-xs"
-              >
-                All Dates
-              </Button>
             </div>
           </div>
 
