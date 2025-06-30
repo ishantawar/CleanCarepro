@@ -286,19 +286,38 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
       {services.length > 0 && (
         <Card className="bg-green-50 border-green-200">
           <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Total Amount</span>
-              <span className="text-xl font-bold text-green-600">
-                ₹
-                {services.reduce(
-                  (total, service) => total + service.price * service.quantity,
-                  0,
-                )}
-              </span>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Services Total</span>
+                <span className="text-sm">
+                  ₹
+                  {services.reduce(
+                    (total, service) =>
+                      total + service.price * service.quantity,
+                    0,
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Delivery Charge</span>
+                <span className="text-sm">₹50</span>
+              </div>
+              <hr className="border-gray-300" />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total Amount</span>
+                <span className="text-xl font-bold text-green-600">
+                  ₹
+                  {services.reduce(
+                    (total, service) =>
+                      total + service.price * service.quantity,
+                    0,
+                  ) + 50}
+                </span>
+              </div>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs text-gray-500 mt-2">
               {services.reduce((total, service) => total + service.quantity, 0)}{" "}
-              items total
+              items • Delivery included
             </p>
           </CardContent>
         </Card>
