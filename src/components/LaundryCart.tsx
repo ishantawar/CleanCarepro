@@ -596,19 +596,18 @@ Confirm this booking?`;
                   </Button>
                 </div>
 
-                {/* Bottom row: Quantity controls and total price */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mt-1">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(service!.id, -1)}
-                      className="h-8 w-8 p-0"
+                      className="h-6 w-6 p-0"
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
 
-                    <span className="w-8 text-center font-medium">
+                    <span className="w-6 text-center font-medium text-xs">
                       {quantity}
                     </span>
 
@@ -616,17 +615,15 @@ Confirm this booking?`;
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(service!.id, 1)}
-                      className="h-8 w-8 p-0"
+                      className="h-6 w-6 p-0"
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
 
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      ₹{service!.price * quantity}
-                    </p>
-                  </div>
+                  <p className="font-semibold text-sm">
+                    ₹{service!.price * quantity}
+                  </p>
                 </div>
               </div>
             ))}
