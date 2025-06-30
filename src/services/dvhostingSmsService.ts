@@ -719,12 +719,12 @@ export class DVHostingSmsService {
         throw new Error("Backend not available in hosted environment");
       }
 
-      const response = await fetch(`${apiBaseUrl}/auth/get-user-by-phone`, {
+      const response = await fetch(`${apiBaseUrl}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ phone: cleanedPhone }),
+        body: JSON.stringify(userData),
       });
 
       if (response.ok) {
