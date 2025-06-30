@@ -123,7 +123,8 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-    // Pre-fill user data
+  // Pre-fill user data and restore form state
+  useEffect(() => {
     if (currentUser) {
       setPhoneNumber(currentUser.phone || "");
 
