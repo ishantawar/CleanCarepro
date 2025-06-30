@@ -565,9 +565,6 @@ const LaundryIndex = () => {
         if (localResult.success) {
           // Also save to Google Sheets even when MongoDB fails
           try {
-            const GoogleSheetsService = (
-              await import("../services/googleSheetsService")
-            ).default;
             const sheetsService = GoogleSheetsService.getInstance();
 
             const orderData = {
