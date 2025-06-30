@@ -10,9 +10,6 @@ import {
   createSuccessNotification,
   createErrorNotification,
 } from "@/utils/notificationUtils";
-import { BookingService } from "../services/bookingService";
-import { bookingHelpers } from "../integrations/mongodb/bookingHelpers";
-import GoogleSheetsService from "../services/googleSheetsService";
 
 // Helper function for coordinate-based location detection (fallback)
 const getCoordinateBasedLocation = (
@@ -333,7 +330,6 @@ const LaundryIndex = () => {
     setCurrentView(targetView);
 
     console.log("✅ User logged in successfully:", user.name || user.phone);
-    console.log("📍 Previous view was:", previousView);
     console.log("📍 Redirecting to:", targetView);
 
     // Add success notification
@@ -373,13 +369,10 @@ const LaundryIndex = () => {
       setCurrentView("auth");
       return;
     }
-
-    // Navigate to bookings view (bookings will be loaded fresh from storage)
     setCurrentView("bookings");
   };
 
   const handleLoginRequired = (fromView: "cart" | "bookings" = "cart") => {
-    console.log(`🔐 Login required from: ${fromView}`);
     setPreviousView(fromView);
     setCurrentView("auth");
   };
@@ -388,8 +381,6 @@ const LaundryIndex = () => {
     // Check if user is authenticated first
     if (!currentUser) {
       console.log("User not authenticated, switching to auth view");
-      console.log("🔄 Setting previousView to 'cart'");
-      setPreviousView("cart");
       setCurrentView("auth");
       return;
     }
@@ -397,7 +388,12 @@ const LaundryIndex = () => {
     console.log("Processing checkout for authenticated user:", cartData);
 
     try {
-      // Use static imports to avoid module loading errors in hosted environment
+      // Import both booking helpers and service
+      const { BookingService } = await import("../services/bookingService");
+      const { bookingHelpers } = await import(
+        "../integrations/mongodb/bookingHelpers"
+      );
+
       const bookingService = BookingService.getInstance();
 
       // Prepare services array for MongoDB
@@ -406,23 +402,9 @@ const LaundryIndex = () => {
           typeof service === "string" ? service : service.name,
         ) || [];
 
-      // Debug current user structure
-      console.log("🔍 Current user for booking:", {
-        user: currentUser,
-        _id: currentUser._id,
-        id: currentUser.id,
-        phone: currentUser.phone,
-        name: currentUser.name || currentUser.full_name,
-      });
-
-      // Get user ID with fallback
-      const userId =
-        currentUser._id || currentUser.id || currentUser.phone || "unknown";
-      console.log("👤 Using user ID for booking:", userId);
-
       // Create booking data for MongoDB backend
       const mongoBookingData = {
-        customer_id: userId,
+        customer_id: currentUser._id || currentUser.id,
         service: servicesArray[0] || "Laundry Service",
         service_type: "laundry",
         services: servicesArray,
@@ -447,8 +429,6 @@ const LaundryIndex = () => {
         },
       };
 
-      console.log("📋 MongoDB booking data:", mongoBookingData);
-
       // Save to MongoDB backend first
       console.log("💾 Saving to MongoDB backend...");
       const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
@@ -461,6 +441,9 @@ const LaundryIndex = () => {
 
         // Also save to Google Sheets
         try {
+          const GoogleSheetsService = (
+            await import("../services/googleSheetsService")
+          ).default;
           const sheetsService = GoogleSheetsService.getInstance();
 
           const orderData = {
@@ -495,7 +478,7 @@ const LaundryIndex = () => {
 
         // Also save using booking service for local storage backup
         const localBookingData = {
-          userId: userId, // Use same resolved user ID
+          userId: currentUser._id || currentUser.id || currentUser.phone,
           services: servicesArray,
           totalAmount: cartData.totalAmount,
           status: "pending" as const,
@@ -514,7 +497,7 @@ const LaundryIndex = () => {
 
         const localResult =
           await bookingService.createBooking(localBookingData);
-        console.log("���� Local booking result:", localResult);
+        console.log("📝 Local booking result:", localResult);
 
         // Show success message
         const bookingId = mongoResult.data._id || `local_${Date.now()}`;
@@ -525,16 +508,13 @@ const LaundryIndex = () => {
           ),
         );
 
-        // Clear cart from localStorage and component state
+        // Clear cart
         localStorage.removeItem("laundry_cart");
-        localStorage.removeItem("cart_data");
-
-        // Note: Do NOT clear user_bookings here as it contains the booking we just created!
 
         // Redirect to home page after successful booking
         setTimeout(() => {
           setCurrentView("home");
-        }, 1500); // Reduced wait time
+        }, 2000); // Wait 2 seconds to show success message
       } else {
         // If MongoDB fails, still try to save locally
         console.warn(
@@ -543,7 +523,7 @@ const LaundryIndex = () => {
         );
 
         const localBookingData = {
-          userId: userId, // Use same resolved user ID
+          userId: currentUser._id || currentUser.id || currentUser.phone,
           services: servicesArray,
           totalAmount: cartData.totalAmount,
           status: "pending" as const,
@@ -567,6 +547,9 @@ const LaundryIndex = () => {
         if (localResult.success) {
           // Also save to Google Sheets even when MongoDB fails
           try {
+            const GoogleSheetsService = (
+              await import("../services/googleSheetsService")
+            ).default;
             const sheetsService = GoogleSheetsService.getInstance();
 
             const orderData = {
@@ -604,21 +587,21 @@ const LaundryIndex = () => {
             ),
           );
 
-          // Clear cart from localStorage and component state
+          // Clear cart
           localStorage.removeItem("laundry_cart");
-          localStorage.removeItem("cart_data");
-
-          // Note: Do NOT clear user_bookings here as it contains the booking we just created!
 
           // Redirect to home page after successful booking
           setTimeout(() => {
             setCurrentView("home");
-          }, 1500); // Reduced wait time
+          }, 2000); // Wait 2 seconds to show success message
         } else {
           console.error("❌ Local booking also failed:", localResult.error);
 
           // Still try to save to Google Sheets as last resort
           try {
+            const GoogleSheetsService = (
+              await import("../services/googleSheetsService")
+            ).default;
             const sheetsService = GoogleSheetsService.getInstance();
 
             const orderData = {
@@ -649,15 +632,10 @@ const LaundryIndex = () => {
                   "Your order has been saved to our backup system and will be processed manually.",
                 ),
               );
-              // Clear cart from localStorage and component state
               localStorage.removeItem("laundry_cart");
-              localStorage.removeItem("cart_data");
-
-              // Note: Do NOT clear user_bookings here as it contains the booking we just created!
-
               setTimeout(() => {
                 setCurrentView("home");
-              }, 1500);
+              }, 2000);
               return; // Exit early since we saved to sheets
             }
           } catch (sheetsError) {
@@ -721,7 +699,8 @@ const LaundryIndex = () => {
               onClose={() => setCurrentView("home")}
               onSuccess={(user) => {
                 handleLoginSuccess(user);
-                // handleLoginSuccess already sets the view to previousView, no need to set it again
+                // Return to the view they were trying to access
+                setCurrentView(previousView);
               }}
             />
           </div>

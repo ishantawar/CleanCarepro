@@ -95,38 +95,14 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     appliedCoupon,
   ]);
 
-  // Load cart from localStorage and refresh on component mount
+  // Load cart from localStorage
   useEffect(() => {
-    const loadCart = () => {
-      const savedCart = localStorage.getItem("laundry_cart");
-      if (savedCart) {
-        try {
-          const parsedCart = JSON.parse(savedCart);
-          setCart(parsedCart);
-        } catch (error) {
-          console.error("Error parsing cart from localStorage:", error);
-          setCart({});
-        }
-      } else {
-        setCart({});
-      }
-    };
+    const savedCart = localStorage.getItem("laundry_cart");
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
 
-    loadCart();
-
-    // Add event listener for storage changes (when cart is cleared from other components)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "laundry_cart") {
-        loadCart();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
-  // Pre-fill user data and restore form state
-  useEffect(() => {
+    // Pre-fill user data
     if (currentUser) {
       setPhoneNumber(currentUser.phone || "");
 
@@ -834,10 +810,8 @@ Confirm this booking?`;
         isOpen={showSavedAddresses}
         onClose={() => setShowSavedAddresses(false)}
         onSelectAddress={(address) => {
-          console.log("🏠 Address selected in LaundryCart:", address);
           setAddressData(address);
           setShowSavedAddresses(false);
-          console.log("✅ Address data updated, modal closed");
         }}
         currentUser={currentUser}
       />

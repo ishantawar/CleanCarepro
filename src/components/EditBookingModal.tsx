@@ -101,28 +101,12 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
     setIsLoading(true);
 
     try {
-      console.log("💾 EditBookingModal handleSave called with:", {
-        originalBooking: booking,
-        bookingId: booking?.id,
-        bookingMongoId: booking?._id,
-        bookingKeys: booking ? Object.keys(booking) : [],
-      });
-
-      // Calculate delivery charge
-      const deliveryCharge = 50;
-      const finalAmount = totalPrice + deliveryCharge;
-
-      // Ensure we preserve the booking ID correctly
-      const bookingId = booking?.id || booking?._id;
-      if (!bookingId) {
-        throw new Error("No valid booking ID found in original booking object");
-      }
+      // Calculate delivery charge if needed
+      const deliveryCharge = 0; // No delivery charge for updates
+      const finalAmount = totalPrice;
 
       const updatedBooking = {
         ...booking,
-        // Explicitly preserve the ID fields
-        id: booking.id,
-        _id: booking._id,
         scheduled_date: formData.scheduled_date,
         pickupDate: formData.scheduled_date, // Also update pickupDate
         scheduled_time: formData.scheduled_time,
@@ -149,14 +133,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
         updatedAt: new Date().toISOString(),
       };
 
-      console.log("📤 Passing updatedBooking to onSave:", {
-        updatedBooking,
-        hasId: !!updatedBooking.id,
-        hasMongoId: !!updatedBooking._id,
-        idValue: updatedBooking.id,
-        mongoIdValue: updatedBooking._id,
-      });
-
+      console.log("Saving updated booking:", updatedBooking);
       await onSave(updatedBooking);
     } catch (error) {
       console.error("Error updating booking:", error);
@@ -242,6 +219,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
                   </p>
                 )}
               </div>
+
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between text-xs">
                   <span>Services Total:</span>
@@ -257,6 +235,8 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
                   <span>₹{(totalPrice || 0) + 50}</span>
                 </div>
               </div>
+              
+
             </div>
 
             {/* Date */}
