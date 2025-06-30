@@ -572,6 +572,9 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                 ? booking.services
                 : [booking.service || "Home Service"];
               const total = calculateTotal(booking);
+              const hasRealId =
+                !!(booking.id || booking._id) &&
+                !bookingId.startsWith("booking_");
 
               return (
                 <Card
