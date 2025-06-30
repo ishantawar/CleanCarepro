@@ -632,23 +632,23 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-4 p-4 sm:p-6">
+                  <CardContent className="space-y-2 p-3">
                     {/* Booked Services */}
                     {safeBooking.services &&
                       Array.isArray(safeBooking.services) &&
                       safeBooking.services.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900 text-sm">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-gray-900 text-xs">
                             Booked Services
                           </h4>
                           {safeBooking.services.map(
                             (service: any, idx: number) => (
                               <div
                                 key={idx}
-                                className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100"
+                                className="flex justify-between items-center p-2 bg-blue-50 rounded-lg border border-blue-100"
                               >
                                 <div className="flex-1">
-                                  <p className="font-medium text-gray-900 text-sm">
+                                  <p className="font-medium text-gray-900 text-xs">
                                     <SafeText>{service.name}</SafeText>
                                   </p>
                                   <p className="text-xs text-gray-600">
@@ -656,7 +656,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                                   </p>
                                 </div>
                                 {service.price > 0 && (
-                                  <p className="font-semibold text-blue-600">
+                                  <p className="font-semibold text-blue-600 text-xs">
                                     ₹{service.price}
                                   </p>
                                 )}
