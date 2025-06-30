@@ -667,15 +667,15 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                       )}
 
                     {/* Pickup & Delivery Slots */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-3 bg-green-50 rounded-xl border border-green-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-green-600" />
-                          <span className="font-medium text-gray-900 text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-green-50 rounded-lg border border-green-100">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Calendar className="h-3 w-3 text-green-600" />
+                          <span className="font-medium text-gray-900 text-xs">
                             Pickup
                           </span>
                         </div>
-                        <p className="text-sm text-gray-900">
+                        <p className="text-xs text-gray-900">
                           {(() => {
                             const dateStr =
                               safeBooking.pickupDate ||
