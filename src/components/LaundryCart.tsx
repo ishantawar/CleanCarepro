@@ -553,22 +553,18 @@ Confirm this booking?`;
         </div>
       </div>
 
-      <div className="p-3 sm:p-4 space-y-4 pb-32">
+      <div className="p-2 space-y-3 pb-32">
         {/* Cart Items */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Order Items</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Order Items</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2 pt-0">
             {cartItems.map(({ service, quantity }) => (
-              <div
-                key={service!.id}
-                className="p-3 bg-gray-50 rounded-lg space-y-3"
-              >
-                {/* Top row: Icon, Details, and Remove button */}
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg">
+              <div key={service!.id} className="p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">
                       {service!.category.includes("Men")
                         ? "👔"
                         : service!.category.includes("Women")
@@ -584,22 +580,17 @@ Confirm this booking?`;
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">
+                    <h4 className="font-medium text-xs truncate">
                       {service!.name}
                     </h4>
-                    <p className="text-xs text-gray-600 truncate">
-                      {service!.category}
-                    </p>
-                    <p className="text-sm font-semibold text-green-600">
-                      ₹{service!.price} {service!.unit}
-                    </p>
+                    <p className="text-xs text-green-600">₹{service!.price}</p>
                   </div>
 
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem(service!.id)}
-                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
