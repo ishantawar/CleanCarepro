@@ -292,29 +292,118 @@ app.get("/api/test", (req, res) => {
   });
 });
 
-// Error handling middleware
+// Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error("Error:", err);
-  res.status(500).json({
+  console.error("💥 Global Error Handler:", err);
+
+  // Log error details in production
+  if (productionConfig.isProduction()) {
+    console.error("Error Stack:", err.stack);
+    console.error("Request Details:", {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      body: req.body,
+    });
+  }
+
+  // Return appropriate error response
+  const statusCode = err.statusCode || 500;
+  const message = productionConfig.isProduction()
+    ? "Internal server error"
+    : err.message || "Something went wrong";
+
+  res.status(statusCode).json({
     success: false,
-    message: "Internal server error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    message,
+    error: productionConfig.isDevelopment() ? err.stack : undefined,
+    timestamp: new Date().toISOString(),
   });
 });
 
-// Handle 404
+// Handle 404 routes
 app.use("*", (req, res) => {
   res.status(404).json({
     success: false,
-    message: "Route not found",
+    message: `Route ${req.originalUrl} not found`,
+    availableRoutes: [
+      "/api/health",
+      "/api/test",
+      "/api/auth",
+      "/api/bookings",
+      "/api/addresses",
+      "/api/location",
+      "/api/whatsapp",
+      "/api/sheets/order",
+    ],
   });
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server with error handling
+const server = app.listen(PORT, () => {
   console.log(`🚀 CleanCare Pro server running on port ${PORT}`);
+  console.log(`📱 Environment: ${productionConfig.NODE_ENV}`);
   console.log(`📱 API available at: http://localhost:${PORT}/api`);
   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔒 Security: Helmet enabled`);
+  console.log(`⚡ Compression: Enabled`);
+  console.log(`🛡️  Rate limiting: Enabled`);
+
+  if (productionConfig.FEATURES.SMS_VERIFICATION) {
+    console.log(`📱 SMS Service: DVHosting`);
+  }
+
+  if (productionConfig.GOOGLE_SHEETS_ENABLED) {
+    console.log(`📊 Google Sheets: Enabled`);
+  }
+});
+
+// Graceful shutdown handling
+const gracefulShutdown = (signal) => {
+  console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+
+  server.close((err) => {
+    if (err) {
+      console.error("❌ Error during server shutdown:", err);
+      process.exit(1);
+    }
+
+    console.log("✅ HTTP server closed");
+
+    // Close database connection
+    mongoose.connection.close(false, (err) => {
+      if (err) {
+        console.error("❌ Error closing MongoDB connection:", err);
+        process.exit(1);
+      }
+
+      console.log("✅ MongoDB connection closed");
+      console.log("👋 Graceful shutdown completed");
+      process.exit(0);
+    });
+  });
+
+  // Force shutdown after 30 seconds
+  setTimeout(() => {
+    console.error("⚠️  Forced shutdown after 30 seconds");
+    process.exit(1);
+  }, 30000);
+};
+
+// Handle shutdown signals
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.error("💥 Uncaught Exception:", err);
+  gracefulShutdown("uncaughtException");
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("💥 Unhandled Rejection at:", promise, "reason:", reason);
+  gracefulShutdown("unhandledRejection");
 });
 
 // Graceful shutdown
