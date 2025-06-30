@@ -35,8 +35,13 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
     if (!currentUser && !authAttempted) {
       setShowAuthModal(true);
       setAuthAttempted(true);
+
+      // Also trigger the parent's login required callback
+      if (onLoginRequired) {
+        onLoginRequired();
+      }
     }
-  }, [currentUser, authAttempted]);
+  }, [currentUser, authAttempted, onLoginRequired]);
 
   const handleAuthSuccess = (user: any) => {
     setShowAuthModal(false);

@@ -1,5 +1,34 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+// API URL configuration with fallback for hosted environment
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+
+  // If we have an environment URL, use it
+  if (envUrl && envUrl !== "") {
+    return envUrl;
+  }
+
+  // Try the backend URL - update to correct endpoint
+  if (
+    window.location.hostname.includes("vercel.app") ||
+    window.location.hostname.includes("builder.codes")
+  ) {
+    // Use the correct render.com backend URL
+    return "https://cleancarepro-xrqa.onrender.com/api";
+  }
+
+  // For hosted environment, detect if we're on fly.dev and disable backend calls
+  const isHostedEnv = window.location.hostname.includes("fly.dev");
+
+  if (isHostedEnv) {
+    console.log("🌐 Hosted environment detected - MongoDB backend disabled");
+    return null; // This will cause graceful fallback to local storage
+  }
+
+  // Local development fallback
+  return "http://localhost:3001/api";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface Booking {
   _id?: string;
@@ -43,32 +72,220 @@ const getAuthHeaders = () => {
   };
 };
 
+// Simple response parser that avoids all cloning and caching issues
+const safeParseJSON = async (response: Response) => {
+  if (!response) {
+    throw new Error("No response received from server");
+  }
+
+  try {
+    // Simple approach: just read the response as text once
+    const responseText = await response.text();
+
+    // If empty response, return error object
+    if (!responseText.trim()) {
+      return { error: "Empty response from server" };
+    }
+
+    // Try to parse as JSON
+    try {
+      return JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("JSON parse failed for response:", responseText);
+
+      // Check if it looks like HTML (likely an error page)
+      if (
+        responseText.includes("<html") ||
+        responseText.includes("<!DOCTYPE")
+      ) {
+        return {
+          error: "Server returned HTML instead of JSON (likely an error page)",
+        };
+      }
+
+      // Return the raw text as error for debugging
+      return {
+        error: `Invalid JSON response: ${responseText.substring(0, 200)}...`,
+      };
+    }
+  } catch (error: any) {
+    console.error("Failed to read response text:", error);
+
+    // If the response body was already consumed, return a generic error
+    if (
+      error.message.includes("already used") ||
+      error.message.includes("already read")
+    ) {
+      console.warn(
+        "Response body was already consumed - this indicates multiple read attempts",
+      );
+      return { error: "Server communication error - please try again" };
+    }
+
+    throw new Error(`Failed to read response: ${error.message}`);
+  }
+};
 export const bookingHelpers = {
   // ✅ Create new booking
   async createBooking(bookingData: Partial<Booking>) {
     try {
       const user = JSON.parse(localStorage.getItem("current_user") || "{}");
-      const customerId = user?._id;
 
-      if (!user._id) {
-        throw new Error("Logged-in user ID not found in local storage");
-      }
+      // Try to get customer ID from multiple possible fields
+      let customerId = user?._id || user?.id || user?.phone;
 
-      const response = await fetch(`${API_BASE_URL}/bookings`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          ...bookingData,
-          customer_id: user._id, // ✅ use Mongo ObjectId from backend
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
+      if (!customerId) {
+        console.error("User object:", user);
         return {
           data: null,
-          error: { message: data.error || "Failed to create booking" },
+          error: {
+            message: "User ID not found. Please sign in again.",
+            code: "USER_ERROR",
+          },
+        };
+      }
+
+      // If we only have phone number, try to create or get user from backend
+      if (!user._id && user.phone) {
+        console.log("🔄 User missing MongoDB ID, using phone:", user.phone);
+        customerId = user.phone; // Use phone as fallback ID
+      }
+
+      // Check if backend is available
+      if (!API_BASE_URL) {
+        console.log("🌐 No backend URL configured - saving locally only");
+        return {
+          data: null,
+          error: {
+            message: "Backend unavailable. Order will be saved locally.",
+            code: "NETWORK_ERROR",
+          },
+        };
+      }
+
+      // First, ensure customer exists in backend
+      try {
+        const customerResponse = await fetch(`${API_BASE_URL}/auth/register`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            phone: user.phone,
+            full_name:
+              user.name ||
+              user.full_name ||
+              `User ${user.phone?.slice(-4) || "Unknown"}`,
+            email: user.email || "",
+            user_type: "customer",
+            is_verified: true,
+            phone_verified: true,
+          }),
+        });
+
+        if (customerResponse.ok) {
+          const customerData = await safeParseJSON(customerResponse);
+          if (customerData.user && customerData.user._id) {
+            customerId = customerData.user._id;
+            console.log("✅ Customer verified/created with ID:", customerId);
+          }
+        } else {
+          console.log(
+            "⚠️ Customer creation/verification failed, using phone as ID",
+          );
+        }
+      } catch (customerError) {
+        console.log(
+          "⚠️ Customer creation error, proceeding with phone as ID:",
+          customerError,
+        );
+      }
+
+      let response;
+      let data;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+        response = await fetch(`${API_BASE_URL}/bookings`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            ...bookingData,
+            customer_id: customerId, // ✅ use resolved customer ID
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+      } catch (fetchError: any) {
+        console.error("Network fetch failed:", fetchError);
+
+        // Handle different types of network errors
+        let errorMessage = "Backend unavailable. Order will be saved locally.";
+
+        if (
+          fetchError.name === "TypeError" &&
+          fetchError.message.includes("fetch")
+        ) {
+          errorMessage =
+            "Network connection failed. Order will be saved locally.";
+        } else if (fetchError.name === "AbortError") {
+          errorMessage = "Request timeout. Order will be saved locally.";
+        }
+
+        // Check if it's a CORS or network issue in hosted environment
+        const isHostedEnv =
+          window.location.hostname.includes("fly.dev") ||
+          window.location.hostname.includes("builder.codes") ||
+          window.location.hostname.includes("localhost");
+
+        if (isHostedEnv) {
+          console.log("🌐 Environment detected, treating as offline mode");
+        }
+
+        return {
+          data: null,
+          error: {
+            message: errorMessage,
+            code: "NETWORK_ERROR",
+          },
+        };
+      }
+
+      try {
+        data = await safeParseJSON(response);
+
+        if (!response.ok) {
+          return {
+            data: null,
+            error: {
+              message:
+                data.error ||
+                `HTTP ${response.status}: Failed to create booking`,
+              code: "SERVER_ERROR",
+            },
+          };
+        }
+      } catch (jsonError: any) {
+        console.error("Failed to parse response:", jsonError);
+
+        // If JSON parsing fails but we have a response, check status
+        if (response && !response.ok) {
+          return {
+            data: null,
+            error: {
+              message: `HTTP ${response.status}: Failed to create booking`,
+              code: "SERVER_ERROR",
+            },
+          };
+        }
+
+        return {
+          data: null,
+          error: {
+            message: "Invalid response from server. Please try again.",
+            code: "PARSE_ERROR",
+          },
         };
       }
 
@@ -77,23 +294,41 @@ export const bookingHelpers = {
       console.error("Booking creation error:", error);
       return {
         data: null,
-        error: { message: "Network error. Please check your connection." },
+        error: {
+          message: "Unexpected error occurred. Please try again.",
+          code: "UNKNOWN_ERROR",
+        },
       };
     }
   },
 
   // Get bookings for a specific customer
   async getUserBookings(userId: string) {
+    // Check if backend is available
+    if (!API_BASE_URL) {
+      console.log("🌐 No backend URL configured - returning empty bookings");
+      return {
+        data: [],
+        error: null,
+      };
+    }
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const response = await fetch(
         `${API_BASE_URL}/bookings/customer/${userId}`,
         {
           method: "GET",
           headers: getAuthHeaders(),
+          signal: controller.signal,
         },
       );
 
-      const data = await response.json();
+      clearTimeout(timeoutId);
+
+      const data = await safeParseJSON(response);
 
       if (!response.ok) {
         return {
@@ -126,7 +361,7 @@ export const bookingHelpers = {
         headers: getAuthHeaders(),
       });
 
-      const data = await response.json();
+      const data = await safeParseJSON(response);
 
       if (!response.ok) {
         return {
@@ -157,7 +392,7 @@ export const bookingHelpers = {
         },
       );
 
-      const data = await response.json();
+      const data = await safeParseJSON(response);
 
       if (!response.ok) {
         return {

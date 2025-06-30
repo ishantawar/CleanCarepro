@@ -63,6 +63,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   const [searchValue, setSearchValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const autocompleteRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -76,12 +77,12 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     }
   }, []);
 
-  // Auto-detect location on mount if no initial address provided
-  useEffect(() => {
-    if (!initialAddress?.fullAddress && !address.fullAddress) {
-      detectCurrentLocation();
-    }
-  }, []);
+  // Don't auto-detect location - only when user clicks the button
+  // useEffect(() => {
+  //   if (!initialAddress?.fullAddress && !address.fullAddress) {
+  //     detectCurrentLocation();
+  //   }
+  // }, []);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -154,7 +155,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     const newAddress: AddressData = {
       flatNo: address.flatNo, // Keep user-entered flat number
       street: "",
-      landmark: address.landmark, // Keep user-entered landmark
+      landmark: "", // Never autofill landmark - keep it empty
       village: "",
       city: "",
       pincode: "",
@@ -211,10 +212,11 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         // Pincode
         newAddress.pincode = longName;
       } else if (types.includes("premise") || types.includes("establishment")) {
-        // Landmark/Building name
-        if (!newAddress.landmark) {
-          newAddress.landmark = longName;
+        // Building name - don't use for landmark, but can use for flat number if empty
+        if (!newAddress.flatNo && types.includes("premise")) {
+          newAddress.flatNo = longName;
         }
+        // Never autofill landmark from location
       }
     });
 
@@ -234,11 +236,15 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     setAddress(newAddress);
     setSearchValue(place.formatted_address || "");
     setShowSuggestions(false);
-    onAddressChange(newAddress);
+    if (onAddressChange) {
+      onAddressChange(newAddress);
+    }
   };
 
   const detectCurrentLocation = async () => {
     setIsDetectingLocation(true);
+    setLocationDenied(false);
+
     try {
       let coordinates: Coordinates;
 
@@ -250,7 +256,17 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           maximumAge: 0, // Don't use cached location
         });
         console.log("📍 Location detected:", coordinates);
+        setLocationDenied(false); // Reset denied state on success
       } catch (locationError) {
+        console.log("Location detection failed:", locationError);
+        // Check if it's a permission denied error
+        if (
+          locationError.message?.includes("denied") ||
+          locationError.code === 1
+        ) {
+          setLocationDenied(true);
+          console.log("Location permission denied by user");
+        }
         // Fallback to default coordinates (28.5600, 76.9989)
         console.log("Using fallback coordinates");
         coordinates = { lat: 28.56, lng: 76.9989 };
@@ -309,13 +325,17 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         const parsedAddress = parseAddressString(addressString, coordinates);
         setAddress(parsedAddress);
         setSearchValue(addressString);
-        onAddressChange(parsedAddress);
+        if (onAddressChange) {
+          onAddressChange(parsedAddress);
+        }
       } else {
         // Use coordinates as address
         const coordsAddress = createCoordinatesAddress(coordinates);
         setAddress(coordsAddress);
         setSearchValue(coordsAddress.fullAddress);
-        onAddressChange(coordsAddress);
+        if (onAddressChange) {
+          onAddressChange(coordsAddress);
+        }
       }
     } catch (error) {
       console.error("Alternative geocoding failed:", error);
@@ -323,7 +343,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const coordsAddress = createCoordinatesAddress(coordinates);
       setAddress(coordsAddress);
       setSearchValue(coordsAddress.fullAddress);
-      onAddressChange(coordsAddress);
+      if (onAddressChange) {
+        onAddressChange(coordsAddress);
+      }
     }
   };
 
@@ -336,7 +358,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     return {
       flatNo: address.flatNo || "", // Keep user input
       street: parts[1] || "",
-      landmark: address.landmark || "", // Keep user input
+      landmark: "", // Never autofill landmark
       village: parts[2] || parts[1] || "",
       city: parts[parts.length - 3] || parts[parts.length - 2] || "",
       pincode: extractPincode(addressString) || "",
@@ -388,6 +410,50 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     }
   };
 
+  const handleCombinedAddressChange = (value: string) => {
+    // Parse the combined address input and update the individual fields
+    const parts = value.split(",").map((part) => part.trim());
+
+    let updatedAddress = { ...address };
+
+    if (parts.length >= 1) {
+      updatedAddress.street = parts[0] || "";
+    }
+    if (parts.length >= 2) {
+      updatedAddress.village = parts[1] || "";
+    }
+    if (parts.length >= 3) {
+      // Check if this part is a pincode
+      if (/^\d{6}$/.test(parts[2])) {
+        updatedAddress.pincode = parts[2];
+      } else {
+        updatedAddress.city = parts[2];
+      }
+    }
+    if (parts.length >= 4) {
+      // Check if last part is a pincode (6 digits)
+      const lastPart = parts[parts.length - 1];
+      if (/^\d{6}$/.test(lastPart)) {
+        updatedAddress.pincode = lastPart;
+        // The third part should be city
+        updatedAddress.city = parts[2] || "";
+      } else {
+        updatedAddress.city = lastPart;
+      }
+    }
+
+    // Update full address
+    updatedAddress.fullAddress = value;
+
+    setAddress(updatedAddress);
+    if (onAddressChange) {
+      onAddressChange(updatedAddress);
+    }
+    if (onAddressUpdate) {
+      onAddressUpdate(updatedAddress);
+    }
+  };
+
   const resetForm = () => {
     const emptyAddress: AddressData = {
       flatNo: "",
@@ -401,7 +467,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     };
     setAddress(emptyAddress);
     setSearchValue("");
-    onAddressChange(emptyAddress);
+    if (onAddressChange) {
+      onAddressChange(emptyAddress);
+    }
   };
 
   // Search for places when user types
@@ -415,6 +483,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
 
       setIsSearching(true);
       try {
+        let searchComplete = false;
+
         // Try Google Places API first
         if (window.google && window.google.maps && window.google.maps.places) {
           const service = new window.google.maps.places.AutocompleteService();
@@ -424,23 +494,35 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
               componentRestrictions: { country: "in" },
               types: ["address", "establishment", "geocode"],
             },
-            (predictions, status) => {
+            async (predictions, status) => {
+              if (searchComplete) return; // Prevent duplicate calls
+
               if (
                 status === window.google.maps.places.PlacesServiceStatus.OK &&
-                predictions
+                predictions &&
+                predictions.length > 0
               ) {
                 setSuggestions(predictions.slice(0, 5));
                 setShowSuggestions(true);
+                setIsSearching(false);
+                searchComplete = true;
               } else {
                 // Fallback to alternative search
-                searchAlternativePlaces(searchValue);
+                try {
+                  await searchAlternativePlaces(searchValue);
+                  searchComplete = true;
+                } catch (error) {
+                  console.error("Alternative search error:", error);
+                  setIsSearching(false);
+                  searchComplete = true;
+                }
               }
-              setIsSearching(false);
             },
           );
         } else {
           // Use alternative search method
           await searchAlternativePlaces(searchValue);
+          searchComplete = true;
         }
       } catch (error) {
         console.error("Search error:", error);
@@ -455,18 +537,28 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   // Alternative place search using Nominatim
   const searchAlternativePlaces = async (query: string) => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, India&limit=5&addressdetails=1`,
         {
           headers: {
             "User-Agent": "LaundaryFlash-App/1.0",
           },
+          signal: controller.signal,
         },
       );
 
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const formattedSuggestions = data.map((place: any) => ({
           description: place.display_name,
           place_id: place.place_id,
@@ -483,11 +575,16 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         }));
         setSuggestions(formattedSuggestions);
         setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
       }
     } catch (error) {
       console.error("Alternative search failed:", error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+      throw error; // Re-throw to let caller handle setIsSearching
     }
-    setIsSearching(false);
   };
 
   // Handle suggestion selection
@@ -533,8 +630,10 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
 
   // Update address whenever individual fields change
   useEffect(() => {
-    onAddressChange(address);
-  }, [address]);
+    if (onAddressChange) {
+      onAddressChange(address);
+    }
+  }, [address, onAddressChange]);
 
   return (
     <Card className={className}>
@@ -607,26 +706,40 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
             )}
           </div>
 
-          {/* Auto-detect button */}
-          <Button
-            type="button"
-            variant="default"
-            onClick={detectCurrentLocation}
-            disabled={isDetectingLocation}
-            className="w-full bg-green-600 hover:bg-green-700"
-          >
-            {isDetectingLocation ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Detecting Location...
-              </>
-            ) : (
-              <>
-                <Navigation className="h-4 w-4 mr-2" />
-                Use My Current Location
-              </>
+          {/* Location detection buttons */}
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="default"
+                onClick={detectCurrentLocation}
+                disabled={isDetectingLocation}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {isDetectingLocation ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Detecting...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="h-4 w-4 mr-2" />
+                    {locationDenied ? "Try Location Again" : "Detect Location"}
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {locationDenied && (
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm text-orange-800">
+                  📍 Location access was denied. You can manually enter your
+                  address or click "Try Location Again" to re-enable location
+                  detection.
+                </p>
+              </div>
             )}
-          </Button>
+          </div>
         </div>
 
         {(isLoadingGoogleMaps || isDetectingLocation) && (
@@ -677,99 +790,57 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           </div>
         )}
 
-        {/* Individual Address Fields */}
+        {/* Address Fields - Optimized Layout */}
         <div className="space-y-4">
-          {/* Row 1: House/Flat and Street */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="flatNo" className="text-sm font-medium">
-                🏠 Flat/House No. *
-              </Label>
-              <Input
-                id="flatNo"
-                placeholder="e.g., A-101, House No. 45"
-                value={address.flatNo}
-                onChange={(e) => handleFieldChange("flatNo", e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="street" className="text-sm font-medium">
-                🛣️ Street/Area
-              </Label>
-              <Input
-                id="street"
-                placeholder="e.g., MG Road, Sector 15"
-                value={address.street}
-                onChange={(e) => handleFieldChange("street", e.target.value)}
-                className="mt-1"
-              />
-            </div>
+          {/* Row 1: House/Flat Number */}
+          <div>
+            <Label htmlFor="flatNo" className="text-sm font-medium">
+              🏠 Flat/House No. <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="flatNo"
+              placeholder="e.g., A-101, House No. 45"
+              value={address.flatNo}
+              onChange={(e) => handleFieldChange("flatNo", e.target.value)}
+              className={`mt-1 ${!address.flatNo ? "border-red-300 focus:border-red-500" : ""}`}
+              required
+            />
+            {!address.flatNo && (
+              <p className="text-xs text-red-500 mt-1">
+                Flat/House number is required
+              </p>
+            )}
           </div>
 
-          {/* Row 2: Landmark and Village/Town */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="landmark" className="text-sm font-medium">
-                📍 Landmark
-              </Label>
-              <Input
-                id="landmark"
-                placeholder="e.g., Near Metro Station, Opposite Mall"
-                value={address.landmark}
-                onChange={(e) => handleFieldChange("landmark", e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="village" className="text-sm font-medium">
-                🏘️ Village/Town *
-              </Label>
-              <Input
-                id="village"
-                placeholder="e.g., Gurgaon, DLF Phase 1"
-                value={address.village}
-                onChange={(e) => handleFieldChange("village", e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
+          {/* Row 2: Combined Area/Street + City + Pincode */}
+          <div>
+            <Label htmlFor="combined-address" className="text-sm font-medium">
+              📍 Area, City, Pincode *
+            </Label>
+            <Input
+              id="combined-address"
+              placeholder="e.g., Sector 15, Gurgaon, 122018"
+              value={`${address.street || ""}${address.street && address.village ? ", " : ""}${address.village || ""}${address.village && address.city && address.village !== address.city ? ", " : ""}${address.city && address.city !== address.village ? address.city : ""}${address.pincode ? ", " + address.pincode : ""}`
+                .replace(/^, /, "")
+                .replace(/, $/, "")}
+              onChange={(e) => handleCombinedAddressChange(e.target.value)}
+              className="mt-1"
+              required
+            />
           </div>
 
-          {/* Row 3: City and Pincode */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="city" className="text-sm font-medium">
-                🏙️ City *
-              </Label>
-              <Input
-                id="city"
-                placeholder="e.g., Gurgaon, Delhi, Mumbai"
-                value={address.city}
-                onChange={(e) => handleFieldChange("city", e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="pincode" className="text-sm font-medium">
-                📮 Pincode *
-              </Label>
-              <Input
-                id="pincode"
-                placeholder="e.g., 122018"
-                value={address.pincode}
-                onChange={(e) => handleFieldChange("pincode", e.target.value)}
-                maxLength={6}
-                pattern="[0-9]{6}"
-                className="mt-1"
-                required
-              />
-            </div>
+          {/* Row 3: Landmark */}
+          <div>
+            <Label htmlFor="landmark" className="text-sm font-medium">
+              🗺️ Landmark
+            </Label>
+            <Input
+              id="landmark"
+              placeholder="e.g., Near Metro Station, Opposite Mall"
+              value={address.landmark}
+              onChange={(e) => handleFieldChange("landmark", e.target.value)}
+              className="mt-1"
+            />
           </div>
         </div>
 

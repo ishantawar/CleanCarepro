@@ -33,11 +33,32 @@ export interface BookingResponse {
 
 export class BookingService {
   private static instance: BookingService;
-  private apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+  private apiBaseUrl: string;
   private mongoService: MongoDBService;
 
   constructor() {
     this.mongoService = MongoDBService.getInstance();
+
+    // Use same URL detection logic as bookingHelpers
+    const envUrl = import.meta.env.VITE_API_BASE_URL;
+
+    if (envUrl && envUrl !== "") {
+      this.apiBaseUrl = envUrl;
+    } else if (
+      window.location.hostname.includes("vercel.app") ||
+      window.location.hostname.includes("builder.codes")
+    ) {
+      // Use external backend for hosted environments
+      this.apiBaseUrl = "https://cleancarepro-xrqa.onrender.com/api";
+    } else if (window.location.hostname.includes("fly.dev")) {
+      // Disable backend sync for fly.dev environments
+      this.apiBaseUrl = "";
+    } else {
+      // Local development
+      this.apiBaseUrl = "http://localhost:3001/api";
+    }
+
+    console.log("📡 BookingService API URL:", this.apiBaseUrl);
   }
 
   public static getInstance(): BookingService {
@@ -66,18 +87,29 @@ export class BookingService {
     // If we only have phone number, try to resolve MongoDB ID
     if (currentUser.phone) {
       try {
-        const response = await fetch(`/api/auth/get-user-by-phone`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: currentUser.phone }),
-        });
+        // Check if we're in a hosted environment without backend
+        const isHostedEnv =
+          window.location.hostname.includes("fly.dev") ||
+          window.location.hostname.includes("builder.codes");
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.user && result.user._id) {
-            // Update local user data with MongoDB ID
-            authService.setCurrentUser(result.user);
-            return result.user._id;
+        if (isHostedEnv) {
+          console.log("🌐 Hosted environment - skipping user ID resolution");
+          // Use phone as fallback ID in hosted environment
+          currentUser._id = `user_${currentUser.phone}`;
+        } else {
+          const response = await fetch(`/api/auth/get-user-by-phone`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: currentUser.phone }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.user && result.user._id) {
+              // Update local user data with MongoDB ID
+              authService.setCurrentUser(result.user);
+              return result.user._id;
+            }
           }
         }
       } catch (error) {
@@ -407,10 +439,18 @@ export class BookingService {
    */
   private async syncBookingToBackend(booking: BookingDetails): Promise<void> {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Skip backend sync if no API URL configured (fly.dev environment)
+      if (!this.apiBaseUrl) {
+        console.log(
+          "🌐 Skipping backend sync - no API URL configured (hosted environment)",
+        );
+        return;
+      }
 
-      // Transform booking data to match backend schema
+      console.log("🔄 Syncing booking to backend:", booking.id);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       const backendBooking = {
         customer_id: booking.userId,
         service: Array.isArray(booking.services)

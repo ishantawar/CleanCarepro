@@ -32,6 +32,8 @@ import {
 } from "@/utils/formPersistence";
 import EnhancedAddressForm from "./EnhancedAddressForm";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
+import { FormValidation, validateCheckoutForm } from "./FormValidation";
+import SavedAddressesModal from "./SavedAddressesModal";
 
 interface LaundryCartProps {
   onBack: () => void;
@@ -101,6 +103,31 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     // Pre-fill user data
     if (currentUser) {
       setPhoneNumber(currentUser.phone || "");
+
+      // Restore checkout form state after login
+      const savedState = localStorage.getItem("checkout_form_state");
+      if (savedState) {
+        try {
+          const state = JSON.parse(savedState);
+          // Only restore if saved within last 30 minutes
+          if (Date.now() - state.timestamp < 30 * 60 * 1000) {
+            if (state.addressData) setAddressData(state.addressData);
+            if (state.phoneNumber && !phoneNumber)
+              setPhoneNumber(state.phoneNumber);
+            if (state.selectedDate)
+              setSelectedDate(new Date(state.selectedDate));
+            if (state.selectedTime) setSelectedTime(state.selectedTime);
+            if (state.specialInstructions)
+              setSpecialInstructions(state.specialInstructions);
+            if (state.appliedCoupon) setAppliedCoupon(state.appliedCoupon);
+
+            console.log("✅ Restored checkout form state after login");
+          }
+          localStorage.removeItem("checkout_form_state");
+        } catch (error) {
+          console.error("Failed to restore checkout state:", error);
+        }
+      }
     }
   }, [currentUser]);
 
@@ -209,56 +236,94 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     localStorage.removeItem("laundry_cart");
   };
 
+  const [validationErrors, setValidationErrors] = useState<any[]>([]);
+  const [showSavedAddresses, setShowSavedAddresses] = useState(false);
+
   const handleProceedToCheckout = () => {
-    // Check if user is authenticated first
+    console.log("🛒 Checkout button clicked!");
+    console.log("📝 Current form data:", {
+      currentUser: !!currentUser,
+      addressData: !!addressData,
+      phoneNumber,
+      selectedDate,
+      selectedTime,
+      addressFullAddress: addressData?.fullAddress,
+      flatNo: addressData?.flatNo,
+    });
+
+    // Check authentication first before validation
     if (!currentUser) {
+      console.log("❌ User not authenticated, redirecting to login");
+
+      // Save current cart state for post-login restore
+      const currentCartState = {
+        addressData,
+        phoneNumber,
+        selectedDate: selectedDate?.toISOString(),
+        selectedTime,
+        specialInstructions,
+        appliedCoupon,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(
+        "checkout_form_state",
+        JSON.stringify(currentCartState),
+      );
+
       if (onLoginRequired) {
         onLoginRequired();
-        return;
       } else {
         addNotification(
           createWarningNotification(
             "Login Required",
-            "Please login to confirm your booking",
+            "Please sign in to complete your booking",
           ),
         );
-        return;
       }
+      return;
     }
 
-    if (!addressData) {
+    // Validate form and show inline errors
+    console.log("🔍 Starting form validation...");
+
+    let errors;
+    try {
+      errors = validateCheckoutForm(
+        currentUser,
+        addressData,
+        phoneNumber,
+        selectedDate,
+        selectedTime,
+      );
+      console.log("📋 Validation results:", errors);
+    } catch (validationError) {
+      console.error("❌ Validation function failed:", validationError);
       addNotification(
-        createWarningNotification(
-          "Address Required",
-          "Please enter pickup address",
+        createErrorNotification(
+          "Validation Error",
+          "There was an error checking your form. Please try again.",
         ),
       );
       return;
     }
 
-    if (!phoneNumber.trim()) {
-      addNotification(
-        createWarningNotification(
-          "Phone Required",
-          "Please enter phone number",
-        ),
-      );
+    if (errors.length > 0) {
+      console.log("❌ Validation failed with errors:", errors);
+      setValidationErrors(errors);
+
+      // Scroll to validation errors
+      const errorElement = document.getElementById("validation-errors");
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
       return;
     }
 
-    if (!selectedDate) {
-      addNotification(
-        createWarningNotification("Date Required", "Please select pickup date"),
-      );
-      return;
-    }
+    console.log("✅ Validation passed, proceeding to checkout...");
 
-    if (!selectedTime) {
-      addNotification(
-        createWarningNotification("Time Required", "Please select pickup time"),
-      );
-      return;
-    }
+    // Clear validation errors
+    setValidationErrors([]);
 
     // Structure data to match booking service requirements
     const cartItems = getCartItems();
@@ -345,7 +410,65 @@ Total Amount: ₹${finalTotal}
 Confirm this booking?`;
 
     if (confirm(confirmationMessage)) {
-      onProceedToCheckout(orderData);
+      try {
+        console.log("💰 User confirmed order, processing...");
+
+        // Save address for future use before processing order
+        saveAddressAfterBooking(addressData);
+
+        // Call the parent's checkout handler
+        console.log("📤 Calling onProceedToCheckout with order data");
+        onProceedToCheckout(orderData);
+
+        console.log("✅ Checkout initiated successfully");
+      } catch (checkoutError) {
+        console.error("💥 Checkout process failed:", checkoutError);
+        addNotification(
+          createErrorNotification(
+            "Checkout Failed",
+            "Failed to process your order. Please try again.",
+          ),
+        );
+      }
+    } else {
+      console.log("❌ User cancelled the order");
+    }
+  };
+
+  const saveAddressAfterBooking = async (orderAddress: any) => {
+    if (!currentUser || !orderAddress) return;
+
+    try {
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const savedAddressesKey = `addresses_${userId}`;
+      const existingAddresses = JSON.parse(
+        localStorage.getItem(savedAddressesKey) || "[]",
+      );
+
+      // Check if this address already exists
+      const addressExists = existingAddresses.some(
+        (addr: any) => addr.fullAddress === orderAddress.fullAddress,
+      );
+
+      if (!addressExists && orderAddress.fullAddress) {
+        const newAddress = {
+          ...orderAddress,
+          id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          label: orderAddress.label || "Recent Order Address",
+          type: orderAddress.type || "other",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const updatedAddresses = [...existingAddresses, newAddress];
+        localStorage.setItem(
+          savedAddressesKey,
+          JSON.stringify(updatedAddresses),
+        );
+        console.log("✅ Address saved after booking");
+      }
+    } catch (error) {
+      console.error("Failed to save address after booking:", error);
     }
   };
 
@@ -486,6 +609,29 @@ Confirm this booking?`;
           </CardContent>
         </Card>
 
+        {/* Saved Addresses Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Delivery Address
+              </CardTitle>
+              {currentUser && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSavedAddresses(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Saved Addresses
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
+
         {/* Enhanced Address Form */}
         <EnhancedAddressForm
           onAddressChange={setAddressData}
@@ -617,13 +763,51 @@ Confirm this booking?`;
 
       {/* Fixed Bottom Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 sm:p-4 safe-area-bottom">
-        <Button
-          onClick={handleProceedToCheckout}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold"
-        >
-          Proceed to Checkout • ₹{getTotal()}
-        </Button>
+        <div className="space-y-3">
+          {/* Validation Errors */}
+          {validationErrors.length > 0 && (
+            <div id="validation-errors">
+              <FormValidation errors={validationErrors} />
+            </div>
+          )}
+
+          <Button
+            onClick={(e) => {
+              console.log("🚀 Button clicked event triggered");
+              e.preventDefault();
+              e.stopPropagation();
+              try {
+                handleProceedToCheckout();
+              } catch (error) {
+                console.error("💥 Checkout handler failed:", error);
+                addNotification(
+                  createErrorNotification(
+                    "Checkout Error",
+                    "An unexpected error occurred. Please try again.",
+                  ),
+                );
+              }
+            }}
+            disabled={cartItems.length === 0}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {cartItems.length === 0
+              ? "Add items to cart"
+              : `Proceed to Checkout • ₹${getTotal()}`}
+          </Button>
+        </div>
       </div>
+
+      {/* Saved Addresses Modal */}
+      <SavedAddressesModal
+        isOpen={showSavedAddresses}
+        onClose={() => setShowSavedAddresses(false)}
+        onSelectAddress={(address) => {
+          setAddressData(address);
+          setShowSavedAddresses(false);
+        }}
+        currentUser={currentUser}
+      />
     </div>
   );
 };

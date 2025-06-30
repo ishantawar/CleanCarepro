@@ -20,7 +20,6 @@ import {
   ShoppingCart,
   Plus,
 } from "lucide-react";
-import ServiceSelector from "./ServiceSelector";
 import ServiceEditor from "./ServiceEditor";
 
 interface EditBookingModalProps {
