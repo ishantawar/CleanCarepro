@@ -17,6 +17,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:8080",
+  "https://cleancarepro-git-aimainb2920c220d71-hills-projects-6611101c.vercel.app",
   "https://cleancare-pro-frontend-production.up.railway.app",
   "https://cleancarepro.vercel.app",
   "https://cleancare-pro-api.onrender.com",
