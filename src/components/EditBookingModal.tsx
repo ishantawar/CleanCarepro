@@ -137,7 +137,14 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
         updatedAt: new Date().toISOString(),
       };
 
-      console.log("Saving updated booking:", updatedBooking);
+      console.log("📤 Passing updatedBooking to onSave:", {
+        updatedBooking,
+        hasId: !!updatedBooking.id,
+        hasMongoId: !!updatedBooking._id,
+        idValue: updatedBooking.id,
+        mongoIdValue: updatedBooking._id,
+      });
+
       await onSave(updatedBooking);
     } catch (error) {
       console.error("Error updating booking:", error);
