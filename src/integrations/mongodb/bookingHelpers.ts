@@ -219,13 +219,58 @@ export const bookingHelpers = {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
+        // Transform booking data to match backend schema
+        const transformedBookingData = {
+          customer_id: customerId,
+          service: Array.isArray(bookingData.services)
+            ? bookingData.services.join(", ")
+            : bookingData.services || "Home Service",
+          service_type: "home-service",
+          services: Array.isArray(bookingData.services)
+            ? bookingData.services
+            : [bookingData.services || "Home Service"],
+          scheduled_date:
+            bookingData.pickupDate ||
+            bookingData.scheduled_date ||
+            new Date().toISOString().split("T")[0],
+          scheduled_time:
+            bookingData.pickupTime || bookingData.scheduled_time || "10:00",
+          provider_name: "CleanCare Pro",
+          address:
+            typeof bookingData.address === "string"
+              ? bookingData.address
+              : bookingData.address?.fullAddress ||
+                JSON.stringify(bookingData.address) ||
+                "Address not provided",
+          coordinates: (typeof bookingData.address === "object" &&
+            bookingData.address?.coordinates) || { lat: 0, lng: 0 },
+          additional_details:
+            bookingData.contactDetails?.instructions ||
+            bookingData.additional_details ||
+            "",
+          total_price: bookingData.totalAmount || bookingData.total_price || 0,
+          discount_amount: bookingData.discount_amount || 0,
+          final_amount:
+            bookingData.totalAmount ||
+            bookingData.final_amount ||
+            bookingData.total_price ||
+            0,
+          special_instructions:
+            bookingData.contactDetails?.instructions ||
+            bookingData.additional_details ||
+            "",
+          charges_breakdown: {
+            base_price: bookingData.totalAmount || bookingData.total_price || 0,
+            tax_amount: 0,
+            service_fee: 0,
+            discount: 0,
+          },
+        };
+
         response = await fetch(`${API_BASE_URL}/bookings`, {
           method: "POST",
           headers: getAuthHeaders(),
-          body: JSON.stringify({
-            ...bookingData,
-            customer_id: customerId, // ✅ use resolved customer ID
-          }),
+          body: JSON.stringify(transformedBookingData),
           signal: controller.signal,
         });
 
