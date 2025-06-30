@@ -827,8 +827,10 @@ Confirm this booking?`;
         isOpen={showSavedAddresses}
         onClose={() => setShowSavedAddresses(false)}
         onSelectAddress={(address) => {
+          console.log("🏠 Address selected in LaundryCart:", address);
           setAddressData(address);
           setShowSavedAddresses(false);
+          console.log("✅ Address data updated, modal closed");
         }}
         currentUser={currentUser}
       />
