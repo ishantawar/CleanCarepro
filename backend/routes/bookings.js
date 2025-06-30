@@ -444,7 +444,15 @@ router.put("/:bookingId/accept", async (req, res) => {
 router.put("/:bookingId/status", async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { status, rider_id } = req.body;
+    const { status, rider_id, user_id, user_type } = req.body;
+
+    console.log("📝 Booking status update request:", {
+      bookingId,
+      status,
+      rider_id,
+      user_id,
+      user_type,
+    });
 
     const validStatuses = [
       "pending",
@@ -456,6 +464,12 @@ router.put("/:bookingId/status", async (req, res) => {
 
     if (!status || !validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
+    }
+
+    // Validate bookingId format
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      console.error("❌ Invalid booking ID format:", bookingId);
+      return res.status(400).json({ error: "Invalid booking ID format" });
     }
 
     let query = { _id: bookingId };
@@ -475,6 +489,8 @@ router.put("/:bookingId/status", async (req, res) => {
       updateData.completed_at = new Date();
     }
 
+    console.log("🔍 Looking for booking with query:", query);
+
     const booking = await Booking.findOneAndUpdate(query, updateData, {
       new: true,
       runValidators: true,
@@ -483,10 +499,26 @@ router.put("/:bookingId/status", async (req, res) => {
       .populate("rider_id", "full_name phone");
 
     if (!booking) {
+      console.error("❌ Booking not found with ID:", bookingId);
+
+      // Check if booking exists at all
+      const existingBooking = await Booking.findById(bookingId);
+      if (!existingBooking) {
+        console.error("❌ Booking does not exist in database");
+      } else {
+        console.error("❌ Booking exists but query failed. Current booking:", {
+          id: existingBooking._id,
+          status: existingBooking.status,
+          rider_id: existingBooking.rider_id,
+        });
+      }
+
       return res
         .status(404)
         .json({ error: "Booking not found or access denied" });
     }
+
+    console.log("✅ Booking status updated successfully:", booking._id);
 
     res.json({
       message: "Booking status updated successfully",
