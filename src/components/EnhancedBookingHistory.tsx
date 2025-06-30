@@ -607,7 +607,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         Booked Services
                       </h4>
                       <div className="space-y-2">
-
                         {services.map((service: any, idx: number) => {
                           const serviceName =
                             typeof service === "object"
@@ -845,7 +844,9 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 size="sm"
                               >
                                 <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                                <span className="text-xs sm:text-sm">Add Services</span>
+                                <span className="text-xs sm:text-sm">
+                                  Add Services
+                                </span>
                               </Button>
                             )}
                           </div>
@@ -858,7 +859,9 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                             size="sm"
                           >
                             <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm">Contact Support</span>
+                            <span className="text-xs sm:text-sm">
+                              Contact Support
+                            </span>
                           </Button>
                         </>
                       ) : (
@@ -870,11 +873,12 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                             size="sm"
                           >
                             <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm">Contact Support</span>
+                            <span className="text-xs sm:text-sm">
+                              Contact Support
+                            </span>
                           </Button>
                         </div>
                       )}
-                    </div>
                     </div>
                   </CardContent>
                 </Card>
