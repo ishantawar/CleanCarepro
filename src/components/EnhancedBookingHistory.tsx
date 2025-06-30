@@ -675,11 +675,21 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         ) : (
           <div className="space-y-6">
             {bookings.map((booking: any, index) => {
-              const bookingId = booking.id || booking._id || `booking_${index}`;
+              // Use actual booking ID, not fallback index-based ID for actions
+              const bookingId = booking.id || booking._id;
+              const displayId = bookingId || `booking_${index}`;
               const services = Array.isArray(booking.services)
                 ? booking.services
                 : [booking.service || "Home Service"];
               const total = calculateTotal(booking);
+
+              console.log("🔍 Rendering booking:", {
+                index,
+                bookingId,
+                displayId,
+                hasRealId: !!bookingId,
+                booking,
+              });
 
               return (
                 <Card
