@@ -34,7 +34,11 @@ export const GOOGLE_SHEETS_CONFIG = {
   ],
 
   // Enable/disable Google Sheets integration
-  ENABLED: true,
+  // Automatically disabled in hosted environments where WEB_APP_URL is not configured
+  ENABLED:
+    typeof window !== "undefined" &&
+    !window.location.hostname.includes("fly.dev") &&
+    !window.location.hostname.includes("builder.codes"),
 };
 
 // Helper function to validate configuration
@@ -62,7 +66,7 @@ export const SETUP_INSTRUCTIONS = `
 
 2. **Create Google Apps Script:**
    - Go to script.google.com
-   - Create new project  
+   - Create new project
    - Copy code from GoogleSheetsService.generateAppsScriptCode()
    - Deploy as web app
    - Update WEB_APP_URL with your deployment URL
