@@ -68,6 +68,62 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   const autocompleteRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+
+  // Update address when initialAddress prop changes (for autofill)
+  useEffect(() => {
+    if (initialAddress) {
+      // Check if the address has meaningful data before autofilling
+      const hasData =
+        initialAddress.flatNo ||
+        initialAddress.flatHouseNo ||
+        initialAddress.street ||
+        initialAddress.village ||
+        initialAddress.city ||
+        initialAddress.pincode ||
+        initialAddress.fullAddress;
+
+      // Only autofill if there's meaningful data and it's different from current state
+      if (
+        hasData &&
+        (address.flatNo !==
+          (initialAddress.flatNo || initialAddress.flatHouseNo || "") ||
+          address.street !== (initialAddress.street || "") ||
+          address.village !== (initialAddress.village || "") ||
+          address.city !== (initialAddress.city || "") ||
+          address.pincode !== (initialAddress.pincode || "") ||
+          address.fullAddress !== (initialAddress.fullAddress || ""))
+      ) {
+        console.log("📍 Autofilling address from saved data:", initialAddress);
+        const updatedAddress = {
+          flatNo: initialAddress.flatNo || initialAddress.flatHouseNo || "",
+          flatHouseNo:
+            initialAddress.flatNo || initialAddress.flatHouseNo || "",
+          street: initialAddress.street || "",
+          landmark: initialAddress.landmark || "",
+          village: initialAddress.village || "",
+          city: initialAddress.city || "",
+          pincode: initialAddress.pincode || "",
+          fullAddress: initialAddress.fullAddress || "",
+          label: initialAddress.label || "",
+          type: initialAddress.type || "other",
+          coordinates: initialAddress.coordinates,
+        };
+        setAddress(updatedAddress);
+        setSearchValue(initialAddress.fullAddress || "");
+        console.log("✅ Address autofilled successfully");
+      }
+    }
+  }, [
+    initialAddress,
+    address.flatNo,
+    address.street,
+    address.village,
+    address.city,
+    address.pincode,
+    address.fullAddress,
+  ]);
+
+
   // Load Google Maps API
   useEffect(() => {
     if (window.google && window.google.maps) {

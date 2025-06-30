@@ -504,25 +504,25 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-6 sm:px-6">
+      <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {onBack && (
                 <Button
                   onClick={onBack}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-gray-600 hover:text-gray-900 p-1 sm:p-2"
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
                   Booking History
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">
                   {bookings.length}{" "}
                   {bookings.length === 1 ? "booking" : "bookings"} found
                 </p>
@@ -545,7 +545,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6">
+      <div className="max-w-4xl mx-auto px-3 py-3 sm:px-6 sm:py-8">
         {bookings.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
@@ -565,7 +565,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-6">
             {bookings.map((booking: any, index) => {
               const bookingId = booking.id || booking._id || `booking_${index}`;
               const services = Array.isArray(booking.services)
@@ -578,13 +578,13 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                   key={bookingId}
                   className="overflow-hidden border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300"
                 >
-                  <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200 p-3 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                       <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-gray-900 mb-2">
+                        <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
                           {booking.service || "Home Service"}
                         </CardTitle>
-                        <p className="text-sm text-blue-600 font-medium">
+                        <p className="text-xs sm:text-sm text-blue-600 font-medium">
                           by {booking.provider_name || "HomeServices Pro"}
                         </p>
                       </div>
@@ -599,7 +599,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                     </div>
                   </CardHeader>
 
-                  <CardContent className="p-6 space-y-6">
+                  <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-6">
                     {/* Services */}
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -607,44 +607,40 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         Booked Services
                       </h4>
                       <div className="space-y-2">
-                        {services.map((service: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100"
-                          >
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {typeof service === "object"
-                                  ? service.name || service.service
-                                  : service}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Qty:{" "}
-                                {typeof service === "object"
-                                  ? service.quantity || 1
-                                  : 1}
-                              </p>
-                            </div>
-                            {typeof service === "object" && service.price && (
-                              <p className="font-semibold text-blue-600">
-                                ₹{service.price}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+
+                        {services.map((service: any, idx: number) => {
+                          const serviceName =
+                            typeof service === "object"
+                              ? service.name || service.service
+                              : service;
+                          const quantity =
+                            typeof service === "object"
+                              ? service.quantity || 1
+                              : 1;
+
+                          return (
+                            <Badge
+                              key={idx}
+                              variant="secondary"
+                              className="bg-white text-gray-700 border border-blue-200 text-xs px-2 py-1"
+                            >
+                              {serviceName} {quantity > 1 && `x${quantity}`}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
 
                     {/* Schedule */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-green-600" />
-                          <span className="font-medium text-gray-900">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+                      <div className="p-2 sm:p-4 bg-green-50 rounded-lg border border-green-100">
+                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                          <span className="font-medium text-gray-900 text-sm sm:text-base">
                             Pickup
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900">
                           {formatDate(
                             booking.pickupDate || booking.scheduled_date,
                           )}
@@ -656,14 +652,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         </p>
                       </div>
 
-                      <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-emerald-600" />
-                          <span className="font-medium text-gray-900">
+                      <div className="p-2 sm:p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600" />
+                          <span className="font-medium text-gray-900 text-sm sm:text-base">
                             Delivery
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900">
                           {formatDate(booking.deliveryDate) || "Date TBD"}
                         </p>
                         <p className="text-xs text-emerald-600">
@@ -762,17 +758,85 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
-                      {canEditBooking(booking) && (
-                        <Button
-                          onClick={() => handleEditBooking(booking)}
-                          variant="outline"
-                          className="flex items-center gap-2 border-green-200 text-green-600 hover:bg-green-50"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit Order
-                        </Button>
-                      )}
+
+                    <div className="flex flex-col gap-2 sm:gap-3 pt-2 sm:pt-4 border-t border-gray-200">
+                      {hasRealId ? (
+                        <>
+                          {/* Primary Actions Row */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                            {canEditBooking(booking) && (
+                              <Button
+                                onClick={() => handleEditBooking(booking)}
+                                variant="outline"
+                                className="flex items-center justify-center gap-1 sm:gap-2 border-green-200 text-green-600 hover:bg-green-50 py-1.5 sm:py-2 text-xs sm:text-sm"
+                                size="sm"
+                              >
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span>Edit Order</span>
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* Secondary Actions Row */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {canCancelBooking(booking) && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="flex items-center justify-center gap-2 border-red-200 text-red-600 hover:bg-red-50 py-2"
+                                    disabled={cancellingBooking === bookingId}
+                                    size="sm"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="text-sm">
+                                      {cancellingBooking === bookingId
+                                        ? "Cancelling..."
+                                        : "Cancel"}
+                                    </span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="mx-4">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Cancel Booking?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to cancel this
+                                      booking? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                    <AlertDialogCancel className="w-full sm:w-auto">
+                                      Keep Booking
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        console.log(
+                                          "🔥 Cancel button clicked for booking:",
+                                          {
+                                            bookingId,
+                                            hasBookingId: !!bookingId,
+                                            booking,
+                                          },
+                                        );
+                                        if (bookingId) {
+                                          handleCancelBooking(bookingId);
+                                        } else {
+                                          console.error(
+                                            "❌ No valid booking ID for cancellation",
+                                          );
+                                        }
+                                      }}
+                                      className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+                                    >
+                                      Yes, Cancel Booking
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+
 
                       {canCancelBooking(booking) && (
                         <AlertDialog>

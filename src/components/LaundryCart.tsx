@@ -21,6 +21,8 @@ import {
   User,
   Phone,
   Calendar,
+  Loader2,
+  CreditCard,
 } from "lucide-react";
 import { laundryServices, LaundryService } from "@/data/laundryServices";
 import { OTPAuthService } from "@/services/otpAuthService";
@@ -63,11 +65,11 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 
   const authService = OTPAuthService.getInstance();
 
-  // Load saved form data on component mount
+  // Load saved form data on component mount (excluding date autofill)
   useEffect(() => {
     const savedFormData = getBookingFormData();
 
-    if (savedFormData.selectedDate) setSelectedDate(savedFormData.selectedDate);
+    // Don't autofill date - let user select fresh
     if (savedFormData.selectedTime) setSelectedTime(savedFormData.selectedTime);
     if (savedFormData.additionalDetails)
       setSpecialInstructions(savedFormData.additionalDetails);
@@ -238,165 +240,169 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
+  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
-  const handleProceedToCheckout = () => {
+  const handleProceedToCheckout = async () => {
     console.log("🛒 Checkout button clicked!");
-    console.log("📝 Current form data:", {
-      currentUser: !!currentUser,
-      addressData: !!addressData,
-      phoneNumber,
-      selectedDate,
-      selectedTime,
-      addressFullAddress: addressData?.fullAddress,
-      flatNo: addressData?.flatNo,
-    });
+    setIsProcessingCheckout(true);
 
-    // Check authentication first before validation
-    if (!currentUser) {
-      console.log("❌ User not authenticated, redirecting to login");
-
-      // Save current cart state for post-login restore
-      const currentCartState = {
-        addressData,
-        phoneNumber,
-        selectedDate: selectedDate?.toISOString(),
-        selectedTime,
-        specialInstructions,
-        appliedCoupon,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(
-        "checkout_form_state",
-        JSON.stringify(currentCartState),
-      );
-
-      if (onLoginRequired) {
-        onLoginRequired();
-      } else {
-        addNotification(
-          createWarningNotification(
-            "Login Required",
-            "Please sign in to complete your booking",
-          ),
-        );
-      }
-      return;
-    }
-
-    // Validate form and show inline errors
-    console.log("🔍 Starting form validation...");
-
-    let errors;
     try {
-      errors = validateCheckoutForm(
-        currentUser,
-        addressData,
+      console.log("📝 Current form data:", {
+        currentUser: !!currentUser,
+        addressData: !!addressData,
         phoneNumber,
         selectedDate,
         selectedTime,
-      );
-      console.log("📋 Validation results:", errors);
-    } catch (validationError) {
-      console.error("❌ Validation function failed:", validationError);
-      addNotification(
-        createErrorNotification(
-          "Validation Error",
-          "There was an error checking your form. Please try again.",
-        ),
-      );
-      return;
-    }
+        addressFullAddress: addressData?.fullAddress,
+        flatNo: addressData?.flatNo,
+      });
 
-    if (errors.length > 0) {
-      console.log("❌ Validation failed with errors:", errors);
-      setValidationErrors(errors);
+      // Check authentication first before validation
+      if (!currentUser) {
+        console.log("❌ User not authenticated, redirecting to login");
 
-      // Scroll to validation errors
-      const errorElement = document.getElementById("validation-errors");
-      if (errorElement) {
-        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Save current cart state for post-login restore
+        const currentCartState = {
+          addressData,
+          phoneNumber,
+          selectedDate: selectedDate?.toISOString(),
+          selectedTime,
+          specialInstructions,
+          appliedCoupon,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(
+          "checkout_form_state",
+          JSON.stringify(currentCartState),
+        );
+
+        if (onLoginRequired) {
+          onLoginRequired();
+        } else {
+          addNotification(
+            createWarningNotification(
+              "Login Required",
+              "Please sign in to complete your booking",
+            ),
+          );
+        }
+        return;
       }
 
-      return;
-    }
+      // Validate form and show inline errors
+      console.log("🔍 Starting form validation...");
 
-    console.log("✅ Validation passed, proceeding to checkout...");
+      let errors;
+      try {
+        errors = validateCheckoutForm(
+          currentUser,
+          addressData,
+          phoneNumber,
+          selectedDate,
+          selectedTime,
+        );
+        console.log("📋 Validation results:", errors);
+      } catch (validationError) {
+        console.error("❌ Validation function failed:", validationError);
+        addNotification(
+          createErrorNotification(
+            "Validation Error",
+            "There was an error checking your form. Please try again.",
+          ),
+        );
+        return;
+      }
 
-    // Clear validation errors
-    setValidationErrors([]);
+      if (errors.length > 0) {
+        console.log("❌ Validation failed with errors:", errors);
+        setValidationErrors(errors);
 
-    // Structure data to match booking service requirements
-    const cartItems = getCartItems();
-    console.log("Cart items:", cartItems);
-
-    const services = cartItems
-      .map((item) => {
-        if (!item.service) {
-          console.error("Service not found for cart item:", item);
-          return null;
+        // Scroll to validation errors
+        const errorElement = document.getElementById("validation-errors");
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
 
-        // Validate price and quantity
-        const price = Number(item.service.price) || 0;
-        const quantity = Number(item.quantity) || 1;
+        return;
+      }
 
-        if (price === 0) {
-          console.warn("Service has zero price:", item.service);
-        }
+      console.log("✅ Validation passed, proceeding to checkout...");
 
-        return {
-          id: item.service.id,
-          name: item.service.name,
-          category: item.service.category,
-          price: price,
-          quantity: quantity,
-        };
-      })
-      .filter(Boolean);
+      // Clear validation errors
+      setValidationErrors([]);
 
-    console.log("Formatted services:", services);
+      // Structure data to match booking service requirements
+      const cartItems = getCartItems();
+      console.log("Cart items:", cartItems);
 
-    // Calculate delivery time (2 days after pickup)
-    const deliveryDate = new Date(selectedDate);
-    deliveryDate.setDate(deliveryDate.getDate() + 2); // Add 2 days
+      const services = cartItems
+        .map((item) => {
+          if (!item.service) {
+            console.error("Service not found for cart item:", item);
+            return null;
+          }
 
-    // Delivery time same as pickup time
-    const deliveryTimeString = selectedTime;
+          // Validate price and quantity
+          const price = Number(item.service.price) || 0;
+          const quantity = Number(item.quantity) || 1;
 
-    // Calculate total from services to ensure consistency
-    const serviceTotal = services.reduce((total, service) => {
-      const itemTotal = service.price * service.quantity || 0;
-      return total + itemTotal;
-    }, 0);
+          if (price === 0) {
+            console.warn("Service has zero price:", item.service);
+          }
 
-    const deliveryCharge = getDeliveryCharge() || 0;
-    const couponDiscount = getCouponDiscount() || 0;
-    const finalTotal = serviceTotal + deliveryCharge - couponDiscount;
+          return {
+            id: item.service.id,
+            name: item.service.name,
+            category: item.service.category,
+            price: price,
+            quantity: quantity,
+          };
+        })
+        .filter(Boolean);
 
-    console.log("Price breakdown:", {
-      serviceTotal,
-      deliveryCharge,
-      couponDiscount,
-      appliedCoupon: appliedCoupon?.code,
-      finalTotal,
-    });
+      console.log("Formatted services:", services);
 
-    const orderData = {
-      services,
-      totalAmount: finalTotal,
-      pickupDate: selectedDate.toISOString().split("T")[0],
-      deliveryDate: deliveryDate.toISOString().split("T")[0],
-      pickupTime: selectedTime,
-      deliveryTime: deliveryTimeString,
-      address: addressData,
-      phone: phoneNumber || currentUser?.phone,
-      instructions: specialInstructions,
-    };
+      // Calculate delivery time (2 days after pickup)
+      const deliveryDate = new Date(selectedDate);
+      deliveryDate.setDate(deliveryDate.getDate() + 2); // Add 2 days
 
-    console.log("Final order data:", orderData);
+      // Delivery time same as pickup time
+      const deliveryTimeString = selectedTime;
 
-    // Show confirmation dialog
-    const confirmationMessage = `
+      // Calculate total from services to ensure consistency
+      const serviceTotal = services.reduce((total, service) => {
+        const itemTotal = service.price * service.quantity || 0;
+        return total + itemTotal;
+      }, 0);
+
+      const deliveryCharge = getDeliveryCharge() || 0;
+      const couponDiscount = getCouponDiscount() || 0;
+      const finalTotal = serviceTotal + deliveryCharge - couponDiscount;
+
+      console.log("Price breakdown:", {
+        serviceTotal,
+        deliveryCharge,
+        couponDiscount,
+        appliedCoupon: appliedCoupon?.code,
+        finalTotal,
+      });
+
+      const orderData = {
+        services,
+        totalAmount: finalTotal,
+        pickupDate: selectedDate.toISOString().split("T")[0],
+        deliveryDate: deliveryDate.toISOString().split("T")[0],
+        pickupTime: selectedTime,
+        deliveryTime: deliveryTimeString,
+        address: addressData,
+        phone: phoneNumber || currentUser?.phone,
+        instructions: specialInstructions,
+      };
+
+      console.log("Final order data:", orderData);
+
+      // Show confirmation dialog
+      const confirmationMessage = `
 Booking Confirmation:
 
 Services: ${services.length} items
@@ -409,29 +415,40 @@ Total Amount: ₹${finalTotal}
 
 Confirm this booking?`;
 
-    if (confirm(confirmationMessage)) {
-      try {
-        console.log("💰 User confirmed order, processing...");
+      if (confirm(confirmationMessage)) {
+        try {
+          console.log("💰 User confirmed order, processing...");
 
-        // Save address for future use before processing order
-        saveAddressAfterBooking(addressData);
+          // Save address for future use before processing order
+          saveAddressAfterBooking(addressData);
 
-        // Call the parent's checkout handler
-        console.log("📤 Calling onProceedToCheckout with order data");
-        onProceedToCheckout(orderData);
+          // Call the parent's checkout handler
+          console.log("📤 Calling onProceedToCheckout with order data");
+          onProceedToCheckout(orderData);
 
-        console.log("✅ Checkout initiated successfully");
-      } catch (checkoutError) {
-        console.error("💥 Checkout process failed:", checkoutError);
-        addNotification(
-          createErrorNotification(
-            "Checkout Failed",
-            "Failed to process your order. Please try again.",
-          ),
-        );
+          console.log("✅ Checkout initiated successfully");
+        } catch (checkoutError) {
+          console.error("💥 Checkout process failed:", checkoutError);
+          addNotification(
+            createErrorNotification(
+              "Checkout Failed",
+              "Failed to process your order. Please try again.",
+            ),
+          );
+        }
+      } else {
+        console.log("❌ User cancelled the order");
       }
-    } else {
-      console.log("❌ User cancelled the order");
+    } catch (error) {
+      console.error("💥 Checkout failed:", error);
+      addNotification(
+        createErrorNotification(
+          "Checkout Failed",
+          "Unable to process your order. Please try again.",
+        ),
+      );
+    } finally {
+      setIsProcessingCheckout(false);
     }
   };
 
@@ -501,7 +518,7 @@ Confirm this booking?`;
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm px-3 sm:px-4 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white shadow-sm px-3 sm:px-4 py-4 flex items-center sticky top-0 z-10">
         <div className="flex items-center gap-2 sm:gap-4">
           <Button variant="ghost" onClick={onBack} className="p-0 h-8 w-8">
             <ArrowLeft className="h-5 w-5" />
@@ -510,32 +527,20 @@ Confirm this booking?`;
             Cart ({cartItems.length} items)
           </h1>
         </div>
-
-        <Button
-          variant="ghost"
-          onClick={clearCart}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          Clear All
-        </Button>
       </div>
 
-      <div className="p-3 sm:p-4 space-y-4 pb-32">
+      <div className="p-2 space-y-3 pb-32">
         {/* Cart Items */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Order Items</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Order Items</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2 pt-0">
             {cartItems.map(({ service, quantity }) => (
-              <div
-                key={service!.id}
-                className="p-3 bg-gray-50 rounded-lg space-y-3"
-              >
-                {/* Top row: Icon, Details, and Remove button */}
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg">
+              <div key={service!.id} className="p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">
                       {service!.category.includes("Men")
                         ? "👔"
                         : service!.category.includes("Women")
@@ -551,40 +556,34 @@ Confirm this booking?`;
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">
+                    <h4 className="font-medium text-xs truncate">
                       {service!.name}
                     </h4>
-                    <p className="text-xs text-gray-600 truncate">
-                      {service!.category}
-                    </p>
-                    <p className="text-sm font-semibold text-green-600">
-                      ₹{service!.price} {service!.unit}
-                    </p>
+                    <p className="text-xs text-green-600">₹{service!.price}</p>
                   </div>
 
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem(service!.id)}
-                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
 
-                {/* Bottom row: Quantity controls and total price */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mt-1">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(service!.id, -1)}
-                      className="h-8 w-8 p-0"
+                      className="h-6 w-6 p-0"
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
 
-                    <span className="w-8 text-center font-medium">
+                    <span className="w-6 text-center font-medium text-xs">
                       {quantity}
                     </span>
 
@@ -592,17 +591,15 @@ Confirm this booking?`;
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(service!.id, 1)}
-                      className="h-8 w-8 p-0"
+                      className="h-6 w-6 p-0"
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
 
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      ₹{service!.price * quantity}
-                    </p>
-                  </div>
+                  <p className="font-semibold text-sm">
+                    ₹{service!.price * quantity}
+                  </p>
                 </div>
               </div>
             ))}
@@ -788,12 +785,22 @@ Confirm this booking?`;
                 );
               }
             }}
-            disabled={cartItems.length === 0}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={cartItems.length === 0 || isProcessingCheckout}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {cartItems.length === 0
-              ? "Add items to cart"
-              : `Proceed to Checkout • ₹${getTotal()}`}
+            {isProcessingCheckout ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : cartItems.length === 0 ? (
+              "Add items to cart"
+            ) : (
+              <>
+                <CreditCard className="h-4 w-4" />
+                Proceed to Checkout • ₹{getTotal()}
+              </>
+            )}
           </Button>
         </div>
       </div>

@@ -388,21 +388,21 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600 overflow-x-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 sm:p-6 shadow-sm">
+      <div className="bg-gradient-to-r from-green-500 to-green-600 p-2 sm:p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Button
               onClick={onBack || (() => window.history.back())}
               variant="ghost"
-              className="text-white hover:bg-white/20 p-2 rounded-xl flex-shrink-0"
+              className="text-white hover:bg-white/20 p-1.5 rounded-xl flex-shrink-0"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-white truncate">
+              <h1 className="text-lg sm:text-xl font-bold text-white truncate">
                 My Bookings
               </h1>
-              <p className="text-green-100 text-xs sm:text-sm">
+              <p className="text-green-100 text-xs">
                 {bookings.length}{" "}
                 {bookings.length === 1 ? "booking" : "bookings"} found
               </p>
@@ -609,12 +609,12 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
               return (
                 <Card
                   key={safeBooking.id || index}
-                  className="border-0 shadow-xl rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm hover:shadow-2xl transition-all duration-300"
+                  className="border-0 shadow-lg rounded-xl overflow-hidden bg-white/95 backdrop-blur-sm hover:shadow-xl transition-all duration-300"
                 >
-                  <CardHeader className="pb-3 p-4 sm:p-6 bg-gradient-to-r from-green-50 to-emerald-50">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                  <CardHeader className="pb-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base sm:text-lg font-bold text-gray-900 mb-1 truncate">
+                        <CardTitle className="text-sm sm:text-base font-bold text-gray-900 mb-1 truncate">
                           {safeBooking.service}
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-green-600 truncate font-medium">
@@ -632,50 +632,51 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-4 p-4 sm:p-6">
+                  <CardContent className="space-y-2 p-3">
                     {/* Booked Services */}
                     {safeBooking.services &&
                       Array.isArray(safeBooking.services) &&
                       safeBooking.services.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900 text-sm">
-                            Booked Services
-                          </h4>
-                          {safeBooking.services.map(
-                            (service: any, idx: number) => (
-                              <div
-                                key={idx}
-                                className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100"
-                              >
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-900 text-sm">
-                                    <SafeText>{service.name}</SafeText>
-                                  </p>
-                                  <p className="text-xs text-gray-600">
-                                    Qty: {service.quantity}
-                                  </p>
-                                </div>
-                                {service.price > 0 && (
-                                  <p className="font-semibold text-blue-600">
-                                    ₹{service.price}
-                                  </p>
-                                )}
-                              </div>
-                            ),
-                          )}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="font-semibold text-gray-900 text-xs">
+                              Services ({safeBooking.services.length})
+                            </h4>
+                            <span className="text-xs text-blue-600 font-medium">
+                              ₹
+                              {safeBooking.totalAmount ||
+                                safeBooking.total_price ||
+                                0}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {safeBooking.services.map(
+                              (service: any, idx: number) => (
+                                <Badge
+                                  key={idx}
+                                  variant="secondary"
+                                  className="bg-white text-gray-700 border border-blue-200 text-xs px-1.5 py-0.5"
+                                >
+                                  <SafeText>{service.name}</SafeText>
+                                  {service.quantity > 1 &&
+                                    ` x${service.quantity}`}
+                                </Badge>
+                              ),
+                            )}
+                          </div>
                         </div>
                       )}
 
                     {/* Pickup & Delivery Slots */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-3 bg-green-50 rounded-xl border border-green-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-green-600" />
-                          <span className="font-medium text-gray-900 text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-green-50 rounded-lg border border-green-100">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Calendar className="h-3 w-3 text-green-600" />
+                          <span className="font-medium text-gray-900 text-xs">
                             Pickup
                           </span>
                         </div>
-                        <p className="text-sm text-gray-900">
+                        <p className="text-xs text-gray-900">
                           {(() => {
                             const dateStr =
                               safeBooking.pickupDate ||
@@ -920,28 +921,28 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                     )}
 
                     {/* Comprehensive Actions */}
-                    <div className="space-y-3 pt-3">
+                    <div className="space-y-2 pt-2">
                       {/* Primary Actions Row */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         {(safeBooking.status === "pending" ||
                           safeBooking.status === "confirmed") && (
                           <>
                             <Button
                               variant="outline"
                               onClick={() => handleEditBooking(safeBooking)}
-                              className="flex-1 rounded-xl border-2 border-green-200 hover:bg-green-50 text-green-600 font-medium py-3"
+                              className="flex-1 rounded-lg border border-green-200 hover:bg-green-50 text-green-600 text-xs py-2"
                             >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Order
+                              <Edit className="mr-1 h-3 w-3" />
+                              Edit
                             </Button>
 
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className="flex-1 rounded-xl border-2 border-red-200 hover:bg-red-50 text-red-600 font-medium py-3"
+                                  className="flex-1 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs py-2"
                                 >
-                                  <XCircle className="mr-2 h-4 w-4" />
+                                  <XCircle className="mr-1 h-3 w-3" />
                                   Cancel
                                 </Button>
                               </AlertDialogTrigger>
@@ -986,16 +987,6 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
 
                       {/* Secondary Actions Row */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button
-                          variant="ghost"
-                          className="rounded-xl border border-blue-200 hover:bg-blue-50 text-blue-600 font-medium py-3 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                          onClick={() => handleAddServices(safeBooking)}
-                          aria-label={`Add more services to booking ${safeBooking.service || "Home Service"}`}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add More Services
-                        </Button>
-
                         <Button
                           variant="ghost"
                           className="rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium py-3"
