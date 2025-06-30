@@ -458,9 +458,6 @@ const LaundryIndex = () => {
 
         // Also save to Google Sheets
         try {
-          const GoogleSheetsService = (
-            await import("../services/googleSheetsService")
-          ).default;
           const sheetsService = GoogleSheetsService.getInstance();
 
           const orderData = {
