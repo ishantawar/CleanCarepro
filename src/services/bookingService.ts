@@ -695,6 +695,60 @@ export class BookingService {
   }
 
   /**
+   * Sync booking update to backend
+   */
+  private async syncBookingUpdateToBackend(
+    bookingId: string,
+    updates: Partial<BookingDetails>,
+  ): Promise<{ success: boolean; booking?: any; error?: string }> {
+    try {
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+
+      // For status updates, use the specific status update endpoint
+      if (updates.status) {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/bookings/${bookingId}/status`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: updates.status,
+              user_id: currentUser.id,
+              user_type: "customer",
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        return {
+          success: true,
+          booking: data.booking,
+        };
+      }
+
+      // For other updates, we'd need a general update endpoint
+      // For now, return success to indicate localStorage update is sufficient
+      return { success: false, error: "General update endpoint not available" };
+    } catch (error) {
+      console.error("Backend sync error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
    * Clear all bookings (for testing)
    */
   clearAllBookings(): void {
