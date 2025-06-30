@@ -447,7 +447,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "Date TBD";
+    if (!dateStr) {
+      // Return today's date if no date provided
+      const today = new Date();
+      return today.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+    }
 
     try {
       let date;
@@ -458,7 +466,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         date = new Date(dateStr);
       }
 
-      if (isNaN(date.getTime())) return "Date TBD";
+      if (isNaN(date.getTime())) {
+        // Fallback to today's date if parsing fails
+        const today = new Date();
+        return today.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        });
+      }
 
       return date.toLocaleDateString("en-US", {
         weekday: "short",
@@ -467,7 +483,13 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
       });
     } catch (error) {
       console.error("Error parsing date:", dateStr, error);
-      return "Date TBD";
+      // Return today's date as fallback
+      const today = new Date();
+      return today.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
     }
   };
 
