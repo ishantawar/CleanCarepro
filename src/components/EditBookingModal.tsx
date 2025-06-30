@@ -199,14 +199,22 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="details" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Booking Details
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger
+              value="details"
+              className="flex items-center gap-1 sm:gap-2 p-2 text-xs sm:text-sm"
+            >
+              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Booking Details</span>
+              <span className="sm:hidden">Details</span>
             </TabsTrigger>
-            <TabsTrigger value="services" className="flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              Services
+            <TabsTrigger
+              value="services"
+              className="flex items-center gap-1 sm:gap-2 p-2 text-xs sm:text-sm"
+            >
+              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Services</span>
+              <span className="sm:hidden">Services</span>
             </TabsTrigger>
           </TabsList>
 
