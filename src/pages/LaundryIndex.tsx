@@ -634,10 +634,12 @@ const LaundryIndex = () => {
                   "Your order has been saved to our backup system and will be processed manually.",
                 ),
               );
+              // Clear cart from localStorage and component state
               localStorage.removeItem("laundry_cart");
+              localStorage.removeItem("cart_data");
               setTimeout(() => {
                 setCurrentView("home");
-              }, 2000);
+              }, 1500);
               return; // Exit early since we saved to sheets
             }
           } catch (sheetsError) {
