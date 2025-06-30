@@ -16,7 +16,7 @@
     "start:backend": "cd backend && NODE_ENV=production node server-laundry.js",
     "start:frontend": "npx serve -s dist -p 8080",
     "deploy": "chmod +x deploy.sh && ./deploy.sh",
-    "render:build": "npm install && cd backend && npm install && cd .. && npm run build",
+    "render:build": "npm install && npm run build && cd backend && npm install --production",
     "render:start": "cd backend && NODE_ENV=production node server-laundry.js"
   },
   "dependencies": {
