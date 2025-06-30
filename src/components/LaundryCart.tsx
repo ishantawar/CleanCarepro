@@ -264,39 +264,43 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
 
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
+  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
-  const handleProceedToCheckout = () => {
+  const handleProceedToCheckout = async () => {
     console.log("🛒 Checkout button clicked!");
-    console.log("📝 Current form data:", {
-      currentUser: !!currentUser,
-      addressData: !!addressData,
-      phoneNumber,
-      selectedDate,
-      selectedTime,
-      addressFullAddress: addressData?.fullAddress,
-      flatNo: addressData?.flatNo,
-    });
+    setIsProcessingCheckout(true);
 
-    // Check authentication first before validation
-    if (!currentUser) {
-      console.log("❌ User not authenticated, redirecting to login");
-
-      // Save current cart state for post-login restore
-      const currentCartState = {
-        addressData,
+    try {
+      console.log("📝 Current form data:", {
+        currentUser: !!currentUser,
+        addressData: !!addressData,
         phoneNumber,
-        selectedDate: selectedDate?.toISOString(),
+        selectedDate,
         selectedTime,
-        specialInstructions,
-        appliedCoupon,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(
-        "checkout_form_state",
-        JSON.stringify(currentCartState),
-      );
+        addressFullAddress: addressData?.fullAddress,
+        flatNo: addressData?.flatNo,
+      });
 
-      if (onLoginRequired) {
+      // Check authentication first before validation
+      if (!currentUser) {
+        console.log("❌ User not authenticated, redirecting to login");
+
+        // Save current cart state for post-login restore
+        const currentCartState = {
+          addressData,
+          phoneNumber,
+          selectedDate: selectedDate?.toISOString(),
+          selectedTime,
+          specialInstructions,
+          appliedCoupon,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(
+          "checkout_form_state",
+          JSON.stringify(currentCartState),
+        );
+
+        if (onLoginRequired) {
         onLoginRequired();
       } else {
         addNotification(
