@@ -95,11 +95,12 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
     }));
     onServicesChange(serviceStrings);
 
-    const totalPrice = services.reduce(
+    const servicesTotal = services.reduce(
       (total, service) => total + service.price * service.quantity,
       0,
     );
-    onPriceChange(totalPrice);
+    // Pass only services total to parent (delivery charge added separately)
+    onPriceChange(servicesTotal);
   }, [services, onServicesChange, onPriceChange]);
 
   const updateServiceQuantity = (index: number, newQuantity: number) => {
