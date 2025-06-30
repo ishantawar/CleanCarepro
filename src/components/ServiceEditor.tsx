@@ -225,7 +225,7 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
         </h3>
 
         {/* Available Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {availableServices.map((service) => {
             const isSelected = services.some((s) => s.name === service.name);
 
@@ -234,24 +234,45 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
                 key={service.name}
                 className={`cursor-pointer transition-all hover:shadow-md ${
                   isSelected
-                    ? "border-blue-500 bg-blue-50"
+                    ? "border-green-500 bg-green-50"
                     : "hover:border-gray-300"
                 }`}
                 onClick={() => addAvailableService(service.name, service.price)}
               >
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{service.name}</h4>
-                      <p className="text-xs text-gray-600">₹{service.price}</p>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">
+                        {service.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-2">
+                        {service.category}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-green-600">
+                          ₹{service.price}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {service.unit}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center gap-2 ml-2">
                       {isSelected && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-green-100 text-green-700"
+                        >
                           Added
                         </Badge>
                       )}
-                      <Plus className="h-4 w-4 text-gray-400" />
+                      <Button
+                        size="sm"
+                        variant={isSelected ? "secondary" : "outline"}
+                        className="w-8 h-8 p-0"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -259,49 +280,6 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
             );
           })}
         </div>
-
-        {/* Custom Service */}
-        <Card className="border-dashed border-gray-300">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Add Custom Service</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="service-name" className="text-sm">
-                  Service Name
-                </Label>
-                <Input
-                  id="service-name"
-                  placeholder="e.g., Special Cleaning"
-                  value={newServiceName}
-                  onChange={(e) => setNewServiceName(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="service-price" className="text-sm">
-                  Price (₹)
-                </Label>
-                <Input
-                  id="service-price"
-                  type="number"
-                  placeholder="35"
-                  value={newServicePrice}
-                  onChange={(e) => setNewServicePrice(e.target.value)}
-                />
-              </div>
-            </div>
-            <Button
-              type="button"
-              onClick={addCustomService}
-              disabled={!newServiceName.trim()}
-              className="w-full"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Custom Service
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Total */}
