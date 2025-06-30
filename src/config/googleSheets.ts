@@ -35,11 +35,8 @@ export const GOOGLE_SHEETS_CONFIG = {
   ],
 
   // Enable/disable Google Sheets integration
-  // Automatically disabled in hosted environments where WEB_APP_URL is not configured
-  ENABLED:
-    typeof window !== "undefined" &&
-    !window.location.hostname.includes("fly.dev") &&
-    !window.location.hostname.includes("builder.codes"),
+  // Temporarily disabled to prevent 503 errors from placeholder URL
+  ENABLED: false,
 };
 
 // Helper function to validate configuration
