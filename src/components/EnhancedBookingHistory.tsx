@@ -86,10 +86,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
     try {
       setLoading(true);
 
-      // Import MongoDB helpers
-      const { bookingHelpers } = await import(
-        "../integrations/mongodb/bookingHelpers"
-      );
+      // Use static imports to avoid module loading errors
       const bookingService = BookingService.getInstance();
 
       console.log(
