@@ -695,6 +695,14 @@ export class BookingService {
   }
 
   /**
+   * Get current user
+   */
+  private getCurrentUser(): any {
+    const authService = DVHostingSmsService.getInstance();
+    return authService.getCurrentUser();
+  }
+
+  /**
    * Sync booking update to backend
    */
   private async syncBookingUpdateToBackend(
