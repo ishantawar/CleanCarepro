@@ -33,7 +33,7 @@ export interface BookingResponse {
 
 export class BookingService {
   private static instance: BookingService;
-  private apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+  private apiBaseUrl: string;
   private mongoService: MongoDBService;
 
   constructor() {
