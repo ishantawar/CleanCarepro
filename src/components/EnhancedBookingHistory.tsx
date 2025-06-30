@@ -336,8 +336,22 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
   const handleSaveEditedBooking = async (updatedBooking: any) => {
     try {
+      console.log("📝 handleSaveEditedBooking called with:", {
+        updatedBooking,
+        bookingId: updatedBooking.id,
+        bookingMongoId: updatedBooking._id,
+      });
+
       const bookingService = BookingService.getInstance();
-      const bookingId = updatedBooking.id || updatedBooking._id;
+
+      // Ensure booking ID is a string, not an object
+      let bookingId = updatedBooking.id || updatedBooking._id;
+      if (typeof bookingId === "object") {
+        console.error("❌ Booking ID is an object:", bookingId);
+        bookingId = JSON.stringify(bookingId);
+      }
+
+      console.log("🔍 Using booking ID for edit:", bookingId);
 
       const result = await bookingService.updateBooking(
         bookingId,
@@ -418,7 +432,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         bookingId = JSON.stringify(bookingId);
       }
 
-      console.log("🔍 Extracted booking ID:", {
+      console.log("��� Extracted booking ID:", {
         bookingId,
         type: typeof bookingId,
         length: bookingId?.length,
@@ -1011,7 +1025,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                     <AlertDialogAction
                                       onClick={() => {
                                         console.log(
-                                          "��� Cancel button clicked for booking:",
+                                          "🔥 Cancel button clicked for booking:",
                                           {
                                             bookingId,
                                             hasBookingId: !!bookingId,
