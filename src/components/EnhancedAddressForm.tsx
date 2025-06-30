@@ -753,39 +753,36 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           </div>
         )}
 
-        {/* Label and Type Fields (if enabled) */}
+        {/* Address Category (if enabled) */}
         {showLabel && (
           <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="label" className="text-sm font-medium">
-                  🏷️ Address Label *
-                </Label>
-                <Input
-                  id="label"
-                  placeholder="e.g., Home, Office, Parent's House"
-                  value={address.label}
-                  onChange={(e) => handleFieldChange("label", e.target.value)}
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="type" className="text-sm font-medium">
-                  📂 Address Type
-                </Label>
-                <select
-                  id="type"
-                  value={address.type}
-                  onChange={(e) => handleFieldChange("type", e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="home">🏠 Home</option>
-                  <option value="work">🏢 Work</option>
-                  <option value="other">📍 Other</option>
-                </select>
-              </div>
+            <div>
+              <Label htmlFor="type" className="text-sm font-medium">
+                📂 Address Category <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="type"
+                value={address.type}
+                onChange={(e) => {
+                  const selectedType = e.target.value;
+                  handleFieldChange("type", selectedType);
+                  // Auto-generate label based on type
+                  const autoLabel =
+                    selectedType === "home"
+                      ? "Home"
+                      : selectedType === "office"
+                        ? "Office"
+                        : "Other";
+                  handleFieldChange("label", autoLabel);
+                }}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                required
+              >
+                <option value="">Select address category</option>
+                <option value="home">🏠 Home</option>
+                <option value="office">🏢 Office</option>
+                <option value="other">📍 Other</option>
+              </select>
             </div>
           </div>
         )}
@@ -883,7 +880,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
                 !address.village ||
                 !address.city ||
                 !address.pincode ||
-                (showLabel && !address.label)
+                (showLabel && !address.type)
               }
             >
               Save Address
