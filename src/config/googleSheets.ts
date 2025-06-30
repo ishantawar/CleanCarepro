@@ -2,18 +2,14 @@
 // Change these values to switch to a different Google Sheet
 
 export const GOOGLE_SHEETS_CONFIG = {
-  // Main Google Sheet URL - CHANGE THIS TO USE A DIFFERENT SHEET
+  // Main Google Sheet URL - Production sheet
   SHEET_URL:
+    import.meta.env.VITE_GOOGLE_SHEETS_URL ||
     "https://docs.google.com/spreadsheets/d/1kQeHBoXgSLI7nDJyCA-rUqmkQhnWjRHSawm6hzTAj1s/edit?usp=sharing",
 
-  // Google Apps Script Web App URL (you need to create this)
-  // Instructions:
-  // 1. Go to script.google.com
-  // 2. Create new project
-  // 3. Copy the Apps Script code from GoogleSheetsService.generateAppsScriptCode()
-  // 4. Deploy as web app
-  // 5. Copy the web app URL here
+  // Google Apps Script Web App URL - Production deployment
   WEB_APP_URL:
+    import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL ||
     "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec",
 
   // Sheet configuration
@@ -31,12 +27,14 @@ export const GOOGLE_SHEETS_CONFIG = {
     "Pickup Date",
     "Pickup Time",
     "Status",
+    "Payment Status",
     "Coordinates",
+    "City",
+    "Pincode",
   ],
 
-  // Enable/disable Google Sheets integration
-  // Temporarily disabled to prevent 503 errors from placeholder URL
-  ENABLED: false,
+  // Enable Google Sheets integration in production
+  ENABLED: true,
 };
 
 // Helper function to validate configuration
