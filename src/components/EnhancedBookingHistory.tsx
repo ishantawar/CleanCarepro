@@ -551,6 +551,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                   {bookings.length}{" "}
                   {bookings.length === 1 ? "booking" : "bookings"} found
                 </p>
+                {/* Debug info */}
+                <p className="text-xs text-gray-500 mt-1">
+                  User ID:{" "}
+                  {currentUser?._id ||
+                    currentUser?.id ||
+                    currentUser?.phone ||
+                    "No ID"}
+                </p>
               </div>
             </div>
             <Button
