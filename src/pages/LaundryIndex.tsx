@@ -508,13 +508,14 @@ const LaundryIndex = () => {
           ),
         );
 
-        // Clear cart
+        // Clear cart from localStorage and component state
         localStorage.removeItem("laundry_cart");
+        localStorage.removeItem("cart_data");
 
         // Redirect to home page after successful booking
         setTimeout(() => {
           setCurrentView("home");
-        }, 2000); // Wait 2 seconds to show success message
+        }, 1500); // Reduced wait time
       } else {
         // If MongoDB fails, still try to save locally
         console.warn(
