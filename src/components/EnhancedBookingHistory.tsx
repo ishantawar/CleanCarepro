@@ -494,20 +494,55 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   const calculateTotal = (booking: any) => {
-    if (booking.totalAmount) return booking.totalAmount;
-    if (booking.total_price) return booking.total_price;
-    if (booking.final_amount) return booking.final_amount;
+    // First try explicit total amounts
+    if (booking.totalAmount && booking.totalAmount > 0)
+      return booking.totalAmount;
+    if (booking.total_price && booking.total_price > 0)
+      return booking.total_price;
+    if (booking.final_amount && booking.final_amount > 0)
+      return booking.final_amount;
 
     // Calculate from services if available
     if (Array.isArray(booking.services)) {
-      return booking.services.reduce((total: number, service: any) => {
-        const price = service.price || service.amount || 0;
-        const quantity = service.quantity || 1;
-        return total + price * quantity;
-      }, 0);
+      const servicesTotal = booking.services.reduce(
+        (total: number, service: any) => {
+          const price =
+            service.price || service.amount || getServicePrice(service);
+          const quantity = service.quantity || 1;
+          return total + price * quantity;
+        },
+        0,
+      );
+
+      // Add delivery charge if services total > 0
+      return servicesTotal > 0 ? servicesTotal + 50 : servicesTotal;
     }
 
-    return 0;
+    // Fallback: return at least delivery charge if booking exists
+    return 50;
+  };
+
+  const getServicePrice = (service: any) => {
+    // Helper to get service price from service name
+    const serviceName =
+      typeof service === "string" ? service : service.name || service.service;
+
+    // Common service prices mapping
+    const servicePrices: { [key: string]: number } = {
+      "Laundry and Fold": 70,
+      "Laundry and Iron": 120,
+      "Jacket (Full/Half Sleeves)": 300,
+      "Shirt/T-Shirt": 90,
+      "Trouser/Jeans": 120,
+      Kurta: 140,
+      "Saree (Simple/Silk)": 210,
+      Dress: 330,
+      "Lehenga (2+ Pieces)": 450,
+      "Sweater/Sweatshirt": 200,
+      "Long Coat": 400,
+    };
+
+    return servicePrices[serviceName] || 100; // Default price
   };
 
   if (!currentUser) {
