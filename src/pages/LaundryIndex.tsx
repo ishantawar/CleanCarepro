@@ -431,6 +431,10 @@ const LaundryIndex = () => {
 
       // Save to MongoDB backend first
       console.log("💾 Saving to MongoDB backend...");
+      console.log(
+        "📤 MongoDB booking data:",
+        JSON.stringify(mongoBookingData, null, 2),
+      );
       const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
 
       if (mongoResult.data) {
