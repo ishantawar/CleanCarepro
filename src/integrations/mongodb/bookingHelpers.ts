@@ -132,16 +132,23 @@ export const bookingHelpers = {
       const user = JSON.parse(localStorage.getItem("current_user") || "{}");
 
       // Try to get customer ID from multiple possible fields
-      const customerId = user?._id || user?.id || user?.phone;
+      let customerId = user?._id || user?.id || user?.phone;
 
       if (!customerId) {
         console.error("User object:", user);
-        throw new Error("User ID not found. Please sign in again.");
+        return {
+          data: null,
+          error: {
+            message: "User ID not found. Please sign in again.",
+            code: "USER_ERROR",
+          },
+        };
       }
 
       // If we only have phone number, try to create or get user from backend
       if (!user._id && user.phone) {
         console.log("🔄 User missing MongoDB ID, using phone:", user.phone);
+        customerId = user.phone; // Use phone as fallback ID
       }
 
       // Check if backend is available
