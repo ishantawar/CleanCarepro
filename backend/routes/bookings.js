@@ -108,19 +108,32 @@ router.post("/", async (req, res) => {
 
     // Verify customer exists - handle both ObjectId and phone-based lookup
     let customer;
+    let actualCustomerId = customer_id;
 
-    // Try to find by ObjectId first
-    if (mongoose.Types.ObjectId.isValid(customer_id)) {
-      customer = await User.findById(customer_id);
+    // Handle user_ prefix format (e.g., user_9717619183)
+    if (typeof customer_id === "string" && customer_id.startsWith("user_")) {
+      const phone = customer_id.replace("user_", "");
+      if (phone.match(/^\d{10,}$/)) {
+        actualCustomerId = phone;
+        console.log(`📞 Extracted phone from user ID: ${phone}`);
+      }
     }
 
-    // If not found and customer_id looks like a phone number, try to find by phone
+    // Try to find by ObjectId first
+    if (mongoose.Types.ObjectId.isValid(actualCustomerId)) {
+      customer = await User.findById(actualCustomerId);
+    }
+
+    // If not found and actualCustomerId looks like a phone number, try to find by phone
     if (
       !customer &&
-      typeof customer_id === "string" &&
-      customer_id.match(/^\d{10,}$/)
+      typeof actualCustomerId === "string" &&
+      actualCustomerId.match(/^\d{10,}$/)
     ) {
-      customer = await User.findOne({ phone: customer_id });
+      customer = await User.findOne({ phone: actualCustomerId });
+      console.log(
+        `🔍 Looking for customer by phone: ${actualCustomerId}, found: ${!!customer}`,
+      );
     }
 
     // If still not found, try to find user in CleanCareUser collection
@@ -151,8 +164,35 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // If customer not found, create a basic customer record
+    if (!customer && actualCustomerId.match(/^\d{10,}$/)) {
+      console.log(`👤 Creating new customer with phone: ${actualCustomerId}`);
+
+      customer = new User({
+        email: `${actualCustomerId}@cleancare.com`,
+        password: "temp_password_123", // Temporary password
+        full_name: `User ${actualCustomerId.slice(-4)}`,
+        phone: actualCustomerId,
+        user_type: "customer",
+        is_verified: true,
+        phone_verified: true,
+      });
+
+      try {
+        await customer.save();
+        console.log("✅ Auto-created customer:", customer._id);
+      } catch (createError) {
+        console.error("Failed to auto-create customer:", createError);
+        return res
+          .status(500)
+          .json({ error: "Failed to create customer record" });
+      }
+    }
+
     if (!customer) {
-      return res.status(404).json({ error: "Customer not found" });
+      return res
+        .status(404)
+        .json({ error: "Customer not found and could not be created" });
     }
 
     // Create booking
