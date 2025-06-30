@@ -379,6 +379,7 @@ const LaundryIndex = () => {
   };
 
   const handleLoginRequired = (fromView: "cart" | "bookings" = "cart") => {
+    console.log(`🔐 Login required from: ${fromView}`);
     setPreviousView(fromView);
     setCurrentView("auth");
   };
