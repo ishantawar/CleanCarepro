@@ -726,6 +726,19 @@ export class BookingService {
 
       // For status updates, use the specific status update endpoint
       if (updates.status) {
+        // Get proper user ID for backend
+        const userId =
+          currentUser._id ||
+          currentUser.id ||
+          (currentUser.phone ? `user_${currentUser.phone}` : null);
+
+        console.log("🔄 Syncing booking update to backend:", {
+          bookingId,
+          status: updates.status,
+          userId,
+          currentUser,
+        });
+
         const response = await fetch(
           `${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/bookings/${bookingId}/status`,
           {
@@ -735,7 +748,7 @@ export class BookingService {
             },
             body: JSON.stringify({
               status: updates.status,
-              user_id: currentUser.id,
+              user_id: userId,
               user_type: "customer",
             }),
           },
