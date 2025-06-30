@@ -388,21 +388,21 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-green-600 overflow-x-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 sm:p-6 shadow-sm">
+      <div className="bg-gradient-to-r from-green-500 to-green-600 p-2 sm:p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Button
               onClick={onBack || (() => window.history.back())}
               variant="ghost"
-              className="text-white hover:bg-white/20 p-2 rounded-xl flex-shrink-0"
+              className="text-white hover:bg-white/20 p-1.5 rounded-xl flex-shrink-0"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-white truncate">
+              <h1 className="text-lg sm:text-xl font-bold text-white truncate">
                 My Bookings
               </h1>
-              <p className="text-green-100 text-xs sm:text-sm">
+              <p className="text-green-100 text-xs">
                 {bookings.length}{" "}
                 {bookings.length === 1 ? "booking" : "bookings"} found
               </p>
