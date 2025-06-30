@@ -79,9 +79,21 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
     }
     return [];
   });
-  const [totalPrice, setTotalPrice] = useState(
-    booking?.total_price || booking?.final_amount || 0,
-  );
+
+  // Calculate initial total price from services, not final amount
+  const [totalPrice, setTotalPrice] = useState(() => {
+    const servicesPrice = booking?.total_price || booking?.totalAmount || 0;
+    // Subtract delivery charge if it was included in the total
+    const deliveryCharge = 50;
+    const finalAmount = booking?.final_amount || booking?.totalAmount || 0;
+    if (
+      finalAmount > servicesPrice &&
+      finalAmount - servicesPrice === deliveryCharge
+    ) {
+      return servicesPrice;
+    }
+    return servicesPrice || 0;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
 
@@ -164,7 +176,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
+      <DialogContent className="sm:max-w-2xl w-[95vw] max-w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {mode === "add-services" ? (
@@ -204,9 +216,9 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
               <p className="text-sm font-medium text-blue-900 mb-2">
                 Selected Services
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1 max-w-full overflow-hidden">
                 {selectedServices.map((service, index) => (
-                  <p key={index} className="text-blue-800 text-sm">
+                  <p key={index} className="text-blue-800 text-sm break-words">
                     •{" "}
                     {typeof service === "object"
                       ? service.name || JSON.stringify(service)
@@ -222,7 +234,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between text-xs">
                   <span>Services Total:</span>
-                  <span>₹{totalPrice}</span>
+                  <span>₹{totalPrice || 0}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span>Delivery Charge:</span>
@@ -231,7 +243,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
                 <hr className="border-blue-300" />
                 <div className="flex justify-between font-semibold">
                   <span>Total Amount:</span>
-                  <span>₹{totalPrice + 50}</span>
+                  <span>₹{(totalPrice || 0) + 50}</span>
                 </div>
               </div>
             </div>
