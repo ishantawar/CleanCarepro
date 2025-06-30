@@ -529,7 +529,17 @@ export class BookingService {
     updates: Partial<BookingDetails>,
   ): Promise<BookingResponse> {
     try {
-      console.log("✏️ Updating booking:", bookingId, updates);
+      console.log("✏️ Updating booking:", {
+        bookingId,
+        updates,
+        idType: typeof bookingId,
+        idLength: bookingId?.length,
+      });
+
+      // Validate booking ID
+      if (!bookingId || bookingId.trim() === "") {
+        throw new Error("Invalid booking ID provided");
+      }
 
       const updatedData = {
         ...updates,
@@ -543,14 +553,20 @@ export class BookingService {
       );
 
       if (updatedBooking) {
-        console.log("💾 Booking updated in localStorage:", bookingId);
+        console.log("✅ Booking updated successfully:", bookingId);
         return {
           success: true,
           message: "Booking updated successfully",
           booking: updatedBooking,
         };
       } else {
-        throw new Error("Booking not found");
+        // More specific error message
+        const allBookings = JSON.parse(
+          localStorage.getItem("user_bookings") || "[]",
+        );
+        throw new Error(
+          `Booking not found. Searched for ID: "${bookingId}". Available bookings: ${allBookings.length}`,
+        );
       }
 
       // Note: Backend sync disabled to prevent fetch errors
