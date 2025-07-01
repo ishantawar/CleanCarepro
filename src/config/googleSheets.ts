@@ -34,7 +34,7 @@ export const GOOGLE_SHEETS_CONFIG = {
   ],
 
   // Enable Google Sheets integration in production
-  ENABLED: false,
+  ENABLED: true,
 };
 
 // Helper function to validate configuration
