@@ -3,35 +3,27 @@
  * This ensures consistent API URL handling across the entire application
  */
 
+import { getProductionApiUrl, shouldUseBackend } from "./production-env";
+
 export const getApiBaseUrl = (): string => {
   // First, check for explicit environment variable
   const envUrl = import.meta.env.VITE_API_BASE_URL;
 
   if (envUrl && envUrl !== "") {
+    console.log("🔧 Using environment variable API URL:", envUrl);
     return envUrl;
   }
 
-  // Detect hosted environments and use the correct production API
-  const hostname = window.location.hostname;
+  // Use production configuration logic
+  const apiUrl = getProductionApiUrl();
 
-  if (
-    hostname.includes("vercel.app") ||
-    hostname.includes("builder.codes") ||
-    hostname.includes("onrender.com") ||
-    hostname.includes("cleancarepro")
-  ) {
-    // Use the production backend API
-    return "https://cleancarepro-95it.onrender.com/api";
-  }
-
-  // For fly.dev or other hosted environments where backend is disabled
-  if (hostname.includes("fly.dev")) {
-    console.log("🌐 Hosted environment detected - backend disabled");
+  // Check if backend should be disabled for certain environments
+  if (!shouldUseBackend()) {
+    console.log("🌐 Backend disabled for this environment");
     return ""; // Empty string indicates no backend available
   }
 
-  // Local development fallback
-  return "http://localhost:3001/api";
+  return apiUrl;
 };
 
 export const isBackendAvailable = (): boolean => {
