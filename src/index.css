@@ -97,5 +97,46 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Optimize critical rendering path */
+  .critical-above-fold {
+    content-visibility: auto;
+    contain-intrinsic-size: 100vh;
+  }
+
+  /* Reduce layout shift */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Optimize commonly used utilities to reduce bundle size */
+@layer utilities {
+  .gradient-primary {
+    @apply bg-gradient-to-r from-blue-500 to-purple-600;
+  }
+
+  .gradient-success {
+    @apply bg-gradient-to-r from-green-500 to-emerald-600;
+  }
+
+  .btn-primary {
+    @apply gradient-primary text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200;
+  }
+
+  .card-compact {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200;
   }
 }

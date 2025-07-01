@@ -576,7 +576,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-sm text-gray-900 truncate">
-                            {booking.service || "Home Service"}
+                            Order #{bookingId}
                           </h3>
                           <Badge
                             className={`${getStatusColor(booking.status)} text-xs px-1.5 py-0.5`}
@@ -597,6 +597,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>
+                              Pickup:{" "}
                               {formatDate(
                                 booking.pickupDate || booking.scheduled_date,
                               )}
@@ -613,6 +614,23 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           <div className="flex items-center gap-1 text-green-600 font-semibold">
                             <span>₹{total}</span>
                           </div>
+                        </div>
+
+                        {/* Order placed time */}
+                        <div className="text-xs text-gray-500 mt-1">
+                          Ordered:{" "}
+                          {formatDate(booking.created_at || booking.createdAt)}{" "}
+                          at{" "}
+                          {booking.created_at
+                            ? new Date(booking.created_at).toLocaleTimeString(
+                                "en-IN",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                },
+                              )
+                            : "N/A"}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -650,9 +668,52 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                       <div className="bg-blue-50 p-3 rounded-lg">
                         <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
                           <Package className="h-4 w-4 text-blue-600" />
-                          Services Ordered
+                          Order Details
                         </h4>
-                        <div className="space-y-1">
+                        <div className="space-y-2 bg-white p-2 rounded">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">Order ID</span>
+                            <span className="font-mono font-medium text-blue-600">
+                              #{bookingId}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">
+                              No. of Items Booked
+                            </span>
+                            <span className="font-medium">
+                              {services.length} items
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">Order Placed</span>
+                            <span className="font-medium">
+                              {formatDate(
+                                booking.created_at || booking.createdAt,
+                              )}{" "}
+                              at{" "}
+                              {booking.created_at
+                                ? new Date(
+                                    booking.created_at,
+                                  ).toLocaleTimeString("en-IN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })
+                                : "N/A"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">Order Value</span>
+                            <span className="font-bold text-green-600">
+                              ₹{total}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-600 mb-1">
+                            Services:
+                          </p>
                           {services.map((service: any, idx: number) => {
                             const serviceName =
                               typeof service === "object"
@@ -662,11 +723,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               typeof service === "object"
                                 ? service.quantity || 1
                                 : 1;
-                            // Use actual service price if available, otherwise use a default
+                            // Use actual service price if available, calculate from total
                             const price =
                               typeof service === "object" && service.price
                                 ? service.price
-                                : 50; // Default price instead of dividing total
+                                : Math.floor((total - 50) / services.length); // Subtract delivery fee and divide by items
 
                             return (
                               <div

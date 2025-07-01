@@ -578,7 +578,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-sm text-gray-900 truncate">
-                            <SafeText>{safeBooking.service}</SafeText>
+                            Order #{bookingId}
                           </h3>
                           <Badge
                             className={`${getStatusColor(safeBooking.status)} text-xs px-1.5 py-0.5`}
@@ -599,6 +599,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>
+                              Pickup:{" "}
                               {(() => {
                                 const dateStr =
                                   safeBooking.pickupDate ||
@@ -638,6 +639,29 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                           <div className="flex items-center gap-1 text-green-600 font-semibold">
                             <span>₹{total}</span>
                           </div>
+                        </div>
+
+                        {/* Order placed time */}
+                        <div className="text-xs text-gray-500 mt-1">
+                          Ordered:{" "}
+                          {(() => {
+                            const orderDate =
+                              safeBooking.created_at || safeBooking.createdAt;
+                            if (!orderDate) return "N/A";
+                            try {
+                              const date = new Date(orderDate);
+                              return `${date.toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })} at ${date.toLocaleTimeString("en-IN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              })}`;
+                            } catch (error) {
+                              return "N/A";
+                            }
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
