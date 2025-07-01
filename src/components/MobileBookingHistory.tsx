@@ -839,7 +839,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                             <span className="font-medium">
                               ₹
                               {(() => {
-                                const deliveryFee = 5; // Standard delivery fee
+                                const deliveryFee = 50; // Standard delivery fee
                                 const totalAmount =
                                   safeBooking.totalAmount ||
                                   safeBooking.total_price ||
@@ -859,7 +859,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                             <span className="text-sm text-gray-600">
                               Delivery Fee
                             </span>
-                            <span className="font-medium">₹5</span>
+                            <span className="font-medium">₹50</span>
                           </div>
 
                           {/* Discount if applicable */}
