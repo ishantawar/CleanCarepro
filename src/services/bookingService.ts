@@ -1,5 +1,6 @@
 import MongoDBService from "./mongodbService";
 import { DVHostingSmsService } from "./dvhostingSmsService";
+import { config } from "../config/env";
 
 export interface BookingDetails {
   id: string;
@@ -38,25 +39,7 @@ export class BookingService {
 
   constructor() {
     this.mongoService = MongoDBService.getInstance();
-
-    // Use same URL detection logic as bookingHelpers
-    const envUrl = import.meta.env.VITE_API_BASE_URL;
-
-    if (envUrl && envUrl !== "") {
-      this.apiBaseUrl = envUrl;
-    } else if (
-      window.location.hostname.includes("vercel.app") ||
-      window.location.hostname.includes("builder.codes")
-    ) {
-      // Use external backend for hosted environments
-      this.apiBaseUrl = "https://cleancarepro-95it.onrender.com/api";
-    } else if (window.location.hostname.includes("fly.dev")) {
-      // Disable backend sync for fly.dev environments
-      this.apiBaseUrl = "";
-    } else {
-      // Local development
-      this.apiBaseUrl = "http://localhost:3001/api";
-    }
+    this.apiBaseUrl = config.apiBaseUrl;
 
     console.log("📡 BookingService API URL:", this.apiBaseUrl);
   }
