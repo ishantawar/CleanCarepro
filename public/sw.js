@@ -36,10 +36,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Don't cache API requests
-  if (event.request.url.includes("/api/")) {
-    event.respondWith(fetch(event.request));
-    return;
+  // Don't cache API requests - let them pass through without interference
+  if (
+    event.request.url.includes("/api/") ||
+    event.request.url.includes("onrender.com") ||
+    event.request.url.includes("localhost:3001")
+  ) {
+    return; // Don't handle these requests at all
   }
 
   event.respondWith(

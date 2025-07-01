@@ -560,25 +560,29 @@ export class BookingService {
         updatedData,
       );
 
-      // Try to sync with backend if booking exists
-      try {
-        const backendResult = await this.syncBookingUpdateToBackend(
-          bookingId,
-          updatedData,
-        );
-        if (backendResult.success) {
-          console.log("✅ Backend update successful");
-          return {
-            success: true,
-            message: "Booking updated successfully",
-            booking: backendResult.booking || localUpdatedBooking,
-          };
+      // Try to sync with backend if booking exists and API URL is configured
+      if (this.apiBaseUrl) {
+        try {
+          const backendResult = await this.syncBookingUpdateToBackend(
+            bookingId,
+            updatedData,
+          );
+          if (backendResult.success) {
+            console.log("✅ Backend update successful");
+            return {
+              success: true,
+              message: "Booking updated successfully",
+              booking: backendResult.booking || localUpdatedBooking,
+            };
+          }
+        } catch (backendError) {
+          console.warn(
+            "⚠️ Backend update failed, falling back to localStorage:",
+            backendError,
+          );
         }
-      } catch (backendError) {
-        console.warn(
-          "⚠️ Backend update failed, falling back to localStorage:",
-          backendError,
-        );
+      } else {
+        console.log("🌐 Skipping backend sync - no API URL configured");
       }
 
       // If backend fails but localStorage succeeds, still return success
@@ -674,20 +678,34 @@ export class BookingService {
       const allBookings = JSON.parse(
         localStorage.getItem("user_bookings") || "[]",
       );
-      const bookingIndex = allBookings.findIndex(
-        (booking: BookingDetails) =>
-          booking.id === bookingId ||
-          (booking as any)._id === bookingId ||
-          // Handle cases where bookingId might be the display format
-          booking.id?.toString() === bookingId ||
-          (booking as any)._id?.toString() === bookingId,
-      );
+      const bookingIndex = allBookings.findIndex((booking: BookingDetails) => {
+        const bid = booking.id || (booking as any)._id;
+        const targetId = bookingId.toString();
+        return (
+          bid === targetId ||
+          bid?.toString() === targetId ||
+          // Handle cases where one might have ObjectId format
+          (typeof bid === "object" && bid.toString() === targetId) ||
+          (typeof bookingId === "object" && bookingId.toString() === bid)
+        );
+      });
 
       if (bookingIndex === -1) {
         console.warn("🔍 Booking not found in localStorage:", bookingId);
         console.log(
           "📋 Available bookings:",
-          allBookings.map((b) => ({ id: b.id, _id: (b as any)._id })),
+          allBookings.map((b) => ({
+            id: b.id,
+            _id: (b as any)._id,
+            idType: typeof (b.id || (b as any)._id),
+            toString: (b.id || (b as any)._id)?.toString(),
+          })),
+        );
+        console.log(
+          "🎯 Target booking ID type:",
+          typeof bookingId,
+          "value:",
+          bookingId,
         );
         return null;
       }
@@ -740,7 +758,7 @@ export class BookingService {
         });
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/bookings/${bookingId}/status`,
+          `${this.apiBaseUrl}/bookings/${bookingId}/status`,
           {
             method: "PUT",
             headers: {
