@@ -34,32 +34,39 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
 }) => {
   const [services, setServices] = useState<ServiceItem[]>([]);
 
-  // Laundry services that users can add
+  // Website catalog services only (filtered to exclude home linen)
   const availableServices = [
     {
       name: "Shirt/T-Shirt",
-      price: 25,
+      price: 90,
       category: "Clothing",
       unit: "per piece",
     },
     {
-      name: "Trouser/Pant",
-      price: 30,
+      name: "Trouser/Jeans",
+      price: 120,
       category: "Clothing",
       unit: "per piece",
     },
-    { name: "Kurta", price: 35, category: "Clothing", unit: "per piece" },
-    { name: "Saree", price: 45, category: "Clothing", unit: "per piece" },
-    { name: "Dress", price: 40, category: "Clothing", unit: "per piece" },
     {
-      name: "Blazer/Suit",
-      price: 80,
-      category: "Formal Wear",
+      name: "Kurta",
+      price: 140,
+      category: "Traditional Wear",
       unit: "per piece",
     },
-    { name: "Jeans", price: 35, category: "Clothing", unit: "per piece" },
-    { name: "Bedsheet", price: 50, category: "Home Linen", unit: "per piece" },
-    { name: "Towel", price: 20, category: "Home Linen", unit: "per piece" },
+    {
+      name: "Saree (Simple/Silk)",
+      price: 210,
+      category: "Traditional Wear",
+      unit: "per piece",
+    },
+    { name: "Dress", price: 330, category: "Western Wear", unit: "per piece" },
+    {
+      name: "Jacket (Full/Half Sleeves)",
+      price: 300,
+      category: "Outerwear",
+      unit: "per piece",
+    },
     {
       name: "Laundry and Fold",
       price: 70,
@@ -67,15 +74,15 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
       unit: "per kg",
     },
     {
-      name: "Dry Cleaning",
-      price: 100,
-      category: "Special Service",
-      unit: "per piece",
+      name: "Laundry and Iron",
+      price: 120,
+      category: "Service Package",
+      unit: "per kg",
     },
     {
-      name: "Iron Only",
-      price: 15,
-      category: "Express Service",
+      name: "Premium Items (Steam Iron)",
+      price: 50,
+      category: "Steam Iron",
       unit: "per piece",
     },
   ];

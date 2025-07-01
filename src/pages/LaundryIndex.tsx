@@ -377,7 +377,16 @@ const LaundryIndex = () => {
     setCurrentView("auth");
   };
 
+  const [isProcessingGlobalCheckout, setIsProcessingGlobalCheckout] =
+    useState(false);
+
   const handleProceedToCheckout = async (cartData: any) => {
+    // Prevent multiple submissions at the parent level too
+    if (isProcessingGlobalCheckout) {
+      console.log("⚠️ Global checkout already in progress, ignoring duplicate");
+      return;
+    }
+
     // Check if user is authenticated first
     if (!currentUser) {
       console.log("User not authenticated, switching to auth view");
@@ -385,6 +394,7 @@ const LaundryIndex = () => {
       return;
     }
 
+    setIsProcessingGlobalCheckout(true);
     console.log("Processing checkout for authenticated user:", cartData);
 
     try {
@@ -678,6 +688,8 @@ const LaundryIndex = () => {
       }
 
       addNotification(createErrorNotification(errorTitle, errorMessage));
+    } finally {
+      setIsProcessingGlobalCheckout(false);
     }
   };
 
