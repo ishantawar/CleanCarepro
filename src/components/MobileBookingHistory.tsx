@@ -666,223 +666,176 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
 
                   {/* Expanded Content - Only Visible When Expanded */}
                   {isExpanded && (
-                    <CardContent className="px-3 pb-3 pt-2 space-y-3 bg-white" onClick={(e) => e.stopPropagation()}>
-                    {/* Booked Services */}
-                    {safeBooking.services &&
-                      Array.isArray(safeBooking.services) &&
-                      safeBooking.services.length > 0 && (
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 rounded-lg border border-blue-200">
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-semibold text-gray-900 text-xs">
-                              Services ({safeBooking.services.length})
-                            </h4>
-                            <span className="text-xs text-blue-600 font-medium">
-                              ₹
-                              {safeBooking.totalAmount ||
-                                safeBooking.total_price ||
-                                0}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {safeBooking.services.map(
-                              (service: any, idx: number) => (
-                                <Badge
-                                  key={idx}
-                                  variant="secondary"
-                                  className="bg-white text-gray-700 border border-blue-200 text-xs px-1.5 py-0.5"
-                                >
-                                  <SafeText>{service.name}</SafeText>
-                                  {service.quantity > 1 &&
-                                    ` x${service.quantity}`}
-                                </Badge>
-                              ),
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Pickup & Delivery Slots */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-2 bg-green-50 rounded-lg border border-green-100">
-                        <div className="flex items-center gap-1 mb-1">
-                          <Calendar className="h-3 w-3 text-green-600" />
-                          <span className="font-medium text-gray-900 text-xs">
-                            Pickup
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-900">
-                          {(() => {
-                            const dateStr =
-                              safeBooking.pickupDate ||
-                              safeBooking.scheduled_date;
-                            if (!dateStr) return "Date TBD";
-
-                            try {
-                              let date;
-                              if (dateStr.includes("-")) {
-                                // YYYY-MM-DD format - parse as local date
-                                const [year, month, day] = dateStr
-                                  .split("-")
-                                  .map(Number);
-                                date = new Date(year, month - 1, day);
-                              } else {
-                                date = new Date(dateStr);
-                              }
-
-                              // Validate date
-                              if (isNaN(date.getTime())) return "Date TBD";
-
-                              return date.toLocaleDateString("en-US", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              });
-                            } catch (error) {
-                              console.error(
-                                "Error parsing date:",
-                                dateStr,
-                                error,
-                              );
-                              return "Date TBD";
-                            }
-                          })()}
-                        </p>
-                        <p className="text-xs text-green-600">
-                          {safeBooking.pickupTime ||
-                            safeBooking.scheduled_time ||
-                            "10:00"}
-                        </p>
-                      </div>
-
-                      <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-emerald-600" />
-                          <span className="font-medium text-gray-900 text-sm">
-                            Delivery
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-900">
-                          {safeBooking.deliveryDate
-                            ? new Date(
-                                safeBooking.deliveryDate,
-                              ).toLocaleDateString("en-US", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              })
-                            : safeBooking.scheduled_date
-                              ? (() => {
-                                  // Calculate delivery date (next day after pickup)
-                                  const dateStr = safeBooking.scheduled_date;
-                                  let date;
-
-                                  if (dateStr && dateStr.includes("-")) {
-                                    const [year, month, day] =
-                                      dateStr.split("-");
-                                    date = new Date(
-                                      parseInt(year),
-                                      parseInt(month) - 1,
-                                      parseInt(day) + 1,
-                                    );
-                                  } else if (dateStr) {
-                                    date = new Date(dateStr);
-                                    date.setDate(date.getDate() + 1);
-                                  } else {
-                                    return "Date TBD";
-                                  }
-
-                                  return date.toLocaleDateString("en-US", {
-                                    weekday: "short",
-                                    month: "short",
-                                    day: "numeric",
-                                  });
-                                })()
-                              : "Date TBD"}
-                        </p>
-                        <p className="text-xs text-emerald-600">
-                          {safeBooking.deliveryTime || "Time TBD"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Address */}
-                    <div className="flex items-start gap-3 p-3 bg-green-50/50 rounded-xl border border-green-100/50">
-                      <MapPin className="h-5 w-5 text-green-600 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 mb-1">
-                          Service Address
-                        </p>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          <SafeText>
-                            {safeBooking.address || "Address not provided"}
-                          </SafeText>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Price Breakdown */}
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-900 text-sm">
-                        Price Breakdown
-                      </h4>
-
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-4">
-                        {/* Service Total */}
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm text-gray-600">
-                            Services Total
-                          </span>
-                          <span className="font-medium">
-                            ₹
-                            {(() => {
-                              const servicesTotal = safeBooking.services.reduce(
-                                (total: number, service: any) => {
-                                  return (
-                                    total +
-                                    (service.price * service.quantity || 0)
-                                  );
-                                },
-                                0,
-                              );
-                              return servicesTotal > 0
-                                ? servicesTotal
-                                : safeBooking.totalAmount ||
-                                    safeBooking.total_price ||
-                                    safeBooking.final_amount ||
-                                    0;
-                            })()}
-                          </span>
-                        </div>
-
-                        {/* Discount if applicable */}
-                        {safeBooking.discount_amount &&
-                          safeBooking.discount_amount > 0 && (
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm text-green-600">
-                                Discount
-                              </span>
-                              <span className="font-medium text-green-600">
-                                -₹{safeBooking.discount_amount}
+                    <CardContent
+                      className="px-3 pb-3 pt-2 space-y-3 bg-white"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Booked Services */}
+                      {safeBooking.services &&
+                        Array.isArray(safeBooking.services) &&
+                        safeBooking.services.length > 0 && (
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-semibold text-gray-900 text-xs">
+                                Services ({safeBooking.services.length})
+                              </h4>
+                              <span className="text-xs text-blue-600 font-medium">
+                                ₹
+                                {safeBooking.totalAmount ||
+                                  safeBooking.total_price ||
+                                  0}
                               </span>
                             </div>
-                          )}
-
-                        {/* Tax if applicable */}
-                        {safeBooking.charges_breakdown?.tax_amount && (
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm text-gray-600">Tax</span>
-                            <span className="font-medium">
-                              ₹{safeBooking.charges_breakdown.tax_amount}
-                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {safeBooking.services.map(
+                                (service: any, idx: number) => (
+                                  <Badge
+                                    key={idx}
+                                    variant="secondary"
+                                    className="bg-white text-gray-700 border border-blue-200 text-xs px-1.5 py-0.5"
+                                  >
+                                    <SafeText>{service.name}</SafeText>
+                                    {service.quantity > 1 &&
+                                      ` x${service.quantity}`}
+                                  </Badge>
+                                ),
+                              )}
+                            </div>
                           </div>
                         )}
 
-                        <div className="border-t border-green-200 pt-2">
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold text-gray-900">
-                              Total Amount
+                      {/* Pickup & Delivery Slots */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 bg-green-50 rounded-lg border border-green-100">
+                          <div className="flex items-center gap-1 mb-1">
+                            <Calendar className="h-3 w-3 text-green-600" />
+                            <span className="font-medium text-gray-900 text-xs">
+                              Pickup
                             </span>
-                            <span className="text-xl font-bold text-green-600">
+                          </div>
+                          <p className="text-xs text-gray-900">
+                            {(() => {
+                              const dateStr =
+                                safeBooking.pickupDate ||
+                                safeBooking.scheduled_date;
+                              if (!dateStr) return "Date TBD";
+
+                              try {
+                                let date;
+                                if (dateStr.includes("-")) {
+                                  // YYYY-MM-DD format - parse as local date
+                                  const [year, month, day] = dateStr
+                                    .split("-")
+                                    .map(Number);
+                                  date = new Date(year, month - 1, day);
+                                } else {
+                                  date = new Date(dateStr);
+                                }
+
+                                // Validate date
+                                if (isNaN(date.getTime())) return "Date TBD";
+
+                                return date.toLocaleDateString("en-US", {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                });
+                              } catch (error) {
+                                console.error(
+                                  "Error parsing date:",
+                                  dateStr,
+                                  error,
+                                );
+                                return "Date TBD";
+                              }
+                            })()}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            {safeBooking.pickupTime ||
+                              safeBooking.scheduled_time ||
+                              "10:00"}
+                          </p>
+                        </div>
+
+                        <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Calendar className="h-4 w-4 text-emerald-600" />
+                            <span className="font-medium text-gray-900 text-sm">
+                              Delivery
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-900">
+                            {safeBooking.deliveryDate
+                              ? new Date(
+                                  safeBooking.deliveryDate,
+                                ).toLocaleDateString("en-US", {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                })
+                              : safeBooking.scheduled_date
+                                ? (() => {
+                                    // Calculate delivery date (next day after pickup)
+                                    const dateStr = safeBooking.scheduled_date;
+                                    let date;
+
+                                    if (dateStr && dateStr.includes("-")) {
+                                      const [year, month, day] =
+                                        dateStr.split("-");
+                                      date = new Date(
+                                        parseInt(year),
+                                        parseInt(month) - 1,
+                                        parseInt(day) + 1,
+                                      );
+                                    } else if (dateStr) {
+                                      date = new Date(dateStr);
+                                      date.setDate(date.getDate() + 1);
+                                    } else {
+                                      return "Date TBD";
+                                    }
+
+                                    return date.toLocaleDateString("en-US", {
+                                      weekday: "short",
+                                      month: "short",
+                                      day: "numeric",
+                                    });
+                                  })()
+                                : "Date TBD"}
+                          </p>
+                          <p className="text-xs text-emerald-600">
+                            {safeBooking.deliveryTime || "Time TBD"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      <div className="flex items-start gap-3 p-3 bg-green-50/50 rounded-xl border border-green-100/50">
+                        <MapPin className="h-5 w-5 text-green-600 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 mb-1">
+                            Service Address
+                          </p>
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            <SafeText>
+                              {safeBooking.address || "Address not provided"}
+                            </SafeText>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Price Breakdown */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-900 text-sm">
+                          Price Breakdown
+                        </h4>
+
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-4">
+                          {/* Service Total */}
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-gray-600">
+                              Services Total
+                            </span>
+                            <span className="font-medium">
                               ₹
                               {(() => {
                                 const servicesTotal =
@@ -895,142 +848,198 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                                     },
                                     0,
                                   );
-                                const actualTotal =
-                                  servicesTotal > 0
-                                    ? servicesTotal
-                                    : safeBooking.final_amount ||
-                                      safeBooking.totalAmount ||
+                                return servicesTotal > 0
+                                  ? servicesTotal
+                                  : safeBooking.totalAmount ||
                                       safeBooking.total_price ||
+                                      safeBooking.final_amount ||
                                       0;
-                                return actualTotal;
                               })()}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-xs text-gray-500">
-                              Payment Status
-                            </span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full ${
-                                (safeBooking.payment_status ||
-                                  safeBooking.paymentStatus) === "paid"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {(
-                                safeBooking.payment_status ||
-                                safeBooking.paymentStatus ||
-                                "pending"
-                              ).toUpperCase()}
-                            </span>
+
+                          {/* Discount if applicable */}
+                          {safeBooking.discount_amount &&
+                            safeBooking.discount_amount > 0 && (
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-green-600">
+                                  Discount
+                                </span>
+                                <span className="font-medium text-green-600">
+                                  -₹{safeBooking.discount_amount}
+                                </span>
+                              </div>
+                            )}
+
+                          {/* Tax if applicable */}
+                          {safeBooking.charges_breakdown?.tax_amount && (
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm text-gray-600">Tax</span>
+                              <span className="font-medium">
+                                ₹{safeBooking.charges_breakdown.tax_amount}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="border-t border-green-200 pt-2">
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold text-gray-900">
+                                Total Amount
+                              </span>
+                              <span className="text-xl font-bold text-green-600">
+                                ₹
+                                {(() => {
+                                  const servicesTotal =
+                                    safeBooking.services.reduce(
+                                      (total: number, service: any) => {
+                                        return (
+                                          total +
+                                          (service.price * service.quantity ||
+                                            0)
+                                        );
+                                      },
+                                      0,
+                                    );
+                                  const actualTotal =
+                                    servicesTotal > 0
+                                      ? servicesTotal
+                                      : safeBooking.final_amount ||
+                                        safeBooking.totalAmount ||
+                                        safeBooking.total_price ||
+                                        0;
+                                  return actualTotal;
+                                })()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center mt-1">
+                              <span className="text-xs text-gray-500">
+                                Payment Status
+                              </span>
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full ${
+                                  (safeBooking.payment_status ||
+                                    safeBooking.paymentStatus) === "paid"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }`}
+                              >
+                                {(
+                                  safeBooking.payment_status ||
+                                  safeBooking.paymentStatus ||
+                                  "pending"
+                                ).toUpperCase()}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Additional Details */}
-                    {safeBooking.additional_details && (
-                      <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
-                        <p className="font-medium text-gray-900 mb-1">
-                          Additional Notes
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {(() => {
-                            if (
-                              typeof booking.additional_details === "string"
-                            ) {
-                              return booking.additional_details;
-                            }
-                            if (
-                              typeof booking.additional_details === "object" &&
-                              booking.additional_details
-                            ) {
-                              return JSON.stringify(booking.additional_details);
-                            }
-                            return "No additional details";
-                          })()}
-                        </p>
-                      </div>
-                    )}
+                      {/* Additional Details */}
+                      {safeBooking.additional_details && (
+                        <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+                          <p className="font-medium text-gray-900 mb-1">
+                            Additional Notes
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {(() => {
+                              if (
+                                typeof booking.additional_details === "string"
+                              ) {
+                                return booking.additional_details;
+                              }
+                              if (
+                                typeof booking.additional_details ===
+                                  "object" &&
+                                booking.additional_details
+                              ) {
+                                return JSON.stringify(
+                                  booking.additional_details,
+                                );
+                              }
+                              return "No additional details";
+                            })()}
+                          </p>
+                        </div>
+                      )}
 
-                    {/* Comprehensive Actions */}
-                    <div className="space-y-2 pt-2">
-                      {/* Primary Actions Row */}
-                      <div className="grid grid-cols-2 gap-2">
-                        {(safeBooking.status === "pending" ||
-                          safeBooking.status === "confirmed") && (
-                          <>
+                      {/* Comprehensive Actions */}
+                      <div className="space-y-2 pt-2">
+                        {/* Primary Actions Row */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {(safeBooking.status === "pending" ||
+                            safeBooking.status === "confirmed") && (
+                            <>
+                              <Button
+                                variant="outline"
+                                onClick={() => handleEditBooking(safeBooking)}
+                                className="flex-1 rounded-lg border border-green-200 hover:bg-green-50 text-green-600 text-xs py-2"
+                              >
+                                <Edit className="mr-1 h-3 w-3" />
+                                Edit
+                              </Button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs py-2"
+                                  >
+                                    <XCircle className="mr-1 h-3 w-3" />
+                                    Cancel
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Cancel Booking
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to cancel this
+                                      booking? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Keep Booking
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleCancelBooking(safeBooking.id)
+                                      }
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Yes, Cancel
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
+
+                          {safeBooking.status === "completed" && (
                             <Button
                               variant="outline"
-                              onClick={() => handleEditBooking(safeBooking)}
-                              className="flex-1 rounded-lg border border-green-200 hover:bg-green-50 text-green-600 text-xs py-2"
+                              className="col-span-2 rounded-xl border-2 border-amber-200 hover:bg-amber-50 text-amber-600 font-medium py-3"
                             >
-                              <Edit className="mr-1 h-3 w-3" />
-                              Edit
+                              <Star className="mr-2 h-4 w-4" />
+                              Rate & Review Service
                             </Button>
+                          )}
+                        </div>
 
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs py-2"
-                                >
-                                  <XCircle className="mr-1 h-3 w-3" />
-                                  Cancel
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Cancel Booking
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to cancel this
-                                    booking? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    Keep Booking
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      handleCancelBooking(safeBooking.id)
-                                    }
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Yes, Cancel
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )}
-
-                        {safeBooking.status === "completed" && (
+                        {/* Secondary Actions Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Button
-                            variant="outline"
-                            className="col-span-2 rounded-xl border-2 border-amber-200 hover:bg-amber-50 text-amber-600 font-medium py-3"
+                            variant="ghost"
+                            className="rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium py-3"
                           >
-                            <Star className="mr-2 h-4 w-4" />
-                            Rate & Review Service
+                            <Phone className="mr-2 h-4 w-4" />
+                            Contact Support
                           </Button>
-                        )}
+                        </div>
                       </div>
-
-                      {/* Secondary Actions Row */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button
-                          variant="ghost"
-                          className="rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium py-3"
-                        >
-                          <Phone className="mr-2 h-4 w-4" />
-                          Contact Support
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
+                    </CardContent>
+                  )}
                 </Card>
               );
             } catch (error) {
