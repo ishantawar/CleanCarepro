@@ -36,13 +36,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Don't cache API requests - let them pass through without interference
+  // Don't interfere with API requests at all - let them pass through normally
   if (
     event.request.url.includes("/api/") ||
     event.request.url.includes("onrender.com") ||
-    event.request.url.includes("localhost:3001")
+    event.request.url.includes("localhost:3001") ||
+    event.request.url.includes("cleancarepro") ||
+    event.request.method !== "GET"
   ) {
-    return; // Don't handle these requests at all
+    // Let these requests pass through without any service worker intervention
+    return;
   }
 
   event.respondWith(
