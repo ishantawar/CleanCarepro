@@ -839,24 +839,27 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                             <span className="font-medium">
                               ₹
                               {(() => {
-                                const servicesTotal =
-                                  safeBooking.services.reduce(
-                                    (total: number, service: any) => {
-                                      return (
-                                        total +
-                                        (service.price * service.quantity || 0)
-                                      );
-                                    },
-                                    0,
-                                  );
-                                return servicesTotal > 0
-                                  ? servicesTotal
-                                  : safeBooking.totalAmount ||
-                                      safeBooking.total_price ||
-                                      safeBooking.final_amount ||
-                                      0;
+                                const deliveryFee = 5; // Standard delivery fee
+                                const totalAmount =
+                                  safeBooking.totalAmount ||
+                                  safeBooking.total_price ||
+                                  safeBooking.final_amount ||
+                                  0;
+                                const servicesTotal = Math.max(
+                                  0,
+                                  totalAmount - deliveryFee,
+                                );
+                                return servicesTotal;
                               })()}
                             </span>
+                          </div>
+
+                          {/* Delivery Fee */}
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-gray-600">
+                              Delivery Fee
+                            </span>
+                            <span className="font-medium">₹5</span>
                           </div>
 
                           {/* Discount if applicable */}
