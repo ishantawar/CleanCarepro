@@ -571,24 +571,96 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                   className="border-0 shadow-sm rounded-lg overflow-hidden bg-white/95 backdrop-blur-sm hover:shadow-md transition-all duration-200 cursor-pointer"
                   onClick={toggleExpand}
                 >
-                  <CardHeader className="pb-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                  {/* Compact Card Header - Always Visible */}
+                  <CardHeader className="pb-2 px-3 py-3 bg-gradient-to-r from-green-50 to-emerald-50">
+                    <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-sm sm:text-base font-bold text-gray-900 mb-1 truncate">
-                          {safeBooking.service}
-                        </CardTitle>
-                        <p className="text-xs sm:text-sm text-green-600 truncate font-medium">
-                          by {safeBooking.provider_name}
-                        </p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-sm text-gray-900 truncate">
+                            <SafeText>{safeBooking.service}</SafeText>
+                          </h3>
+                          <Badge
+                            className={`${getStatusColor(safeBooking.status)} text-xs px-1.5 py-0.5`}
+                          >
+                            <SafeText>{safeBooking.status}</SafeText>
+                          </Badge>
+                        </div>
+
+                        {/* Quick Info Row */}
+                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                            <span>
+                              {safeBooking.services.length} item
+                              {safeBooking.services.length > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              {(() => {
+                                const dateStr =
+                                  safeBooking.pickupDate ||
+                                  safeBooking.scheduled_date;
+                                if (!dateStr) return "Date TBD";
+                                try {
+                                  let date;
+                                  if (dateStr.includes("-")) {
+                                    const [year, month, day] = dateStr
+                                      .split("-")
+                                      .map(Number);
+                                    date = new Date(year, month - 1, day);
+                                  } else {
+                                    date = new Date(dateStr);
+                                  }
+                                  if (isNaN(date.getTime())) return "Date TBD";
+                                  return date.toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                  });
+                                } catch (error) {
+                                  return "Date TBD";
+                                }
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              <SafeText>
+                                {safeBooking.pickupTime ||
+                                  safeBooking.scheduled_time ||
+                                  "10:00"}
+                              </SafeText>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 text-green-600 font-semibold">
+                            <span>₹{total}</span>
+                          </div>
+                        </div>
                       </div>
-                      <Badge
-                        className={`${getStatusColor(safeBooking.status)} border font-medium`}
-                      >
-                        {getStatusIcon(safeBooking.status)}
-                        <span className="ml-1 capitalize">
-                          {safeBooking.status}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">
+                          {isExpanded ? "Less" : "More"}
                         </span>
-                      </Badge>
+                        <div
+                          className={`transform transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                        >
+                          <svg
+                            className="h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </CardHeader>
 
