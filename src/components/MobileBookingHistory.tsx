@@ -40,6 +40,7 @@ import { BookingService } from "@/services/bookingService";
 import { adaptiveBookingHelpers } from "@/integrations/adaptive/bookingHelpers";
 import EditBookingModal from "./EditBookingModal";
 import { clearAllUserData } from "@/utils/clearStorage";
+import { filterProductionBookings } from "@/utils/bookingFilters";
 
 interface MobileBookingHistoryProps {
   currentUser?: any;
