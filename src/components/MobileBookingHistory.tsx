@@ -664,7 +664,9 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-2 p-3">
+                  {/* Expanded Content - Only Visible When Expanded */}
+                  {isExpanded && (
+                    <CardContent className="px-3 pb-3 pt-2 space-y-3 bg-white" onClick={(e) => e.stopPropagation()}>
                     {/* Booked Services */}
                     {safeBooking.services &&
                       Array.isArray(safeBooking.services) &&
