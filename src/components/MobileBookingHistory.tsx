@@ -34,6 +34,7 @@ import {
   RefreshCw,
   Star,
   ArrowLeft,
+  Package,
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
 import { adaptiveBookingHelpers } from "@/integrations/adaptive/bookingHelpers";
