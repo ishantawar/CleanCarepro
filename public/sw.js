@@ -51,16 +51,56 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Handle static assets with caching
+  if (
+    event.request.url.includes("/assets/") ||
+    event.request.url.includes("/static/") ||
+    event.request.url.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2)$/)
+  ) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return fetch(event.request)
+          .then((response) => {
+            // Cache successful responses for static assets
+            if (response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(STATIC_CACHE).then((cache) => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            return new Response("Asset not available offline", {
+              status: 503,
+              statusText: "Service Unavailable",
+            });
+          });
+      }),
+    );
+    return;
+  }
+
+  // Handle regular navigation requests
   event.respondWith(
     caches.match(event.request).then((response) => {
       // Return cached version or fetch from network
       return (
         response ||
         fetch(event.request).catch(() => {
-          // Return a default response for failed fetches
-          return new Response("Resource not available", {
-            status: 503,
-            statusText: "Service Unavailable",
+          // Return cached index.html for SPA routing
+          return caches.match("/").then((indexResponse) => {
+            return (
+              indexResponse ||
+              new Response("Page not available offline", {
+                status: 503,
+                statusText: "Service Unavailable",
+              })
+            );
           });
         })
       );
