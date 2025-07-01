@@ -123,7 +123,7 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
               setSpecialInstructions(state.specialInstructions);
             if (state.appliedCoupon) setAppliedCoupon(state.appliedCoupon);
 
-            console.log("✅ Restored checkout form state after login");
+            console.log("�� Restored checkout form state after login");
           }
           localStorage.removeItem("checkout_form_state");
         } catch (error) {
@@ -529,135 +529,137 @@ Confirm this booking?`;
         </div>
       </div>
 
-      <div className="p-2 space-y-3 pb-32">
-        {/* Cart Items */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Order Items</CardTitle>
+      <div className="p-2 space-y-2 pb-32">
+        {/* Cart Items - Compact View */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-1 px-3 py-2">
+            <CardTitle className="text-sm font-medium">
+              Items ({cartItems.length})
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 pt-0">
+          <CardContent className="space-y-1 pt-0 px-3 pb-3">
             {cartItems.map(({ service, quantity }) => (
-              <div key={service!.id} className="p-2 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">
-                      {service!.category.includes("Men")
-                        ? "👔"
-                        : service!.category.includes("Women")
-                          ? "👗"
-                          : service!.category.includes("Woolen")
-                            ? "🧥"
-                            : service!.category.includes("Steam")
-                              ? "🔥"
-                              : service!.category.includes("Iron")
-                                ? "🏷️"
-                                : "👕"}
-                    </span>
-                  </div>
+              <div
+                key={service!.id}
+                className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+              >
+                <div className="w-6 h-6 bg-gradient-to-br from-green-100 to-green-200 rounded flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs">
+                    {service!.category.includes("Men")
+                      ? "👔"
+                      : service!.category.includes("Women")
+                        ? "👗"
+                        : service!.category.includes("Woolen")
+                          ? "🧥"
+                          : service!.category.includes("Steam")
+                            ? "🔥"
+                            : service!.category.includes("Iron")
+                              ? "🏷️"
+                              : "👕"}
+                  </span>
+                </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-xs truncate">
-                      {service!.name}
-                    </h4>
-                    <p className="text-xs text-green-600">₹{service!.price}</p>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-xs truncate">
+                    {service!.name}
+                  </h4>
+                  <p className="text-xs text-green-600">₹{service!.price}</p>
+                </div>
 
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateQuantity(service!.id, -1)}
+                    className="h-5 w-5 p-0 text-xs"
+                  >
+                    <Minus className="h-2 w-2" />
+                  </Button>
+                  <span className="w-4 text-center font-medium text-xs">
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateQuantity(service!.id, 1)}
+                    className="h-5 w-5 p-0 text-xs"
+                  >
+                    <Plus className="h-2 w-2" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-xs text-green-600">
+                    ₹{service!.price * quantity}
+                  </span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem(service!.id)}
-                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                    className="h-5 w-5 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
-                </div>
-
-                <div className="flex items-center justify-between mt-1">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateQuantity(service!.id, -1)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-
-                    <span className="w-6 text-center font-medium text-xs">
-                      {quantity}
-                    </span>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateQuantity(service!.id, 1)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-
-                  <p className="font-semibold text-sm">
-                    ₹{service!.price * quantity}
-                  </p>
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        {/* Saved Addresses Section */}
-        <Card>
-          <CardHeader>
+        {/* Enhanced Address Form - Compact */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2 px-3 py-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Delivery Address
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MapPin className="h-3 w-3" />
+                Address
               </CardTitle>
               {currentUser && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowSavedAddresses(true)}
-                  className="flex items-center gap-2"
+                  className="h-6 px-2 text-xs"
                 >
-                  <Plus className="h-4 w-4" />
-                  Saved Addresses
+                  <Plus className="h-3 w-3 mr-1" />
+                  Saved
                 </Button>
               )}
             </div>
           </CardHeader>
+          <CardContent className="px-3 pb-3 pt-0">
+            <EnhancedAddressForm
+              onAddressChange={setAddressData}
+              initialAddress={addressData}
+            />
+          </CardContent>
         </Card>
 
-        {/* Enhanced Address Form */}
-        <EnhancedAddressForm
-          onAddressChange={setAddressData}
-          initialAddress={addressData}
-        />
-
-        {/* Contact & Schedule Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Contact & Schedule
+        {/* Contact & Schedule Details - Compact */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2 px-3 py-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              Schedule
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 px-3 pb-3 pt-0">
             <div>
-              <Label htmlFor="phone">Phone Number *</Label>
+              <Label htmlFor="phone" className="text-xs">
+                Phone *
+              </Label>
               <Input
                 id="phone"
                 type="tel"
                 placeholder="Enter phone number"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="mt-1"
+                className="mt-1 h-8 text-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Pickup Schedule *</Label>
+            <div className="space-y-1">
+              <Label className="text-xs">Pickup Schedule *</Label>
               <ProfessionalDateTimePicker
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
@@ -667,90 +669,89 @@ Confirm this booking?`;
             </div>
 
             <div>
-              <Label htmlFor="instructions">
-                Special Instructions (Optional)
+              <Label htmlFor="instructions" className="text-xs">
+                Instructions (Optional)
               </Label>
               <Textarea
                 id="instructions"
-                placeholder="Any special instructions for pickup or cleaning"
+                placeholder="Special instructions..."
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
                 rows={2}
-                className="mt-1"
+                className="mt-1 text-sm"
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Bill Summary with Coupon */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Bill Summary</CardTitle>
+        {/* Bill Summary - Compact */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2 px-3 py-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CreditCard className="h-3 w-3" />
+              Summary
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
+          <CardContent className="space-y-2 px-3 pb-3 pt-0">
+            <div className="flex justify-between text-sm">
               <span>Subtotal</span>
               <span>₹{getSubtotal()}</span>
             </div>
 
-            <div className="flex justify-between">
-              <span>Delivery Charges</span>
+            <div className="flex justify-between text-sm">
+              <span>Delivery</span>
               <span>₹{getDeliveryCharge()}</span>
             </div>
 
-            {/* Compact Coupon Section */}
-            <div className="py-2 border-t border-gray-100">
-              {!appliedCoupon ? (
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Coupon code"
-                    value={couponCode}
-                    onChange={(e) =>
-                      setCouponCode(e.target.value.toUpperCase())
-                    }
-                    className="flex-1 h-8 text-sm"
-                  />
-                  <Button
-                    onClick={applyCoupon}
-                    variant="outline"
-                    disabled={!couponCode.trim()}
-                    className="h-8 px-3 text-sm"
-                  >
-                    Apply
-                  </Button>
+            {/* Ultra Compact Coupon Section */}
+            {!appliedCoupon ? (
+              <div className="flex gap-1 pt-1">
+                <Input
+                  placeholder="Coupon"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  className="flex-1 h-7 text-xs"
+                />
+                <Button
+                  onClick={applyCoupon}
+                  variant="outline"
+                  disabled={!couponCode.trim()}
+                  className="h-7 px-2 text-xs"
+                >
+                  Apply
+                </Button>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-1">
+                  <span className="text-green-700 font-medium text-xs">
+                    ✓ {appliedCoupon.code}
+                  </span>
+                  <span className="text-xs text-green-600">
+                    ({appliedCoupon.discount}%)
+                  </span>
                 </div>
-              ) : (
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-700 font-medium text-sm">
-                      ✓ {appliedCoupon.code}
-                    </span>
-                    <span className="text-xs text-green-600">
-                      ({appliedCoupon.discount}% off)
-                    </span>
-                  </div>
-                  <Button
-                    onClick={removeCoupon}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
-                  >
-                    ✕
-                  </Button>
-                </div>
-              )}
-            </div>
+                <Button
+                  onClick={removeCoupon}
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0 text-green-600 hover:bg-green-100"
+                >
+                  ✕
+                </Button>
+              </div>
+            )}
 
             {appliedCoupon && (
-              <div className="flex justify-between text-green-600">
-                <span>Coupon Discount</span>
+              <div className="flex justify-between text-green-600 text-sm">
+                <span>Discount</span>
                 <span>-₹{getCouponDiscount()}</span>
               </div>
             )}
 
-            <hr />
+            <hr className="my-2" />
 
-            <div className="flex justify-between font-semibold text-lg">
+            <div className="flex justify-between font-semibold">
               <span>Total</span>
               <span className="text-green-600">₹{getTotal()}</span>
             </div>
