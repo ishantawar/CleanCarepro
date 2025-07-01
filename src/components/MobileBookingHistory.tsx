@@ -971,7 +971,10 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                             <>
                               <Button
                                 variant="outline"
-                                onClick={() => handleEditBooking(safeBooking)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditBooking(safeBooking);
+                                }}
                                 className="flex-1 rounded-lg border border-green-200 hover:bg-green-50 text-green-600 text-xs py-2"
                               >
                                 <Edit className="mr-1 h-3 w-3" />
@@ -983,6 +986,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                                   <Button
                                     variant="outline"
                                     className="flex-1 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs py-2"
+                                    onClick={(e) => e.stopPropagation()}
                                   >
                                     <XCircle className="mr-1 h-3 w-3" />
                                     Cancel
@@ -1031,6 +1035,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Button
                             variant="ghost"
+                            onClick={(e) => e.stopPropagation()}
                             className="rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium py-3"
                           >
                             <Phone className="mr-2 h-4 w-4" />
