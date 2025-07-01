@@ -1,11 +1,13 @@
-const CACHE_NAME = "cleancare-v2";
+const CACHE_NAME = "cleancare-v3";
+const STATIC_CACHE = "cleancare-static-v3";
 const urlsToCache = ["/", "/manifest.json"];
 
 // Install service worker
 self.addEventListener("install", (event) => {
+  console.log("Service Worker: Installing v3...");
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log("Opened cache");
+      console.log("Service Worker: Caching app shell");
       return cache.addAll(urlsToCache);
     }),
   );
@@ -14,12 +16,13 @@ self.addEventListener("install", (event) => {
 
 // Activate service worker
 self.addEventListener("activate", (event) => {
+  console.log("Service Worker: Activating v3...");
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log("Deleting old cache:", cacheName);
+          if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE) {
+            console.log("Service Worker: Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         }),
