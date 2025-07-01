@@ -66,6 +66,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
   const [cancellingBooking, setCancellingBooking] = useState<string | null>(
     null,
@@ -538,7 +539,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3 sm:space-y-6">
+          <div className="space-y-3">
             {bookings.map((booking: any, index) => {
               const bookingId = booking.id || booking._id || `booking_${index}`;
               const services = Array.isArray(booking.services)
@@ -548,301 +549,358 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
               const hasRealId =
                 !!(booking.id || booking._id) &&
                 !bookingId.startsWith("booking_");
+              const isExpanded = expandedCard === bookingId;
+
+              const toggleExpand = () => {
+                setExpandedCard(isExpanded ? null : bookingId);
+              };
 
               return (
                 <Card
                   key={bookingId}
-                  className="overflow-hidden border border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                  onClick={toggleExpand}
                 >
-                  <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200 p-3 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
-                          {booking.service || "Home Service"}
-                        </CardTitle>
-                        <p className="text-xs sm:text-sm text-blue-600 font-medium">
-                          by {booking.provider_name || "HomeServices Pro"}
-                        </p>
+                  {/* Compact Card Header - Always Visible */}
+                  <CardHeader className="pb-2 px-3 py-3 bg-gradient-to-r from-green-50 to-blue-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-sm text-gray-900 truncate">
+                            {booking.service || "Home Service"}
+                          </h3>
+                          <Badge
+                            className={`${getStatusColor(booking.status)} text-xs px-1.5 py-0.5`}
+                          >
+                            {booking.status || "pending"}
+                          </Badge>
+                        </div>
+
+                        {/* Quick Info Row */}
+                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                            <span>
+                              {services.length} item
+                              {services.length > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              {formatDate(
+                                booking.pickupDate || booking.scheduled_date,
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              {booking.pickupTime ||
+                                booking.scheduled_time ||
+                                "10:00"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 text-green-600 font-semibold">
+                            <span>₹{total}</span>
+                          </div>
+                        </div>
                       </div>
-                      <Badge
-                        className={`${getStatusColor(booking.status)} border font-medium flex items-center gap-1`}
-                      >
-                        {getStatusIcon(booking.status)}
-                        <span className="capitalize">
-                          {booking.status || "pending"}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">
+                          {isExpanded ? "Less" : "More"}
                         </span>
-                      </Badge>
+                        <div
+                          className={`transform transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                        >
+                          <svg
+                            className="h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-6">
-                    {/* Services */}
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Package className="h-4 w-4 text-blue-600" />
-                        Booked Services
-                      </h4>
-                      <div className="space-y-2">
-                        {services.map((service: any, idx: number) => {
-                          const serviceName =
-                            typeof service === "object"
-                              ? service.name || service.service
-                              : service;
-                          const quantity =
-                            typeof service === "object"
-                              ? service.quantity || 1
-                              : 1;
+                  {/* Expanded Content - Only Visible When Expanded */}
+                  {isExpanded && (
+                    <CardContent
+                      className="px-3 pb-3 pt-2 space-y-3 bg-white"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Services Detail */}
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                          <Package className="h-4 w-4 text-blue-600" />
+                          Services Ordered
+                        </h4>
+                        <div className="space-y-1">
+                          {services.map((service: any, idx: number) => {
+                            const serviceName =
+                              typeof service === "object"
+                                ? service.name || service.service
+                                : service;
+                            const quantity =
+                              typeof service === "object"
+                                ? service.quantity || 1
+                                : 1;
+                            const price =
+                              typeof service === "object" && service.price
+                                ? service.price
+                                : Math.round(total / services.length);
 
-                          return (
-                            <Badge
-                              key={idx}
-                              variant="secondary"
-                              className="bg-white text-gray-700 border border-blue-200 text-xs px-2 py-1"
-                            >
-                              {serviceName} {quantity > 1 && `x${quantity}`}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Schedule */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
-                      <div className="p-2 sm:p-4 bg-green-50 rounded-lg border border-green-100">
-                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            Pickup
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-medium text-gray-900">
-                          {formatDate(
-                            booking.pickupDate || booking.scheduled_date,
-                          )}
-                        </p>
-                        <p className="text-xs text-green-600">
-                          {booking.pickupTime ||
-                            booking.scheduled_time ||
-                            "10:00"}
-                        </p>
-                      </div>
-
-                      <div className="p-2 sm:p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600" />
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            Delivery
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-medium text-gray-900">
-                          {formatDate(booking.deliveryDate) || "Date TBD"}
-                        </p>
-                        <p className="text-xs text-emerald-600">
-                          {booking.deliveryTime || "18:00"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Address */}
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                      <div className="flex items-start gap-3">
-                        <MapPin className="h-5 w-5 text-gray-600 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-gray-900 mb-1">
-                            Service Address
-                          </p>
-                          <p className="text-sm text-gray-600 leading-relaxed">
-                            {typeof booking.address === "object" &&
-                            booking.address !== null
-                              ? booking.address.fullAddress ||
-                                [
-                                  booking.address.flatNo,
-                                  booking.address.street,
-                                  booking.address.landmark,
-                                  booking.address.village,
-                                  booking.address.city,
-                                  booking.address.pincode,
-                                ]
-                                  .filter(Boolean)
-                                  .join(", ") ||
-                                "Address not provided"
-                              : booking.address || "Address not provided"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Price Breakdown */}
-                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-green-600" />
-                        Price Breakdown
-                      </h4>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">
-                            Services Total
-                          </span>
-                          <span className="font-medium">₹{total}</span>
-                        </div>
-
-                        {booking.discount_amount &&
-                          booking.discount_amount > 0 && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-green-600">
-                                Discount
-                              </span>
-                              <span className="font-medium text-green-600">
-                                -₹{booking.discount_amount}
-                              </span>
-                            </div>
-                          )}
-
-                        <Separator />
-
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-gray-900">
-                            Total Amount
-                          </span>
-                          <span className="text-xl font-bold text-green-600">
-                            ₹{total}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-500">
-                            Payment Status
-                          </span>
-                          <Badge
-                            variant={
-                              (booking.payment_status ||
-                                booking.paymentStatus) === "paid"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {(
-                              booking.payment_status ||
-                              booking.paymentStatus ||
-                              "pending"
-                            ).toUpperCase()}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-
-                    <div className="flex flex-col gap-2 sm:gap-3 pt-2 sm:pt-4 border-t border-gray-200">
-                      {hasRealId ? (
-                        <>
-                          {/* Primary Actions Row */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                            {canEditBooking(booking) && (
-                              <Button
-                                onClick={() => handleEditBooking(booking)}
-                                variant="outline"
-                                className="flex items-center justify-center gap-1 sm:gap-2 border-green-200 text-green-600 hover:bg-green-50 py-1.5 sm:py-2 text-xs sm:text-sm"
-                                size="sm"
+                            return (
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center bg-white p-2 rounded text-xs"
                               >
-                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                                <span>Edit Order</span>
-                              </Button>
+                                <span className="font-medium">
+                                  {serviceName}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-600">
+                                    Qty: {quantity}
+                                  </span>
+                                  <span className="font-semibold text-green-600">
+                                    ₹{price * quantity}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Schedule Details */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="h-3 w-3 text-green-600" />
+                            <span className="font-medium text-gray-900 text-xs">
+                              Pickup
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium text-gray-900">
+                            {formatDate(
+                              booking.pickupDate || booking.scheduled_date,
                             )}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            {booking.pickupTime ||
+                              booking.scheduled_time ||
+                              "10:00"}
+                          </p>
+                        </div>
+
+                        <div className="p-3 bg-emerald-50 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="h-3 w-3 text-emerald-600" />
+                            <span className="font-medium text-gray-900 text-xs">
+                              Delivery
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium text-gray-900">
+                            {formatDate(booking.deliveryDate) || "Date TBD"}
+                          </p>
+                          <p className="text-xs text-emerald-600">
+                            {booking.deliveryTime || "18:00"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 mb-1 text-xs">
+                              Service Address
+                            </p>
+                            <p className="text-xs text-gray-600 leading-relaxed">
+                              {typeof booking.address === "object" &&
+                              booking.address !== null
+                                ? booking.address.fullAddress ||
+                                  [
+                                    booking.address.flatNo,
+                                    booking.address.street,
+                                    booking.address.landmark,
+                                    booking.address.village,
+                                    booking.address.city,
+                                    booking.address.pincode,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ") ||
+                                  "Address not provided"
+                                : booking.address || "Address not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Price Breakdown */}
+                      <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-2 text-xs flex items-center gap-2">
+                          <CreditCard className="h-3 w-3 text-green-600" />
+                          Price Breakdown
+                        </h4>
+
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">
+                              Services Total
+                            </span>
+                            <span className="font-medium">₹{total}</span>
                           </div>
 
-                          {/* Secondary Actions Row */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {canCancelBooking(booking) && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className="flex items-center justify-center gap-2 border-red-200 text-red-600 hover:bg-red-50 py-2"
-                                    disabled={cancellingBooking === bookingId}
-                                    size="sm"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="text-sm">
+                          {booking.discount_amount &&
+                            booking.discount_amount > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-green-600">Discount</span>
+                                <span className="font-medium text-green-600">
+                                  -₹{booking.discount_amount}
+                                </span>
+                              </div>
+                            )}
+
+                          <Separator className="my-1" />
+
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-900">
+                              Total Amount
+                            </span>
+                            <span className="font-bold text-green-600">
+                              ₹{total}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center pt-1">
+                            <span className="text-gray-500">
+                              Payment Status
+                            </span>
+                            <Badge
+                              variant={
+                                (booking.payment_status ||
+                                  booking.paymentStatus) === "paid"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className="text-xs"
+                            >
+                              {(
+                                booking.payment_status ||
+                                booking.paymentStatus ||
+                                "pending"
+                              ).toUpperCase()}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="space-y-2 pt-2 border-t">
+                        {hasRealId ? (
+                          <>
+                            <div className="grid grid-cols-2 gap-2">
+                              {canEditBooking(booking) && (
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditBooking(booking);
+                                  }}
+                                  variant="outline"
+                                  className="text-xs py-2 border-green-200 text-green-600 hover:bg-green-50"
+                                  size="sm"
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit Order
+                                </Button>
+                              )}
+
+                              {canCancelBooking(booking) && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      className="text-xs py-2 border-red-200 text-red-600 hover:bg-red-50"
+                                      disabled={cancellingBooking === bookingId}
+                                      size="sm"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Trash2 className="h-3 w-3 mr-1" />
                                       {cancellingBooking === bookingId
                                         ? "Cancelling..."
                                         : "Cancel"}
-                                    </span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="mx-4">
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Cancel Booking?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to cancel this
-                                      booking? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                                    <AlertDialogCancel className="w-full sm:w-auto">
-                                      Keep Booking
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => {
-                                        console.log(
-                                          "🔥 Cancel button clicked for booking:",
-                                          {
-                                            bookingId,
-                                            hasBookingId: !!bookingId,
-                                            booking,
-                                          },
-                                        );
-                                        if (bookingId) {
-                                          handleCancelBooking(bookingId);
-                                        } else {
-                                          console.error(
-                                            "❌ No valid booking ID for cancellation",
-                                          );
-                                        }
-                                      }}
-                                      className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
-                                    >
-                                      Yes, Cancel Booking
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
-                          </div>
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent className="mx-4">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Cancel Booking?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to cancel this
+                                        booking? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                      <AlertDialogCancel className="w-full sm:w-auto">
+                                        Keep Booking
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => {
+                                          if (bookingId) {
+                                            handleCancelBooking(bookingId);
+                                          }
+                                        }}
+                                        className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+                                      >
+                                        Yes, Cancel Booking
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
 
-                          {/* Contact Support */}
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleContactSupport(bookingId);
+                              }}
+                              variant="outline"
+                              className="w-full text-xs py-2 border-gray-200 text-gray-600 hover:bg-gray-50"
+                              size="sm"
+                            >
+                              <MessageCircle className="h-3 w-3 mr-1" />
+                              Contact Support
+                            </Button>
+                          </>
+                        ) : (
                           <Button
-                            onClick={() => handleContactSupport(bookingId)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleContactSupport(bookingId);
+                            }}
                             variant="outline"
-                            className="flex items-center justify-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50 py-2"
+                            className="w-full text-xs py-2 border-gray-200 text-gray-600 hover:bg-gray-50"
                             size="sm"
                           >
-                            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm">
-                              Contact Support
-                            </span>
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            Contact Support
                           </Button>
-                        </>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-3">
-                          <Button
-                            onClick={() => handleContactSupport(bookingId)}
-                            variant="outline"
-                            className="flex items-center justify-center gap-2 border-gray-200 text-gray-600 hover:bg-gray-50 py-2"
-                            size="sm"
-                          >
-                            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm">
-                              Contact Support
-                            </span>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
+                        )}
+                      </div>
+                    </CardContent>
+                  )}
                 </Card>
               );
             })}
