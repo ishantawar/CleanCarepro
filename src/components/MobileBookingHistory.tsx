@@ -553,10 +553,23 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                 },
               };
 
+              const bookingId = safeBooking.id || `booking_${index}`;
+              const isExpanded = expandedCard === bookingId;
+              const total =
+                safeBooking.totalAmount ||
+                safeBooking.total_price ||
+                safeBooking.final_amount ||
+                0;
+
+              const toggleExpand = () => {
+                setExpandedCard(isExpanded ? null : bookingId);
+              };
+
               return (
                 <Card
                   key={safeBooking.id || index}
-                  className="border-0 shadow-lg rounded-xl overflow-hidden bg-white/95 backdrop-blur-sm hover:shadow-xl transition-all duration-300"
+                  className="border-0 shadow-sm rounded-lg overflow-hidden bg-white/95 backdrop-blur-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                  onClick={toggleExpand}
                 >
                   <CardHeader className="pb-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
