@@ -75,8 +75,13 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
       const response = await bookingService.getCurrentUserBookings();
 
       if (response.success && response.bookings) {
-        console.log("Bookings loaded successfully:", response.bookings.length);
-        setBookings(response.bookings);
+        // Filter out demo bookings for production
+        const productionBookings = filterProductionBookings(response.bookings);
+        console.log(
+          "Bookings loaded successfully (filtered):",
+          productionBookings.length,
+        );
+        setBookings(productionBookings);
       } else {
         console.log("No bookings found or error:", response.error);
         setBookings([]);
