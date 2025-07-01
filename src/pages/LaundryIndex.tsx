@@ -397,6 +397,14 @@ const LaundryIndex = () => {
     setIsProcessingGlobalCheckout(true);
     console.log("Processing checkout for authenticated user:", cartData);
 
+    // Add loading notification
+    addNotification(
+      createSuccessNotification(
+        "Processing Order",
+        "Creating your booking, please wait...",
+      ),
+    );
+
     try {
       // Import both booking helpers and service
       const { BookingService } = await import("../services/bookingService");
@@ -522,12 +530,17 @@ const LaundryIndex = () => {
           ),
         );
 
-        // Clear cart
+        // Clear cart and form data
         localStorage.removeItem("laundry_cart");
+        localStorage.removeItem("laundry_booking_form");
 
-        // Redirect to home page after successful booking
+        // Clear any cached cart state
+        const clearCartEvent = new CustomEvent("clearCart");
+        window.dispatchEvent(clearCartEvent);
+
+        // Redirect to booking history to show the new booking
         setTimeout(() => {
-          setCurrentView("home");
+          setCurrentView("bookings");
         }, 2000); // Wait 2 seconds to show success message
       } else {
         // If MongoDB fails, still try to save locally
@@ -647,8 +660,14 @@ const LaundryIndex = () => {
                 ),
               );
               localStorage.removeItem("laundry_cart");
+              localStorage.removeItem("laundry_booking_form");
+
+              // Clear any cached cart state
+              const clearCartEvent = new CustomEvent("clearCart");
+              window.dispatchEvent(clearCartEvent);
+
               setTimeout(() => {
-                setCurrentView("home");
+                setCurrentView("bookings");
               }, 2000);
               return; // Exit early since we saved to sheets
             }

@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
 import EditBookingModal from "./EditBookingModal";
+import { filterProductionBookings } from "@/utils/bookingFilters";
 
 interface EnhancedBookingHistoryProps {
   currentUser?: any;
@@ -106,28 +107,33 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           Array.isArray(mongoResponse.data) &&
           mongoResponse.data.length > 0
         ) {
-          mongoBookings = mongoResponse.data.map((booking: any) => ({
-            id: booking._id,
-            userId: booking.customer_id,
-            services: booking.services || [booking.service],
-            totalAmount: booking.final_amount || booking.total_price,
-            status: booking.status,
-            pickupDate: booking.scheduled_date,
-            deliveryDate: booking.scheduled_date, // Could calculate +1 day
-            pickupTime: booking.scheduled_time,
-            deliveryTime: "18:00",
-            address: booking.address,
-            contactDetails: {
-              phone: currentUser.phone,
-              name: currentUser.full_name || currentUser.name,
-              instructions:
-                booking.additional_details || booking.special_instructions,
-            },
-            paymentStatus: booking.payment_status,
-            createdAt: booking.created_at || booking.createdAt,
-            updatedAt: booking.updated_at || booking.updatedAt,
-          }));
-          console.log("✅ Loaded bookings from MongoDB:", mongoBookings.length);
+          mongoBookings = filterProductionBookings(mongoResponse.data).map(
+            (booking: any) => ({
+              id: booking._id,
+              userId: booking.customer_id,
+              services: booking.services || [booking.service],
+              totalAmount: booking.final_amount || booking.total_price,
+              status: booking.status,
+              pickupDate: booking.scheduled_date,
+              deliveryDate: booking.scheduled_date, // Could calculate +1 day
+              pickupTime: booking.scheduled_time,
+              deliveryTime: "18:00",
+              address: booking.address,
+              contactDetails: {
+                phone: currentUser.phone,
+                name: currentUser.full_name || currentUser.name,
+                instructions:
+                  booking.additional_details || booking.special_instructions,
+              },
+              paymentStatus: booking.payment_status,
+              createdAt: booking.created_at || booking.createdAt,
+              updatedAt: booking.updated_at || booking.updatedAt,
+            }),
+          );
+          console.log(
+            "✅ Loaded bookings from MongoDB (filtered):",
+            mongoBookings.length,
+          );
           setBookings(mongoBookings);
           return;
         }
@@ -138,11 +144,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
       const response = await bookingService.getCurrentUserBookings();
 
       if (response.success && response.bookings) {
+        // Filter out demo bookings for production
+        const productionBookings = filterProductionBookings(response.bookings);
+
         console.log(
-          "✅ Bookings loaded from BookingService:",
-          response.bookings.length,
+          "✅ Bookings loaded from BookingService (filtered):",
+          productionBookings.length,
         );
-        setBookings(response.bookings);
+        setBookings(productionBookings);
       } else {
         console.log("No bookings found or error:", response.error);
         setBookings([]);
@@ -653,10 +662,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               typeof service === "object"
                                 ? service.quantity || 1
                                 : 1;
+                            // Use actual service price if available, otherwise use a default
                             const price =
                               typeof service === "object" && service.price
                                 ? service.price
-                                : Math.round(total / services.length);
+                                : 50; // Default price instead of dividing total
 
                             return (
                               <div
@@ -754,12 +764,36 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         </h4>
 
                         <div className="space-y-1 text-xs">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">
-                              Services Total
-                            </span>
-                            <span className="font-medium">₹{total}</span>
-                          </div>
+                          {/* Calculate service total and delivery fee */}
+                          {(() => {
+                            const deliveryFee = 50; // Standard delivery fee
+                            const serviceTotal = Math.max(
+                              0,
+                              total - deliveryFee,
+                            );
+
+                            return (
+                              <>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">
+                                    Services Total
+                                  </span>
+                                  <span className="font-medium">
+                                    ₹{serviceTotal}
+                                  </span>
+                                </div>
+
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">
+                                    Delivery Fee
+                                  </span>
+                                  <span className="font-medium">
+                                    ₹{deliveryFee}
+                                  </span>
+                                </div>
+                              </>
+                            );
+                          })()}
 
                           {booking.discount_amount &&
                             booking.discount_amount > 0 && (

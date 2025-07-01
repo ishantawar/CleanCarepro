@@ -40,6 +40,7 @@ import { BookingService } from "@/services/bookingService";
 import { adaptiveBookingHelpers } from "@/integrations/adaptive/bookingHelpers";
 import EditBookingModal from "./EditBookingModal";
 import { clearAllUserData } from "@/utils/clearStorage";
+import { filterProductionBookings } from "@/utils/bookingFilters";
 
 interface MobileBookingHistoryProps {
   currentUser?: any;
@@ -74,8 +75,13 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
       const response = await bookingService.getCurrentUserBookings();
 
       if (response.success && response.bookings) {
-        console.log("Bookings loaded successfully:", response.bookings.length);
-        setBookings(response.bookings);
+        // Filter out demo bookings for production
+        const productionBookings = filterProductionBookings(response.bookings);
+        console.log(
+          "Bookings loaded successfully (filtered):",
+          productionBookings.length,
+        );
+        setBookings(productionBookings);
       } else {
         console.log("No bookings found or error:", response.error);
         setBookings([]);
@@ -456,14 +462,8 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
               const sanitizeServices = (services: any) => {
                 if (!Array.isArray(services)) return [];
 
-                // Calculate individual service price based on total
-                const totalAmount =
-                  booking.totalAmount ||
-                  booking.total_price ||
-                  booking.final_amount ||
-                  0;
-                const serviceCount = services.length || 1;
-                const defaultPrice = Math.round(totalAmount / serviceCount);
+                // Use default price instead of dividing total
+                const defaultPrice = 50; // Standard default price per service
 
                 return services.map((service, index) => {
                   if (typeof service === "string") {
@@ -839,24 +839,27 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                             <span className="font-medium">
                               ₹
                               {(() => {
-                                const servicesTotal =
-                                  safeBooking.services.reduce(
-                                    (total: number, service: any) => {
-                                      return (
-                                        total +
-                                        (service.price * service.quantity || 0)
-                                      );
-                                    },
-                                    0,
-                                  );
-                                return servicesTotal > 0
-                                  ? servicesTotal
-                                  : safeBooking.totalAmount ||
-                                      safeBooking.total_price ||
-                                      safeBooking.final_amount ||
-                                      0;
+                                const deliveryFee = 50; // Standard delivery fee
+                                const totalAmount =
+                                  safeBooking.totalAmount ||
+                                  safeBooking.total_price ||
+                                  safeBooking.final_amount ||
+                                  0;
+                                const servicesTotal = Math.max(
+                                  0,
+                                  totalAmount - deliveryFee,
+                                );
+                                return servicesTotal;
                               })()}
                             </span>
+                          </div>
+
+                          {/* Delivery Fee */}
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-gray-600">
+                              Delivery Fee
+                            </span>
+                            <span className="font-medium">₹50</span>
                           </div>
 
                           {/* Discount if applicable */}
