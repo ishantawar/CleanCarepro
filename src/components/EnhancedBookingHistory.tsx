@@ -662,10 +662,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               typeof service === "object"
                                 ? service.quantity || 1
                                 : 1;
+                            // Use actual service price if available, otherwise use a default
                             const price =
                               typeof service === "object" && service.price
                                 ? service.price
-                                : Math.round(total / services.length);
+                                : 50; // Default price instead of dividing total
 
                             return (
                               <div
@@ -763,12 +764,36 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         </h4>
 
                         <div className="space-y-1 text-xs">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">
-                              Services Total
-                            </span>
-                            <span className="font-medium">₹{total}</span>
-                          </div>
+                          {/* Calculate service total and delivery fee */}
+                          {(() => {
+                            const deliveryFee = 5; // Standard delivery fee
+                            const serviceTotal = Math.max(
+                              0,
+                              total - deliveryFee,
+                            );
+
+                            return (
+                              <>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">
+                                    Services Total
+                                  </span>
+                                  <span className="font-medium">
+                                    ₹{serviceTotal}
+                                  </span>
+                                </div>
+
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">
+                                    Delivery Fee
+                                  </span>
+                                  <span className="font-medium">
+                                    ₹{deliveryFee}
+                                  </span>
+                                </div>
+                              </>
+                            );
+                          })()}
 
                           {booking.discount_amount &&
                             booking.discount_amount > 0 && (
