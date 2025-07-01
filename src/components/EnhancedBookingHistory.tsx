@@ -107,20 +107,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           Array.isArray(mongoResponse.data) &&
           mongoResponse.data.length > 0
         ) {
-          mongoBookings = mongoResponse.data
-            .filter((booking: any) => {
-              // Filter out demo bookings for production
-              const isDemoBooking =
-                booking._id?.includes("demo") ||
-                booking.customer_id?.includes("demo") ||
-                booking.address?.includes("demo") ||
-                booking.address?.includes("Demo") ||
-                booking.service?.includes("Demo") ||
-                booking.services?.some((s: string) => s.includes("Demo"));
-
-              return !isDemoBooking;
-            })
-            .map((booking: any) => ({
+          mongoBookings = filterProductionBookings(mongoResponse.data).map(
+            (booking: any) => ({
               id: booking._id,
               userId: booking.customer_id,
               services: booking.services || [booking.service],
@@ -140,7 +128,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
               paymentStatus: booking.payment_status,
               createdAt: booking.created_at || booking.createdAt,
               updatedAt: booking.updated_at || booking.updatedAt,
-            }));
+            }),
+          );
           console.log(
             "✅ Loaded bookings from MongoDB (filtered):",
             mongoBookings.length,
@@ -156,18 +145,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
       if (response.success && response.bookings) {
         // Filter out demo bookings for production
-        const productionBookings = response.bookings.filter((booking: any) => {
-          // Filter out demo data patterns
-          const isDemoBooking =
-            booking.id?.includes("demo") ||
-            booking.userId?.includes("demo") ||
-            booking.contactDetails?.phone?.includes("demo") ||
-            booking.address?.includes("demo") ||
-            booking.address?.includes("Demo") ||
-            booking.contactDetails?.name?.includes("Demo");
-
-          return !isDemoBooking;
-        });
+        const productionBookings = filterProductionBookings(response.bookings);
 
         console.log(
           "✅ Bookings loaded from BookingService (filtered):",
