@@ -106,28 +106,44 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
           Array.isArray(mongoResponse.data) &&
           mongoResponse.data.length > 0
         ) {
-          mongoBookings = mongoResponse.data.map((booking: any) => ({
-            id: booking._id,
-            userId: booking.customer_id,
-            services: booking.services || [booking.service],
-            totalAmount: booking.final_amount || booking.total_price,
-            status: booking.status,
-            pickupDate: booking.scheduled_date,
-            deliveryDate: booking.scheduled_date, // Could calculate +1 day
-            pickupTime: booking.scheduled_time,
-            deliveryTime: "18:00",
-            address: booking.address,
-            contactDetails: {
-              phone: currentUser.phone,
-              name: currentUser.full_name || currentUser.name,
-              instructions:
-                booking.additional_details || booking.special_instructions,
-            },
-            paymentStatus: booking.payment_status,
-            createdAt: booking.created_at || booking.createdAt,
-            updatedAt: booking.updated_at || booking.updatedAt,
-          }));
-          console.log("✅ Loaded bookings from MongoDB:", mongoBookings.length);
+          mongoBookings = mongoResponse.data
+            .filter((booking: any) => {
+              // Filter out demo bookings for production
+              const isDemoBooking =
+                booking._id?.includes("demo") ||
+                booking.customer_id?.includes("demo") ||
+                booking.address?.includes("demo") ||
+                booking.address?.includes("Demo") ||
+                booking.service?.includes("Demo") ||
+                booking.services?.some((s: string) => s.includes("Demo"));
+
+              return !isDemoBooking;
+            })
+            .map((booking: any) => ({
+              id: booking._id,
+              userId: booking.customer_id,
+              services: booking.services || [booking.service],
+              totalAmount: booking.final_amount || booking.total_price,
+              status: booking.status,
+              pickupDate: booking.scheduled_date,
+              deliveryDate: booking.scheduled_date, // Could calculate +1 day
+              pickupTime: booking.scheduled_time,
+              deliveryTime: "18:00",
+              address: booking.address,
+              contactDetails: {
+                phone: currentUser.phone,
+                name: currentUser.full_name || currentUser.name,
+                instructions:
+                  booking.additional_details || booking.special_instructions,
+              },
+              paymentStatus: booking.payment_status,
+              createdAt: booking.created_at || booking.createdAt,
+              updatedAt: booking.updated_at || booking.updatedAt,
+            }));
+          console.log(
+            "✅ Loaded bookings from MongoDB (filtered):",
+            mongoBookings.length,
+          );
           setBookings(mongoBookings);
           return;
         }
@@ -138,11 +154,25 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
       const response = await bookingService.getCurrentUserBookings();
 
       if (response.success && response.bookings) {
+        // Filter out demo bookings for production
+        const productionBookings = response.bookings.filter((booking: any) => {
+          // Filter out demo data patterns
+          const isDemoBooking =
+            booking.id?.includes("demo") ||
+            booking.userId?.includes("demo") ||
+            booking.contactDetails?.phone?.includes("demo") ||
+            booking.address?.includes("demo") ||
+            booking.address?.includes("Demo") ||
+            booking.contactDetails?.name?.includes("Demo");
+
+          return !isDemoBooking;
+        });
+
         console.log(
-          "✅ Bookings loaded from BookingService:",
-          response.bookings.length,
+          "✅ Bookings loaded from BookingService (filtered):",
+          productionBookings.length,
         );
-        setBookings(response.bookings);
+        setBookings(productionBookings);
       } else {
         console.log("No bookings found or error:", response.error);
         setBookings([]);

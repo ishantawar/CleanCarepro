@@ -252,6 +252,14 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     console.log("🛒 Checkout button clicked!");
     setIsProcessingCheckout(true);
 
+    // Add additional UI feedback
+    addNotification(
+      createWarningNotification(
+        "Processing Order",
+        "Please wait while we process your booking...",
+      ),
+    );
+
     try {
       console.log("📝 Current form data:", {
         currentUser: !!currentUser,
@@ -430,9 +438,27 @@ Confirm this booking?`;
 
           // Call the parent's checkout handler
           console.log("📤 Calling onProceedToCheckout with order data");
-          onProceedToCheckout(orderData);
+          await onProceedToCheckout(orderData);
 
           console.log("✅ Checkout initiated successfully");
+
+          // Clear cart after successful booking
+          console.log("🧹 Clearing cart after successful booking");
+          localStorage.removeItem("laundry_cart");
+          setCart({});
+
+          // Clear form data
+          localStorage.removeItem("laundry_booking_form");
+          setSpecialInstructions("");
+          setCouponCode("");
+          setAppliedCoupon(null);
+
+          addNotification(
+            createSuccessNotification(
+              "Cart Cleared",
+              "Your order has been placed and cart has been cleared.",
+            ),
+          );
         } catch (checkoutError) {
           console.error("💥 Checkout process failed:", checkoutError);
           addNotification(
@@ -441,6 +467,7 @@ Confirm this booking?`;
               "Failed to process your order. Please try again.",
             ),
           );
+          // Don't clear cart on error so user can retry
         }
       } else {
         console.log("❌ User cancelled the order");

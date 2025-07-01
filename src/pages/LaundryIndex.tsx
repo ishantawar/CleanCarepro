@@ -397,6 +397,14 @@ const LaundryIndex = () => {
     setIsProcessingGlobalCheckout(true);
     console.log("Processing checkout for authenticated user:", cartData);
 
+    // Add loading notification
+    addNotification(
+      createSuccessNotification(
+        "Processing Order",
+        "Creating your booking, please wait...",
+      ),
+    );
+
     try {
       // Import both booking helpers and service
       const { BookingService } = await import("../services/bookingService");
