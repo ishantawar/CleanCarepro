@@ -688,6 +688,8 @@ const LaundryIndex = () => {
       }
 
       addNotification(createErrorNotification(errorTitle, errorMessage));
+    } finally {
+      setIsProcessingGlobalCheckout(false);
     }
   };
 
