@@ -95,6 +95,21 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     appliedCoupon,
   ]);
 
+  // Listen for cart clearing events
+  useEffect(() => {
+    const handleClearCart = () => {
+      console.log("🧹 Received cart clear event");
+      setCart({});
+      localStorage.removeItem("laundry_cart");
+    };
+
+    window.addEventListener("clearCart", handleClearCart);
+
+    return () => {
+      window.removeEventListener("clearCart", handleClearCart);
+    };
+  }, []);
+
   // Load cart from localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem("laundry_cart");
