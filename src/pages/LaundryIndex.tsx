@@ -660,8 +660,14 @@ const LaundryIndex = () => {
                 ),
               );
               localStorage.removeItem("laundry_cart");
+              localStorage.removeItem("laundry_booking_form");
+
+              // Clear any cached cart state
+              const clearCartEvent = new CustomEvent("clearCart");
+              window.dispatchEvent(clearCartEvent);
+
               setTimeout(() => {
-                setCurrentView("home");
+                setCurrentView("bookings");
               }, 2000);
               return; // Exit early since we saved to sheets
             }
