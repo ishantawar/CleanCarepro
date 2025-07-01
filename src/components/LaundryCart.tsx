@@ -243,6 +243,12 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   const handleProceedToCheckout = async () => {
+    // Prevent multiple submissions
+    if (isProcessingCheckout) {
+      console.log("⚠️ Checkout already in progress, ignoring duplicate click");
+      return;
+    }
+
     console.log("🛒 Checkout button clicked!");
     setIsProcessingCheckout(true);
 
@@ -529,19 +535,19 @@ Confirm this booking?`;
         </div>
       </div>
 
-      <div className="p-2 space-y-2 pb-32">
+      <div className="p-2 space-y-2 pb-24">
         {/* Cart Items - Compact View */}
         <Card className="shadow-sm">
-          <CardHeader className="pb-1 px-3 py-2">
+          <CardHeader className="pb-1 px-3 py-1">
             <CardTitle className="text-sm font-medium">
               Items ({cartItems.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 pt-0 px-3 pb-3">
+          <CardContent className="space-y-1 pt-0 px-3 pb-2">
             {cartItems.map(({ service, quantity }) => (
               <div
                 key={service!.id}
-                className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                className="flex items-center gap-2 p-1.5 bg-gray-50 rounded-md"
               >
                 <div className="w-6 h-6 bg-gradient-to-br from-green-100 to-green-200 rounded flex items-center justify-center flex-shrink-0">
                   <span className="text-xs">
@@ -560,7 +566,7 @@ Confirm this booking?`;
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-xs truncate">
+                  <h4 className="font-medium text-xs break-words leading-tight">
                     {service!.name}
                   </h4>
                   <p className="text-xs text-green-600">₹{service!.price}</p>
@@ -608,7 +614,7 @@ Confirm this booking?`;
 
         {/* Enhanced Address Form - Compact */}
         <Card className="shadow-sm">
-          <CardHeader className="pb-2 px-3 py-2">
+          <CardHeader className="pb-1 px-3 py-1">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">
                 <MapPin className="h-3 w-3" />
@@ -627,7 +633,7 @@ Confirm this booking?`;
               )}
             </div>
           </CardHeader>
-          <CardContent className="px-3 pb-3 pt-0">
+          <CardContent className="px-3 pb-2 pt-0">
             <EnhancedAddressForm
               onAddressChange={setAddressData}
               initialAddress={addressData}
@@ -637,13 +643,13 @@ Confirm this booking?`;
 
         {/* Contact & Schedule Details - Compact */}
         <Card className="shadow-sm">
-          <CardHeader className="pb-2 px-3 py-2">
+          <CardHeader className="pb-1 px-3 py-1">
             <CardTitle className="text-sm flex items-center gap-2">
               <Clock className="h-3 w-3" />
               Schedule
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 px-3 pb-3 pt-0">
+          <CardContent className="space-y-2 px-3 pb-2 pt-0">
             <div>
               <Label htmlFor="phone" className="text-xs">
                 Phone *
@@ -686,20 +692,20 @@ Confirm this booking?`;
 
         {/* Bill Summary - Compact */}
         <Card className="shadow-sm">
-          <CardHeader className="pb-2 px-3 py-2">
+          <CardHeader className="pb-1 px-3 py-1">
             <CardTitle className="text-sm flex items-center gap-2">
               <CreditCard className="h-3 w-3" />
               Summary
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 px-3 pb-3 pt-0">
+          <CardContent className="space-y-1.5 px-3 pb-2 pt-0">
             <div className="flex justify-between text-sm">
-              <span>Subtotal</span>
+              <span>Subtotal ({cartItems.length} items)</span>
               <span>₹{getSubtotal()}</span>
             </div>
 
             <div className="flex justify-between text-sm">
-              <span>Delivery</span>
+              <span>Delivery Fee</span>
               <span>₹{getDeliveryCharge()}</span>
             </div>
 
@@ -760,8 +766,8 @@ Confirm this booking?`;
       </div>
 
       {/* Fixed Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 sm:p-4 safe-area-bottom">
-        <div className="space-y-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 safe-area-bottom">
+        <div className="space-y-2">
           {/* Validation Errors */}
           {validationErrors.length > 0 && (
             <div id="validation-errors">
@@ -787,7 +793,7 @@ Confirm this booking?`;
               }
             }}
             disabled={cartItems.length === 0 || isProcessingCheckout}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-xl text-sm sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isProcessingCheckout ? (
               <>
