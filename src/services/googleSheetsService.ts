@@ -78,35 +78,50 @@ class GoogleSheetsService {
     }
 
     try {
+      // Generate unique order ID
+      const orderId = `${orderData.customerPhone}${new Date().toLocaleDateString("en-IN").replace(/\//g, "")}${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(":", "")}`;
+
       // Prepare data for Google Sheets
       const sheetData = {
         sheetName: this.config.sheetName,
         data: {
-          orderId: orderData.orderId,
+          orderId: orderId,
           timestamp: new Date().toISOString(),
           customerName: orderData.customerName,
           customerPhone: orderData.customerPhone,
           customerAddress: orderData.customerAddress,
-          services: orderData.services.join(", "),
+          services: Array.isArray(orderData.services)
+            ? orderData.services.join(", ")
+            : orderData.services,
           totalAmount: orderData.totalAmount,
           pickupDate: orderData.pickupDate,
           pickupTime: orderData.pickupTime,
           status: orderData.status,
-          coordinates: "", // Will be filled if available
+          paymentStatus: "pending",
+          coordinates: "",
+          city: this.extractCityFromAddress(orderData.customerAddress),
+          pincode: this.extractPincodeFromAddress(orderData.customerAddress),
         },
       };
 
-      // Send to Google Apps Script
+      console.log("📊 Sending order data to Google Sheets:", sheetData);
+
+      // Send to Google Apps Script with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(this.config.webAppUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(sheetData),
-        mode: "no-cors", // Required for Google Apps Script
+        signal: controller.signal,
       });
 
-      console.log("📊 Order data sent to Google Sheets:", orderData.orderId);
+      clearTimeout(timeoutId);
+
+      console.log("📊 Order data sent to Google Sheets:", orderId);
       return true;
     } catch (error) {
       console.error("❌ Failed to save to Google Sheets:", error);
@@ -115,6 +130,29 @@ class GoogleSheetsService {
       this.saveToLocalStorage(orderData);
       return false;
     }
+  }
+
+  /**
+   * Extract city from address string
+   */
+  private extractCityFromAddress(address: string): string {
+    if (typeof address === "object" && address !== null) {
+      return (address as any).city || "";
+    }
+    const parts = address.split(",").map((part) => part.trim());
+    // Usually city is in the second to last or third to last position
+    return parts[parts.length - 2] || parts[parts.length - 3] || "";
+  }
+
+  /**
+   * Extract pincode from address string
+   */
+  private extractPincodeFromAddress(address: string): string {
+    if (typeof address === "object" && address !== null) {
+      return (address as any).pincode || "";
+    }
+    const pincodeMatch = address.match(/\b\d{6}\b/);
+    return pincodeMatch ? pincodeMatch[0] : "";
   }
 
   /**
