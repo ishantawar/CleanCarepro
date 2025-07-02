@@ -408,7 +408,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr === "N/A") return "Date TBD";
+    if (!dateStr || dateStr === "N/A") {
+      // Return today's date as fallback
+      return new Date().toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
 
     try {
       let date;
@@ -419,7 +427,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         date = new Date(dateStr);
       }
 
-      if (isNaN(date.getTime())) return "Date TBD";
+      if (isNaN(date.getTime())) {
+        // Return today's date as fallback
+        return new Date().toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+      }
 
       return date.toLocaleDateString("en-US", {
         weekday: "short",
@@ -429,7 +445,13 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
       });
     } catch (error) {
       console.error("Error parsing date:", dateStr, error);
-      return "Date TBD";
+      // Return today's date as fallback
+      return new Date().toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
     }
   };
 
@@ -581,7 +603,29 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-sm text-gray-900 truncate">
-                            Order #{bookingId}
+                            #{currentUser?.phone || currentUser?.name || "User"}
+                            {formatDate(
+                              booking.created_at ||
+                                booking.createdAt ||
+                                new Date().toISOString(),
+                            ).replace(/\s/g, "")}
+                            {booking.created_at || booking.createdAt
+                              ? new Date(
+                                  booking.created_at || booking.createdAt,
+                                )
+                                  .toLocaleTimeString("en-IN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: false,
+                                  })
+                                  .replace(":", "")
+                              : new Date()
+                                  .toLocaleTimeString("en-IN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: false,
+                                  })
+                                  .replace(":", "")}
                           </h3>
                           <Badge
                             className={`${getStatusColor(booking.status)} text-xs px-1.5 py-0.5`}
@@ -628,7 +672,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                             <span>
                               {booking.pickupTime ||
                                 booking.scheduled_time ||
-                                "10:00"}
+                                "10:00 AM"}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 text-green-600 font-semibold ml-auto">
@@ -701,7 +745,29 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           <div className="flex justify-between items-center text-xs">
                             <span className="text-gray-600">Order ID</span>
                             <span className="font-mono font-medium text-blue-600">
-                              #{bookingId}
+                              #{currentUser?.phone || "User"}
+                              {formatDate(
+                                booking.created_at ||
+                                  booking.createdAt ||
+                                  new Date().toISOString(),
+                              ).replace(/\s/g, "")}
+                              {booking.created_at || booking.createdAt
+                                ? new Date(
+                                    booking.created_at || booking.createdAt,
+                                  )
+                                    .toLocaleTimeString("en-IN", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: false,
+                                    })
+                                    .replace(":", "")
+                                : new Date()
+                                    .toLocaleTimeString("en-IN", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: false,
+                                    })
+                                    .replace(":", "")}
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">

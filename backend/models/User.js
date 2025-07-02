@@ -5,20 +5,27 @@ const userSchema = new mongoose.Schema(
   {
     email: {
       type: String,
-      required: [true, "Email is required"],
-      unique: true,
+      required: false,
+      unique: false,
       lowercase: true,
       trim: true,
+      sparse: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please enter a valid email"],
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: false,
       minlength: [6, "Password must be at least 6 characters"],
     },
     full_name: {
       type: String,
-      required: [true, "Full name is required"],
+      required: false,
+      trim: true,
+      minlength: [2, "Name must be at least 2 characters"],
+    },
+    name: {
+      type: String,
+      required: false,
       trim: true,
       minlength: [2, "Name must be at least 2 characters"],
     },
@@ -27,7 +34,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Phone number is required"],
       unique: true,
       trim: true,
-      match: [/^[\+]?[1-9][\d]{1,14}$/, "Please enter a valid phone number"],
+      match: [/^[6-9]\d{9}$/, "Please enter a valid 10-digit phone number"],
     },
     user_type: {
       type: String,
@@ -81,10 +88,10 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-// Hash password before saving
+// Hash password before saving (only if password exists)
 userSchema.pre("save", async function (next) {
-  // Only hash if password is modified
-  if (!this.isModified("password")) return next();
+  // Only hash if password is modified and exists
+  if (!this.isModified("password") || !this.password) return next();
 
   try {
     const salt = await bcrypt.genSalt(12);
@@ -93,6 +100,19 @@ userSchema.pre("save", async function (next) {
   } catch (error) {
     next(error);
   }
+});
+
+// Sync name and full_name fields
+userSchema.pre("save", function (next) {
+  // If name is provided but full_name is not, copy name to full_name
+  if (this.name && !this.full_name) {
+    this.full_name = this.name;
+  }
+  // If full_name is provided but name is not, copy full_name to name
+  if (this.full_name && !this.name) {
+    this.name = this.full_name;
+  }
+  next();
 });
 
 // Instance method to compare password
