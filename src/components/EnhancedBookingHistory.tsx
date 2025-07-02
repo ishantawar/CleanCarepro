@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
 import EditBookingModal from "./EditBookingModal";
+import GoogleSheetsInfo from "./GoogleSheetsInfo";
 import { filterProductionBookings } from "@/utils/bookingFilters";
 
 interface EnhancedBookingHistoryProps {
@@ -512,18 +513,21 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                 </p>
               </div>
             </div>
-            <Button
-              onClick={refreshBookings}
-              variant="outline"
-              size="sm"
-              disabled={refreshing}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <GoogleSheetsInfo />
+              <Button
+                onClick={refreshBookings}
+                variant="outline"
+                size="sm"
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </div>
