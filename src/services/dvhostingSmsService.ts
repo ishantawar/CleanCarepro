@@ -80,15 +80,15 @@ export class DVHostingSmsService {
       console.log(apiBaseUrl);
       this.log("DVHosting SMS: Local environment, trying backend API:", {
         apiBaseUrl,
-        endpoint: "/api/otp/send",
+        endpoint: "/otp/send",
       });
-      console.log(`${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`);
+      console.log(`${apiBaseUrl}/auth/send-otp?t=${Date.now()}`);
       // Clear any previous phone state for iOS
       this.currentPhone = "";
 
       // Call backend API for local development
       const response = await fetch(
-        `${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`,
+        `${apiBaseUrl}/auth/send-otp?t=${Date.now()}`,
         {
           method: "POST",
           headers: {
@@ -266,7 +266,7 @@ export class DVHostingSmsService {
 
       // For local development, try backend API
       const response = await fetch(
-        `${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`,
+        `${apiBaseUrl}/auth/verify-otp?t=${Date.now()}`,
         {
           method: "POST",
           headers: {
@@ -458,7 +458,7 @@ export class DVHostingSmsService {
 
       // For local development, try backend API
       const response = await fetch(
-        `${apiBaseUrl}/api/auth/verify-otp?t=${Date.now()}`,
+        `${apiBaseUrl}/auth/verify-otp?t=${Date.now()}`,
         {
           method: "POST",
           headers: {
