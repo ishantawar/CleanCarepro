@@ -20,6 +20,11 @@ import {
 } from "lucide-react";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  clearIosAuthState,
+  addIosOtpDelay,
+  isIosDevice,
+} from "@/utils/iosAuthFix";
 
 interface PhoneOtpAuthModalProps {
   isOpen: boolean;
@@ -83,6 +88,11 @@ const PhoneOtpAuthModal: React.FC<PhoneOtpAuthModalProps> = ({
   const dvhostingSmsService = DVHostingSmsService.getInstance();
 
   const resetForm = () => {
+    // Clear iOS auth state for fresh start
+    if (isIosDevice()) {
+      clearIosAuthState();
+    }
+
     setFormData({
       phone: "",
       otp: "",
@@ -123,6 +133,9 @@ const PhoneOtpAuthModal: React.FC<PhoneOtpAuthModalProps> = ({
     setError("");
 
     try {
+      // Add delay for iOS to prevent rate limiting issues
+      await addIosOtpDelay();
+
       const result = await dvhostingSmsService.sendSmsOTP(
         formData.phone,
         formData.name?.trim() || `User ${formData.phone.slice(-4)}`,
