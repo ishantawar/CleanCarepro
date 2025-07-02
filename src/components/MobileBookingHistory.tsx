@@ -592,8 +592,23 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                           <div className="flex items-center gap-1">
                             <Package className="h-3 w-3" />
                             <span>
-                              {safeBooking.services.length} item
-                              {safeBooking.services.length > 1 ? "s" : ""}
+                              {safeBooking.services.reduce((total, service) => {
+                                const quantity =
+                                  typeof service === "object"
+                                    ? service.quantity || 1
+                                    : 1;
+                                return total + quantity;
+                              }, 0)}{" "}
+                              item
+                              {safeBooking.services.reduce((total, service) => {
+                                const quantity =
+                                  typeof service === "object"
+                                    ? service.quantity || 1
+                                    : 1;
+                                return total + quantity;
+                              }, 0) > 1
+                                ? "s"
+                                : ""}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
