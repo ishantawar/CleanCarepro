@@ -283,6 +283,27 @@ router.post("/", async (req, res) => {
         .json({ error: "Customer not found and could not be created" });
     }
 
+    // Prepare item prices for storage
+    let item_prices = [];
+    if (Array.isArray(services)) {
+      item_prices = services.map((service) => {
+        const serviceName =
+          typeof service === "object"
+            ? service.name || service.service
+            : service;
+        const quantity =
+          typeof service === "object" ? service.quantity || 1 : 1;
+        const price = typeof service === "object" ? service.price || 50 : 50;
+
+        return {
+          service_name: serviceName,
+          quantity: quantity,
+          unit_price: price,
+          total_price: price * quantity,
+        };
+      });
+    }
+
     // Create booking with proper customer_id as ObjectId
     const booking = new Booking({
       customer_id: customer._id, // Use the actual customer ObjectId from database
@@ -300,6 +321,7 @@ router.post("/", async (req, res) => {
       final_amount: final_amount || total_price - (discount_amount || 0),
       special_instructions,
       charges_breakdown,
+      item_prices, // Store individual service prices
     });
 
     await booking.save();
