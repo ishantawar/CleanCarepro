@@ -90,10 +90,11 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
                     e.stopPropagation();
                     handleWhatsAppShare();
                   }}
-                  className="p-1 h-6 w-6 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  className="p-1 h-auto w-auto flex flex-col items-center text-green-600 hover:text-green-700 hover:bg-green-50"
                   title="Share website on WhatsApp"
                 >
                   <MessageCircle className="h-3 w-3" />
+                  <span className="text-xs">Share</span>
                 </Button>
               </div>
               <span className="text-xs text-gray-500">
@@ -126,10 +127,11 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
                         handleWhatsAppShare();
                         setIsOpen(false);
                       }}
-                      className="p-1 h-6 w-6 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="p-1 h-auto w-auto flex flex-col items-center text-green-600 hover:text-green-700 hover:bg-green-50"
                       title="Share website on WhatsApp"
                     >
                       <MessageCircle className="h-3 w-3" />
+                      <span className="text-xs">Share</span>
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500">
