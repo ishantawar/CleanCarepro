@@ -1,4 +1,21 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && envUrl !== "") {
+    return envUrl;
+  }
+
+  const hostname = window.location.hostname;
+  const isProduction =
+    !hostname.includes("localhost") && !hostname.includes("127.0.0.1");
+
+  if (isProduction) {
+    return "https://cleancarepro-95it.onrender.com/api";
+  }
+
+  return "http://localhost:3001/api";
+};
+
+const apiBaseUrl = getApiBaseUrl();
 export class DVHostingSmsService {
   private static instance: DVHostingSmsService;
   private currentPhone: string = "";
