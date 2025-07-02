@@ -1,6 +1,7 @@
 import MongoDBService from "./mongodbService";
 import { DVHostingSmsService } from "./dvhostingSmsService";
 import { config } from "../config/env";
+import GoogleSheetsService from "./googleSheetsService";
 
 export interface BookingDetails {
   id: string;
@@ -36,9 +37,11 @@ export class BookingService {
   private static instance: BookingService;
   private apiBaseUrl: string;
   private mongoService: MongoDBService;
+  private googleSheetsService: GoogleSheetsService;
 
   constructor() {
     this.mongoService = MongoDBService.getInstance();
+    this.googleSheetsService = GoogleSheetsService.getInstance();
     this.apiBaseUrl = config.apiBaseUrl;
 
     console.log("📡 BookingService API URL:", this.apiBaseUrl);
@@ -159,6 +162,39 @@ export class BookingService {
       }
 
       console.log("💾 Booking saved to localStorage:", booking.id);
+
+      // Save to Google Sheets
+      try {
+        const authService = DVHostingSmsService.getInstance();
+        const currentUser = authService.getCurrentUser();
+
+        const googleSheetsData = {
+          orderId: `${currentUser?.phone || "User"}${new Date().toLocaleDateString("en-IN").replace(/\//g, "")}${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(":", "")}`,
+          customerName:
+            currentUser?.name || currentUser?.full_name || "Customer",
+          customerPhone: currentUser?.phone || "",
+          customerAddress:
+            typeof booking.address === "object"
+              ? JSON.stringify(booking.address)
+              : booking.address,
+          services: Array.isArray(booking.services)
+            ? booking.services
+            : [booking.services],
+          totalAmount: booking.totalAmount,
+          pickupDate: booking.pickupDate,
+          pickupTime: booking.pickupTime,
+          status: booking.status,
+          createdAt: booking.createdAt,
+        };
+
+        this.googleSheetsService
+          .saveOrderToSheet(googleSheetsData)
+          .catch((error) => {
+            console.warn("Google Sheets save failed:", error);
+          });
+      } catch (error) {
+        console.warn("Google Sheets integration error:", error);
+      }
 
       // Try to sync with backend (but don't block on it)
       if (navigator.onLine) {
