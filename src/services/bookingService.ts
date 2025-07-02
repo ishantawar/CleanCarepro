@@ -109,6 +109,12 @@ export class BookingService {
    */
   async createBooking(
     bookingData: Omit<BookingDetails, "id" | "createdAt" | "updatedAt">,
+    itemPrices?: Array<{
+      service_name: string;
+      quantity: number;
+      unit_price: number;
+      total_price: number;
+    }>,
   ): Promise<BookingResponse> {
     try {
       console.log("📝 Creating new booking:", bookingData);
@@ -133,6 +139,8 @@ export class BookingService {
         id: bookingId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        // Add item prices if provided
+        ...(itemPrices && { item_prices: itemPrices }),
       };
 
       // Always save to localStorage first for immediate availability

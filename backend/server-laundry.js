@@ -61,13 +61,32 @@ const authLimiter = rateLimit({
 app.use(generalLimiter);
 app.use("/api/auth", authLimiter);
 
-// CORS configuration
+// Middleware to add cache control headers for iOS
+app.use("/api/auth", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+
+// CORS configuration - Enhanced for iOS Safari compatibility
 app.use(
   cors({
     origin: productionConfig.ALLOWED_ORIGINS,
-    credentials: false,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept", "user-id"],
+    credentials: true, // Enable credentials for iOS
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "user-id",
+      "Cache-Control", // Add Cache-Control header support
+      "Pragma",
+      "Expires",
+    ],
+    exposedHeaders: ["Clear-Site-Data"], // Expose clear site data header
+    optionsSuccessStatus: 200, // Support legacy browsers
+    preflightContinue: false,
   }),
 );
 

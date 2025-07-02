@@ -342,6 +342,11 @@ const LaundryIndex = () => {
   };
 
   const handleLogout = () => {
+    // Import iOS fixes and clear state for iPhone compatibility
+    import("../utils/iosAuthFix").then(({ clearIosAuthState }) => {
+      clearIosAuthState();
+    });
+
     authService.logout();
     setIsLoggedIn(false);
     setCurrentUser(null);

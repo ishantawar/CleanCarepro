@@ -241,6 +241,11 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
   };
 
   const handleLogout = () => {
+    // Use iOS fixes for logout
+    import("../utils/iosAuthFix").then(({ clearIosAuthState }) => {
+      clearIosAuthState();
+    });
+
     // DVHosting SMS service doesn't have logout method - user logout handled at app level
     if (onLogout) {
       onLogout();

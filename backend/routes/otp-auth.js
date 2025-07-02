@@ -46,10 +46,11 @@ userSchema.pre("save", function (next) {
 userSchema.index({ phone: 1 }, { unique: true });
 const User = mongoose.model("CleanCareUser", userSchema);
 
-// OTP Management
+// OTP Management with rate limiting for iOS
 class OTPManager {
   constructor() {
     this.otpStore = new Map();
+    this.lastRequestTime = new Map(); // Track last request time per phone
     this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
   }
   cleanup() {
@@ -57,6 +58,21 @@ class OTPManager {
     for (const [phone, data] of this.otpStore.entries()) {
       if (now > data.expiry) this.otpStore.delete(phone);
     }
+    // Cleanup old request times (older than 5 minutes)
+    for (const [phone, time] of this.lastRequestTime.entries()) {
+      if (now.getTime() - time > 5 * 60 * 1000) {
+        this.lastRequestTime.delete(phone);
+      }
+    }
+  }
+  canRequestOTP(phone) {
+    const lastTime = this.lastRequestTime.get(phone);
+    if (!lastTime) return true;
+    // Enforce 30 second delay between requests for iOS
+    return Date.now() - lastTime > 30000;
+  }
+  recordRequest(phone) {
+    this.lastRequestTime.set(phone, Date.now());
   }
   store(phone, otp, minutes = 5) {
     const expiry = new Date(Date.now() + minutes * 60 * 1000);
@@ -66,7 +82,8 @@ class OTPManager {
     return this.otpStore.get(phone);
   }
   delete(phone) {
-    return this.otpStore.delete(phone);
+    this.otpStore.delete(phone);
+    this.lastRequestTime.delete(phone); // Clear request time on successful verification
   }
   incrementAttempts(phone) {
     if (this.otpStore.has(phone)) this.otpStore.get(phone).attempts++;
@@ -117,16 +134,42 @@ const validateRequest = (fields) => (req, res, next) => {
 // Routes
 router.post("/send-otp", validateRequest(["phone"]), async (req, res) => {
   const phone = cleanPhone(req.body.phone);
-  log("SEND OTP for phone:", phone); // Add this
+  log("SEND OTP for phone:", phone);
+
   if (!isValidPhone(phone))
     return res.status(400).json({ success: false, message: "Invalid phone" });
+
+  // Check rate limiting for iOS
+  if (!otpManager.canRequestOTP(phone)) {
+    return res.status(429).json({
+      success: false,
+      message: "Please wait 30 seconds before requesting another OTP",
+    });
+  }
+
+  // Record this request
+  otpManager.recordRequest(phone);
+
   const otp = generateOTP();
   otpManager.store(phone, otp);
+
+  // Add delay for iOS to prevent DVHosting rate limiting
+  if (
+    req.headers["user-agent"]?.includes("iPhone") ||
+    req.headers["user-agent"]?.includes("Safari")
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay for iOS
+  }
+
   const sms = await sendSMS(phone, otp);
   if (!sms.success)
     return res.status(500).json({ success: false, message: sms.error });
 
   res.setHeader("Content-Type", "application/json");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+
   return res.status(200).json({
     success: true,
     message: "OTP sent successfully",
@@ -355,6 +398,27 @@ router.post("/get-user-by-phone", async (req, res) => {
   } catch (error) {
     log("Error fetching user:", error.message);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+// Logout endpoint with iOS session clearing
+router.post("/logout", (req, res) => {
+  try {
+    // Clear site data for iOS Safari
+    res.setHeader("Clear-Site-Data", '"cookies", "storage"');
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    res.setHeader("Content-Type", "application/json");
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    log("Logout error:", error.message);
+    res.status(500).json({ success: false, message: "Logout failed" });
   }
 });
 

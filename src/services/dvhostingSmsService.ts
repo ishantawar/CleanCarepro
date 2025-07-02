@@ -66,6 +66,9 @@ export class DVHostingSmsService {
         endpoint: "/api/otp/send",
       });
       console.log(`${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`);
+      // Clear any previous phone state for iOS
+      this.currentPhone = "";
+
       // Call backend API for local development
       const response = await fetch(
         `${apiBaseUrl}/api/auth/send-otp?t=${Date.now()}`,
@@ -674,13 +677,36 @@ export class DVHostingSmsService {
 
   logout(): void {
     try {
+      // Clear localStorage
       localStorage.removeItem("current_user");
       localStorage.removeItem("cleancare_auth_token");
+
+      // Clear sessionStorage for iOS compatibility
+      sessionStorage.clear();
+
+      // Clear current phone and OTP storage
       this.currentPhone = "";
+      this.otpStorage.clear();
+
+      // Call backend logout for session clearing
+      fetch(`${this.getApiBaseUrl()}/auth/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
+      }).catch(() => {
+        // Ignore backend errors during logout
+      });
+
       this.log("✅ User logged out successfully");
     } catch (error) {
       console.error("Error during logout:", error);
     }
+  }
+
+  private getApiBaseUrl(): string {
+    return import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
   }
 
   /**

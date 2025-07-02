@@ -723,11 +723,31 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               typeof service === "object"
                                 ? service.quantity || 1
                                 : 1;
-                            // Use actual service price if available, calculate from total
-                            const price =
-                              typeof service === "object" && service.price
-                                ? service.price
-                                : Math.floor((total - 50) / services.length); // Subtract delivery fee and divide by items
+                            // Use actual service price if available from item_prices or calculate properly
+                            let price = 50; // Default price
+
+                            if (typeof service === "object" && service.price) {
+                              price = service.price;
+                            } else if (
+                              booking.item_prices &&
+                              booking.item_prices.length > 0
+                            ) {
+                              // Find matching price from stored item_prices
+                              const matchingPrice = booking.item_prices.find(
+                                (item: any) =>
+                                  item.service_name === serviceName,
+                              );
+                              if (matchingPrice) {
+                                price = matchingPrice.unit_price;
+                              }
+                            } else {
+                              // Calculate reasonable price from total (subtract delivery fee first)
+                              const serviceTotal = Math.max(0, total - 50);
+                              price =
+                                services.length > 0
+                                  ? Math.floor(serviceTotal / services.length)
+                                  : 50;
+                            }
 
                             return (
                               <div
@@ -780,7 +800,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                             </span>
                           </div>
                           <p className="text-xs font-medium text-gray-900">
-                            {formatDate(booking.deliveryDate) || "Date TBD"}
+                            {formatDate(booking.deliveryDate) ||
+                              formatDate(
+                                booking.created_at || booking.createdAt,
+                              ) ||
+                              "Date TBD"}
                           </p>
                           <p className="text-xs text-emerald-600">
                             {booking.deliveryTime || "18:00"}

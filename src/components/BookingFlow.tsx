@@ -163,6 +163,23 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
         .filter(Boolean)
         .join(", ");
 
+      // Prepare item prices for accurate booking history
+      const itemPrices = isMultipleServices
+        ? services.map((service) => ({
+            service_name: service.name,
+            quantity: service.quantity || 1,
+            unit_price: service.price || 50,
+            total_price: (service.price || 50) * (service.quantity || 1),
+          }))
+        : [
+            {
+              service_name: provider?.name || "Service",
+              quantity: 1,
+              unit_price: provider?.price || 80,
+              total_price: provider?.price || 80,
+            },
+          ];
+
       const bookingData = {
         customer_id: customerId,
         service: isMultipleServices
@@ -199,9 +216,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           .filter(Boolean)
           .join(", "),
         address_details: addressDetails,
+        item_prices: itemPrices, // Add item prices for accurate history
         charges_breakdown: {
           base_price: calculateTotalPrice(),
           service_fee: getDeliveryCharge(),
+          delivery_fee: 50, // Standard delivery fee
           tax_amount: (calculateTotalPrice() + getDeliveryCharge()) * 0.12,
           discount: getCouponDiscount(),
         },

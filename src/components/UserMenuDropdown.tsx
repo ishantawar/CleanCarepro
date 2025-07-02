@@ -154,6 +154,10 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
           <DropdownMenuItem
             onClick={() => {
               setIsOpen(false);
+              // Use iOS fixes for logout
+              import("../utils/iosAuthFix").then(({ clearIosAuthState }) => {
+                clearIosAuthState();
+              });
               onLogout();
             }}
             className="cursor-pointer text-red-600 focus:text-red-600"
