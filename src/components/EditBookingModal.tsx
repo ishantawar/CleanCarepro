@@ -98,6 +98,11 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
   const [activeTab, setActiveTab] = useState("details");
 
   const handleSave = async () => {
+    if (!formData.scheduled_date || !formData.scheduled_time) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -113,10 +118,14 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
         pickupTime: formData.scheduled_time, // Also update pickupTime
         address: formData.address,
         additional_details: formData.additional_details,
-        services: selectedServices.map((service) => ({
+        services: selectedServices.map((service, index) => ({
           name: typeof service === "string" ? service : service.name || service,
-          quantity: 1,
-          price: Math.round(totalPrice / selectedServices.length),
+          quantity: typeof service === "object" ? service.quantity || 1 : 1,
+          price:
+            typeof service === "object"
+              ? service.price ||
+                Math.round(totalPrice / selectedServices.length)
+              : Math.round(totalPrice / selectedServices.length),
         })),
         service:
           selectedServices.length === 1
@@ -135,8 +144,10 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
 
       console.log("Saving updated booking:", updatedBooking);
       await onSave(updatedBooking);
+      onClose(); // Close modal after successful save
     } catch (error) {
       console.error("Error updating booking:", error);
+      alert("Failed to save changes. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -235,8 +246,6 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
                   <span>₹{(totalPrice || 0) + 50}</span>
                 </div>
               </div>
-              
-
             </div>
 
             {/* Date */}
