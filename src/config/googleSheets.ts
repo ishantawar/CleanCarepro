@@ -10,7 +10,7 @@ export const GOOGLE_SHEETS_CONFIG = {
   // Google Apps Script Web App URL - Production deployment
   WEB_APP_URL:
     import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL ||
-    "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec",
+    "https://script.google.com/macros/s/AKfycbz1YgA5L8nP9uJ6vQxK2mT3rN4sE7fW0cH8bV5qZ9iO3aU1xY/exec",
 
   // Sheet configuration
   SHEET_NAME: "Orders",

@@ -164,11 +164,9 @@ router.post("/", async (req, res) => {
           } else {
             // Create corresponding User record for booking
             customer = new User({
-              email:
-                cleanCareUser.email || `${cleanCareUser.phone}@cleancare.com`,
-              password: "temp_password_123", // Temporary password for booking system
-              full_name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
               phone: cleanCareUser.phone,
+              name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+              full_name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
               user_type: "customer",
               is_verified: cleanCareUser.isVerified || false,
               phone_verified: cleanCareUser.isVerified || false,
@@ -183,11 +181,7 @@ router.post("/", async (req, res) => {
             } catch (saveError) {
               if (saveError.code === 11000) {
                 // Duplicate key - try to find existing user
-                if (saveError.keyValue?.email) {
-                  customer = await User.findOne({
-                    email: saveError.keyValue.email,
-                  });
-                } else if (saveError.keyValue?.phone) {
+                if (saveError.keyValue?.phone) {
                   customer = await User.findOne({
                     phone: saveError.keyValue.phone,
                   });
@@ -216,26 +210,19 @@ router.post("/", async (req, res) => {
     if (!customer && actualCustomerId.match(/^\d{10,}$/)) {
       console.log(`👤 Creating new customer with phone: ${actualCustomerId}`);
 
-      // Check if user already exists with this phone or email
+      // Check if user already exists with this phone
       const existingUserByPhone = await User.findOne({
         phone: actualCustomerId,
-      });
-      const existingUserByEmail = await User.findOne({
-        email: `${actualCustomerId}@cleancare.com`,
       });
 
       if (existingUserByPhone) {
         customer = existingUserByPhone;
         console.log("✅ Found existing customer by phone:", customer._id);
-      } else if (existingUserByEmail) {
-        customer = existingUserByEmail;
-        console.log("✅ Found existing customer by email:", customer._id);
       } else {
         customer = new User({
-          email: `${actualCustomerId}@cleancare.com`,
-          password: "temp_password_123", // Temporary password
-          full_name: `User ${actualCustomerId.slice(-4)}`,
           phone: actualCustomerId,
+          name: `User ${actualCustomerId.slice(-4)}`,
+          full_name: `User ${actualCustomerId.slice(-4)}`,
           user_type: "customer",
           is_verified: true,
           phone_verified: true,
@@ -248,11 +235,7 @@ router.post("/", async (req, res) => {
           console.error("Failed to auto-create customer:", createError);
           // Check if it's a duplicate key error - in that case, try to find the existing user
           if (createError.code === 11000) {
-            if (createError.keyValue?.email) {
-              customer = await User.findOne({
-                email: createError.keyValue.email,
-              });
-            } else if (createError.keyValue?.phone) {
+            if (createError.keyValue?.phone) {
               customer = await User.findOne({
                 phone: createError.keyValue.phone,
               });

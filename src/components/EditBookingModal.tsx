@@ -21,6 +21,7 @@ import {
   Plus,
 } from "lucide-react";
 import ServiceEditor from "./ServiceEditor";
+import { getSortedServices, type LaundryService } from "@/data/laundryServices";
 
 interface EditBookingModalProps {
   isOpen: boolean;
@@ -96,6 +97,9 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
+  const [availableServices] = useState<LaundryService[]>(() =>
+    getSortedServices(),
+  );
 
   const handleSave = async () => {
     if (!formData.scheduled_date || !formData.scheduled_time) {

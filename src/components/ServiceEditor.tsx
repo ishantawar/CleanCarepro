@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getSortedServices, type LaundryService } from "@/data/laundryServices";
 
 import {
   Plus,
@@ -34,58 +35,25 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
 }) => {
   const [services, setServices] = useState<ServiceItem[]>([]);
 
-  // Website catalog services only (filtered to exclude home linen)
-  const availableServices = [
-    {
-      name: "Shirt/T-Shirt",
-      price: 90,
-      category: "Clothing",
-      unit: "per piece",
-    },
-    {
-      name: "Trouser/Jeans",
-      price: 120,
-      category: "Clothing",
-      unit: "per piece",
-    },
-    {
-      name: "Kurta",
-      price: 140,
-      category: "Traditional Wear",
-      unit: "per piece",
-    },
-    {
-      name: "Saree (Simple/Silk)",
-      price: 210,
-      category: "Traditional Wear",
-      unit: "per piece",
-    },
-    { name: "Dress", price: 330, category: "Western Wear", unit: "per piece" },
-    {
-      name: "Jacket (Full/Half Sleeves)",
-      price: 300,
-      category: "Outerwear",
-      unit: "per piece",
-    },
-    {
-      name: "Laundry and Fold",
-      price: 70,
-      category: "Service Package",
-      unit: "per kg",
-    },
-    {
-      name: "Laundry and Iron",
-      price: 120,
-      category: "Service Package",
-      unit: "per kg",
-    },
-    {
-      name: "Premium Items (Steam Iron)",
-      price: 50,
-      category: "Steam Iron",
-      unit: "per piece",
-    },
-  ];
+  // Helper function to get service price from catalog
+  const getServicePrice = (serviceName: string): number => {
+    const catalogService = getSortedServices().find(
+      (s) =>
+        s.name.toLowerCase() === serviceName.toLowerCase() ||
+        serviceName.toLowerCase().includes(s.name.toLowerCase()),
+    );
+    return catalogService ? catalogService.price : 50; // Default fallback price
+  };
+
+  // Website catalog services only - get from laundryServices data
+  const availableServices = getSortedServices().map(
+    (service: LaundryService) => ({
+      name: service.name,
+      price: service.price,
+      category: service.category,
+      unit: service.unit,
+    }),
+  );
 
   // Parse selected services into ServiceItem format
   useEffect(() => {
@@ -96,7 +64,11 @@ const ServiceEditor: React.FC<ServiceEditorProps> = ({
         return {
           name: service.name || service.service || "Unknown Service",
           quantity: service.quantity || 1,
-          price: service.price || 35,
+          price:
+            service.price ||
+            getServicePrice(
+              service.name || service.service || "Unknown Service",
+            ),
         };
       }
 
