@@ -407,7 +407,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "Date TBD";
+    if (!dateStr || dateStr === "N/A") return "Date TBD";
 
     try {
       let date;
@@ -424,6 +424,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
         weekday: "short",
         month: "short",
         day: "numeric",
+        year: "numeric",
       });
     } catch (error) {
       console.error("Error parsing date:", dateStr, error);
@@ -619,18 +620,25 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         {/* Order placed time */}
                         <div className="text-xs text-gray-500 mt-1">
                           Ordered:{" "}
-                          {formatDate(booking.created_at || booking.createdAt)}{" "}
+                          {formatDate(
+                            booking.created_at ||
+                              booking.createdAt ||
+                              new Date().toISOString(),
+                          )}{" "}
                           at{" "}
-                          {booking.created_at
-                            ? new Date(booking.created_at).toLocaleTimeString(
-                                "en-IN",
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                },
-                              )
-                            : "N/A"}
+                          {booking.created_at || booking.createdAt
+                            ? new Date(
+                                booking.created_at || booking.createdAt,
+                              ).toLocaleTimeString("en-IN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              })
+                            : new Date().toLocaleTimeString("en-IN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              })}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -686,21 +694,29 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600">Order Placed</span>
+                            <span className="text-gray-600">
+                              Order Placed Date
+                            </span>
                             <span className="font-medium">
                               {formatDate(
-                                booking.created_at || booking.createdAt,
+                                booking.created_at ||
+                                  booking.createdAt ||
+                                  new Date().toISOString(),
                               )}{" "}
                               at{" "}
-                              {booking.created_at
+                              {booking.created_at || booking.createdAt
                                 ? new Date(
-                                    booking.created_at,
+                                    booking.created_at || booking.createdAt,
                                   ).toLocaleTimeString("en-IN", {
                                     hour: "2-digit",
                                     minute: "2-digit",
                                     hour12: true,
                                   })
-                                : "N/A"}
+                                : new Date().toLocaleTimeString("en-IN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })}
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">
@@ -723,7 +739,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               typeof service === "object"
                                 ? service.quantity || 1
                                 : 1;
-                            // Use actual service price if available from item_prices or calculate properly
+                            // Get actual service price from laundry services data or booking data
                             let price = 50; // Default price
 
                             if (typeof service === "object" && service.price) {
@@ -741,12 +757,63 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 price = matchingPrice.unit_price;
                               }
                             } else {
-                              // Calculate reasonable price from total (subtract delivery fee first)
-                              const serviceTotal = Math.max(0, total - 50);
-                              price =
-                                services.length > 0
-                                  ? Math.floor(serviceTotal / services.length)
-                                  : 50;
+                              // Import and use laundry services to get original prices
+                              try {
+                                import("@/data/laundryServices").then(
+                                  ({ getServiceById, getSortedServices }) => {
+                                    const allServices = getSortedServices();
+                                    const matchingService = allServices.find(
+                                      (s) =>
+                                        s.name.toLowerCase() ===
+                                          serviceName.toLowerCase() ||
+                                        serviceName
+                                          .toLowerCase()
+                                          .includes(s.name.toLowerCase()),
+                                    );
+                                    if (matchingService) {
+                                      price = matchingService.price;
+                                    }
+                                  },
+                                );
+                              } catch (error) {
+                                console.error(
+                                  "Error loading service prices:",
+                                  error,
+                                );
+                              }
+
+                              // Fallback: Use known service prices
+                              const servicePriceMap: { [key: string]: number } =
+                                {
+                                  kurta: 140,
+                                  "kurta qty: 1": 140,
+                                  jacket: 300,
+                                  "jacket (full/half sleeves)": 300,
+                                  "jacket (full/half sleeves) qty: 1": 300,
+                                  shirt: 90,
+                                  trouser: 120,
+                                  jeans: 120,
+                                  coat: 220,
+                                  sweater: 200,
+                                  sweatshirt: 200,
+                                  saree: 210,
+                                  lehenga: 330,
+                                  dress: 330,
+                                  "laundry and fold": 70,
+                                  "laundry and iron": 120,
+                                  "steam iron": 30,
+                                };
+
+                              const lowerServiceName =
+                                serviceName.toLowerCase();
+                              for (const [key, value] of Object.entries(
+                                servicePriceMap,
+                              )) {
+                                if (lowerServiceName.includes(key)) {
+                                  price = value;
+                                  break;
+                                }
+                              }
                             }
 
                             return (
