@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
 import EditBookingModal from "./EditBookingModal";
+import GoogleSheetsInfo from "./GoogleSheetsInfo";
 import { filterProductionBookings } from "@/utils/bookingFilters";
 
 interface EnhancedBookingHistoryProps {
@@ -512,18 +513,21 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                 </p>
               </div>
             </div>
-            <Button
-              onClick={refreshBookings}
-              variant="outline"
-              size="sm"
-              disabled={refreshing}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <GoogleSheetsInfo />
+              <Button
+                onClick={refreshBookings}
+                variant="outline"
+                size="sm"
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -587,18 +591,33 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                         </div>
 
                         {/* Quick Info Row */}
-                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-600">
                           <div className="flex items-center gap-1">
                             <Package className="h-3 w-3" />
                             <span>
-                              {services.length} item
-                              {services.length > 1 ? "s" : ""}
+                              {services.reduce((total, service) => {
+                                const quantity =
+                                  typeof service === "object"
+                                    ? service.quantity || 1
+                                    : 1;
+                                return total + quantity;
+                              }, 0)}{" "}
+                              item
+                              {services.reduce((total, service) => {
+                                const quantity =
+                                  typeof service === "object"
+                                    ? service.quantity || 1
+                                    : 1;
+                                return total + quantity;
+                              }, 0) > 1
+                                ? "s"
+                                : ""}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
+                            <span className="hidden sm:inline">Pickup: </span>
                             <span>
-                              Pickup:{" "}
                               {formatDate(
                                 booking.pickupDate || booking.scheduled_date,
                               )}
@@ -612,7 +631,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 "10:00"}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1 text-green-600 font-semibold">
+                          <div className="flex items-center gap-1 text-green-600 font-semibold ml-auto">
                             <span>₹{total}</span>
                           </div>
                         </div>
@@ -690,7 +709,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               No. of Items Booked
                             </span>
                             <span className="font-medium">
-                              {services.length} items
+                              {services.reduce((total, service) => {
+                                const quantity =
+                                  typeof service === "object"
+                                    ? service.quantity || 1
+                                    : 1;
+                                return total + quantity;
+                              }, 0)}{" "}
+                              items
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">

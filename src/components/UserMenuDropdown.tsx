@@ -17,6 +17,7 @@ import {
   Settings,
   MapPin,
   ChevronDown,
+  MessageCircle,
 } from "lucide-react";
 import ProfileSettingsModal from "./ProfileSettingsModal";
 import SavedAddressesModal from "./SavedAddressesModal";
@@ -57,6 +58,13 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
     return phone;
   };
 
+  const handleWhatsAppShare = () => {
+    const websiteUrl = window.location.origin;
+    const message = `Check out CleanCare Pro - Professional Laundry Services! ${websiteUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
   return (
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -71,10 +79,25 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
               </AvatarFallback>
             </Avatar>
             <div className="hidden sm:flex flex-col items-start text-left">
-              <span className="text-sm font-medium text-gray-900">
-                {currentUser.name || "User"}
-              </span>
-              <span className="text-xs text-gray-500">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900">
+                  {currentUser.name || "User"}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWhatsAppShare();
+                  }}
+                  className="p-1 h-auto w-auto flex flex-col items-center text-green-600 hover:text-green-700 hover:bg-green-50"
+                  title="Share website on WhatsApp"
+                >
+                  <MessageCircle className="h-3 w-3" />
+                  <span className="text-xs">Share</span>
+                </Button>
+              </div>
+              <span className="text-xs text-gray-500 -mt-1">
                 {formatPhone(currentUser.phone)}
               </span>
             </div>
@@ -91,10 +114,26 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
                     {getInitials(currentUser.name || "User")}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {currentUser.name || "User"}
-                  </p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-900">
+                      {currentUser.name || "User"}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleWhatsAppShare();
+                        setIsOpen(false);
+                      }}
+                      className="p-1 h-auto w-auto flex flex-col items-center text-green-600 hover:text-green-700 hover:bg-green-50"
+                      title="Share website on WhatsApp"
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                      <span className="text-xs">Share</span>
+                    </Button>
+                  </div>
                   <p className="text-xs text-gray-500">
                     {formatPhone(currentUser.phone)}
                   </p>
