@@ -89,6 +89,29 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    item_prices: [
+      {
+        service_name: {
+          type: String,
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+          min: 1,
+        },
+        unit_price: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+        total_price: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+      },
+    ],
     charges_breakdown: {
       base_price: {
         type: Number,
@@ -101,6 +124,10 @@ const bookingSchema = new mongoose.Schema(
       service_fee: {
         type: Number,
         default: 0,
+      },
+      delivery_fee: {
+        type: Number,
+        default: 50,
       },
       discount: {
         type: Number,
