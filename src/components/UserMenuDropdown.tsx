@@ -97,7 +97,7 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
                   <span className="text-xs">Share</span>
                 </Button>
               </div>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 -mt-1">
                 {formatPhone(currentUser.phone)}
               </span>
             </div>
