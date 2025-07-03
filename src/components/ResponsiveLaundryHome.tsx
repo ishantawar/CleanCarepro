@@ -28,6 +28,11 @@ import {
   searchServices,
   LaundryService,
 } from "@/data/laundryServices";
+import DynamicServicesService from "@/services/dynamicServicesService";
+import type {
+  DynamicLaundryService,
+  DynamicServiceCategory,
+} from "@/services/dynamicServicesService";
 import PhoneOtpAuthModal from "./PhoneOtpAuthModal";
 import EnhancedBookingHistoryModal from "./EnhancedBookingHistoryModal";
 import UserMenuDropdown from "./UserMenuDropdown";

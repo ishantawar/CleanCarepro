@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ResponsiveLaundryHome from "../components/ResponsiveLaundryHome";
-import LaundryCart from "../components/LaundryCart";
+import ZomatoStyleCart from "../components/ZomatoStyleCart";
 import EnhancedBookingHistory from "@/components/EnhancedBookingHistory";
 import PhoneOtpAuthModal from "@/components/PhoneOtpAuthModal";
 import BookingConfirmed from "@/components/BookingConfirmed";
@@ -798,7 +798,7 @@ const LaundryIndex = () => {
       )}
 
       {currentView === "cart" && (
-        <LaundryCart
+        <ZomatoStyleCart
           onBack={() => setCurrentView("home")}
           onProceedToCheckout={handleProceedToCheckout}
           onLoginRequired={() => handleLoginRequired("cart")}
