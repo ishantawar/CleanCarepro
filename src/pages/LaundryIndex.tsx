@@ -623,6 +623,21 @@ const LaundryIndex = () => {
             );
           }
 
+          // Store booking data for confirmation screen
+          const confirmationData = {
+            bookingId: `local_${Date.now()}`,
+            services: servicesArray,
+            totalAmount: cartData.totalAmount,
+            pickupDate: cartData.pickupDate,
+            pickupTime: cartData.pickupTime,
+            address: cartData.address,
+            customerName:
+              currentUser.full_name || currentUser.name || "Customer",
+            customerPhone: currentUser.phone,
+          };
+
+          setLastBookingData(confirmationData);
+
           // Show success but mention it will sync later
           addNotification(
             createSuccessNotification(
@@ -634,10 +649,8 @@ const LaundryIndex = () => {
           // Clear cart
           localStorage.removeItem("laundry_cart");
 
-          // Redirect to home page after successful booking
-          setTimeout(() => {
-            setCurrentView("home");
-          }, 2000); // Wait 2 seconds to show success message
+          // Show booking confirmation screen
+          setCurrentView("booking-confirmed");
         } else {
           console.error("❌ Local booking also failed:", localResult.error);
 
