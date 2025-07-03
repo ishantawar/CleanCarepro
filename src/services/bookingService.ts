@@ -340,7 +340,7 @@ export class BookingService {
     try {
       const mongoBookings = await this.mongoService.getUserBookings(userId);
       if (mongoBookings && mongoBookings.length > 0) {
-        console.log("��� Bookings loaded from MongoDB:", mongoBookings.length);
+        console.log("���� Bookings loaded from MongoDB:", mongoBookings.length);
         // Transform MongoDB bookings to match frontend format
         const transformedBookings = mongoBookings.map((booking) =>
           this.transformBackendBooking(booking),
@@ -576,6 +576,13 @@ export class BookingService {
         console.log("✅ Booking synced to backend:", booking.id, result);
       } else {
         const errorText = await response.text();
+        console.error("❌ Backend API Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          url: `${this.apiBaseUrl}/bookings`,
+          payload: backendBooking,
+        });
         throw new Error(
           `Backend sync failed with status: ${response.status} - ${errorText}`,
         );
@@ -779,7 +786,7 @@ export class BookingService {
 
       allBookings[bookingIndex] = { ...allBookings[bookingIndex], ...updates };
       localStorage.setItem("user_bookings", JSON.stringify(allBookings));
-      console.log("💾 Booking updated in localStorage");
+      console.log("��� Booking updated in localStorage");
 
       return allBookings[bookingIndex];
     } catch (error) {
