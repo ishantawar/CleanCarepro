@@ -156,6 +156,35 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     localStorage.setItem("laundry_cart", JSON.stringify(cart));
   }, [cart]);
 
+  // Auto-load saved address when cart opens
+  useEffect(() => {
+    if (currentUser && !addressData) {
+      loadDefaultAddress();
+    }
+  }, [currentUser, addressData]);
+
+  const loadDefaultAddress = () => {
+    if (!currentUser) return;
+
+    const userId = currentUser._id || currentUser.id || currentUser.phone;
+    const savedAddressesKey = `addresses_${userId}`;
+    const addresses = JSON.parse(
+      localStorage.getItem(savedAddressesKey) || "[]",
+    );
+
+    if (addresses.length > 0) {
+      // Use the most recent address or the first home address
+      const defaultAddress =
+        addresses.find((addr: any) => addr.type === "home") || addresses[0];
+      setSelectedSavedAddress(defaultAddress);
+      setAddressData(defaultAddress);
+      console.log(
+        "✅ Auto-loaded saved address:",
+        defaultAddress.label || defaultAddress.type,
+      );
+    }
+  };
+
   const getAllServices = (): LaundryService[] => {
     return laundryServices.flatMap((category) => category.services);
   };
