@@ -20,6 +20,8 @@ export const getProductionApiUrl = (): string => {
     return PRODUCTION_API_URL;
   }
 
+  // Local development - backend is running on port 3001
+  console.log("🔧 Development environment, using: http://localhost:3001/api");
   return "http://localhost:3001/api";
 };
 
