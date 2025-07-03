@@ -100,6 +100,18 @@ export const validateCheckoutForm = (
     });
   }
 
+  // Validate address type is selected
+  if (
+    addressData &&
+    (!addressData.type ||
+      !["home", "office", "other"].includes(addressData.type))
+  ) {
+    errors.push({
+      field: "address.type",
+      message: "Please select address type (Home/Office/Other)",
+    });
+  }
+
   return errors;
 };
 
