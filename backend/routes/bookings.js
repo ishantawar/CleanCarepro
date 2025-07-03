@@ -108,6 +108,24 @@ router.post("/", async (req, res) => {
       });
     }
 
+    // Validate and sanitize address
+    let sanitizedAddress = address;
+    if (typeof address === "object") {
+      // If address is an object, create a readable string
+      sanitizedAddress = [
+        address.flatNo,
+        address.street,
+        address.landmark,
+        address.village,
+        address.city,
+        address.pincode,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      console.log("📍 Converted address object to string:", sanitizedAddress);
+    }
+
     // Verify customer exists - handle both ObjectId and phone-based lookup
     let customer;
     let actualCustomerId = customer_id;
