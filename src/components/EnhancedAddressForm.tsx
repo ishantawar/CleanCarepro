@@ -43,6 +43,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   initialData,
   className = "",
   showLabel = false,
+  availableTypes = [],
 }) => {
   const [address, setAddress] = useState<AddressData>({
     flatNo: initialData?.flatHouseNo || initialAddress?.flatNo || "",
