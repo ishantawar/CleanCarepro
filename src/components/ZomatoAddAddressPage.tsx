@@ -539,11 +539,10 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                     setShowSuggestions(true);
                   }
                 }}
-                onBlur={() => {
-                  // Delay hiding suggestions to allow clicking on them
-                  setTimeout(() => setShowSuggestions(false), 150);
-                }}
                 className="border-0 bg-transparent p-0 focus:ring-0 text-base placeholder:text-gray-500"
+                autoComplete="address-line1"
+                autoCapitalize="words"
+                spellCheck={false}
               />
             </div>
 
