@@ -745,18 +745,6 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                                 hour12: true
                               })}
                             </span>
-                                ? new Date(
-                                    booking.created_at || booking.createdAt,
-                                  ).toLocaleTimeString("en-IN", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  })
-                                : new Date().toLocaleTimeString("en-IN", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  })}
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">
