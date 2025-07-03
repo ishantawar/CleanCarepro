@@ -150,11 +150,13 @@ export class BookingService {
       this.saveBookingToLocalStorage(booking);
       console.log("💾 Booking saved to localStorage:", booking.id);
 
-      // Save to MongoDB (with improved error handling)
+      // Save to MongoDB and backend (with improved error handling)
+      let backendSaveSuccess = false;
       try {
         const mongoBooking = await this.mongoService.saveBooking(booking);
         if (mongoBooking) {
           console.log("✅ Booking saved to MongoDB:", booking.id);
+          backendSaveSuccess = true;
         } else {
           console.log(
             "⚠️ MongoDB save failed, but localStorage backup available",
@@ -165,6 +167,17 @@ export class BookingService {
           "⚠️ MongoDB save error, but localStorage backup available:",
           error,
         );
+      }
+
+      // Try direct backend sync
+      if (!backendSaveSuccess && this.apiBaseUrl) {
+        try {
+          await this.syncBookingToBackend(booking);
+          console.log("✅ Booking synced to backend API:", booking.id);
+          backendSaveSuccess = true;
+        } catch (syncError) {
+          console.warn("⚠️ Backend API sync failed:", syncError);
+        }
       }
 
       // Save to Google Sheets
@@ -218,9 +231,13 @@ export class BookingService {
         });
       }
 
+      const message = backendSaveSuccess
+        ? "Booking created and saved to server successfully"
+        : "Booking created (saved locally, will sync when online)";
+
       return {
         success: true,
-        message: "Booking created successfully",
+        message,
         booking,
       };
     } catch (error) {
@@ -476,7 +493,7 @@ export class BookingService {
   }
 
   /**
-   * Sync booking to backend in background
+   * Sync booking to backend - now throws errors for better error handling
    */
   private async syncBookingToBackend(booking: BookingDetails): Promise<void> {
     try {
@@ -561,22 +578,25 @@ export class BookingService {
       if (error instanceof Error) {
         if (error.name === "AbortError") {
           console.warn("⚠️ Backend sync timed out for booking:", booking.id);
+          throw new Error("Backend sync timed out");
         } else if (error.message.includes("Failed to fetch")) {
           console.warn(
             "⚠️ Network error - backend sync failed for booking:",
             booking.id,
           );
+          throw new Error("Network error during backend sync");
         } else {
           console.warn(
             "⚠️ Backend sync failed for booking:",
             booking.id,
             error.message,
           );
+          throw error;
         }
       } else {
         console.warn("⚠️ Unknown error during backend sync:", error);
+        throw new Error("Unknown error during backend sync");
       }
-      // Could implement retry logic here if needed
     }
   }
 
