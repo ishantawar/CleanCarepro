@@ -403,6 +403,27 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
             <DialogHeader>
               <DialogTitle>Edit Address</DialogTitle>
               <DialogDescription>
+                Update your address details
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {editingAddress && (
+                <EnhancedAddressForm
+                  initialAddress={editingAddress}
+                  onAddressUpdate={handleEditAddress}
+                  showLabel={true}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+          onOpenChange={() => setEditingAddress(null)}
+        >
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Address</DialogTitle>
+              <DialogDescription>
                 Update the address details below
               </DialogDescription>
             </DialogHeader>
