@@ -41,6 +41,7 @@ import BookingDebugPanel from "./BookingDebugPanel";
 import ConnectionStatus from "./ConnectionStatus";
 import NotificationPanel from "./NotificationPanel";
 import VoiceSearch from "./VoiceSearch";
+import AdminServicesManager from "./AdminServicesManager";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import { saveCartData, getCartData } from "@/utils/formPersistence";
 
@@ -65,6 +66,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showBookingDebugPanel, setShowBookingDebugPanel] = useState(false);
+  const [showAdminServices, setShowAdminServices] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const dvhostingSmsService = DVHostingSmsService.getInstance();
 
@@ -107,6 +109,11 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
       if (event.ctrlKey && event.shiftKey && event.key === "D") {
         event.preventDefault();
         setShowDebugPanel(true);
+      }
+      // Ctrl+Shift+A to open admin services manager
+      if (event.ctrlKey && event.shiftKey && event.key === "A") {
+        event.preventDefault();
+        setShowAdminServices(true);
       }
     };
 
