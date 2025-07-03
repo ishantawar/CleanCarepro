@@ -27,14 +27,24 @@ const googleSheetsService = GoogleSheetsService.getInstance();
 
 export const adaptiveBookingHelpers = {
   async createBooking(bookingData: any) {
-    console.log("📝 Creating booking with adaptive helpers:", bookingData);
+    console.log("📝 Creating booking with adaptive helpers:", {
+      customer_id: bookingData.customer_id,
+      services: bookingData.services,
+      total_price: bookingData.total_price,
+      scheduled_date: bookingData.scheduled_date,
+      scheduled_time: bookingData.scheduled_time,
+    });
 
     try {
       // Always try BookingService first (it handles all environments)
       const result = await bookingService.createBooking(bookingData);
 
       if (result.success && result.booking) {
-        console.log("✅ Booking created successfully:", result.booking.id);
+        console.log("✅ Booking created successfully:", {
+          id: result.booking.id,
+          status: result.booking.status,
+          totalAmount: result.booking.totalAmount,
+        });
 
         // Also try to send to Google Sheets
         try {
@@ -62,8 +72,13 @@ export const adaptiveBookingHelpers = {
             createdAt: new Date().toISOString(),
           };
 
-          await googleSheetsService.saveOrderToSheet(googleSheetsData);
-          console.log("✅ Booking also saved to Google Sheets");
+          const sheetsResult =
+            await googleSheetsService.saveOrderToSheet(googleSheetsData);
+          if (sheetsResult) {
+            console.log("✅ Booking also saved to Google Sheets");
+          } else {
+            console.log("⚠️ Google Sheets save failed or disabled");
+          }
         } catch (sheetsError) {
           console.warn("⚠️ Google Sheets save failed:", sheetsError);
         }
@@ -73,6 +88,7 @@ export const adaptiveBookingHelpers = {
           error: null,
         };
       } else {
+        console.error("❌ BookingService failed:", result.error);
         return {
           data: null,
           error: { message: result.error || "Failed to create booking" },
