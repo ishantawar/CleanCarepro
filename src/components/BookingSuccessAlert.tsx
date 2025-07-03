@@ -36,10 +36,11 @@ const BookingSuccessAlert: React.FC<BookingSuccessAlertProps> = ({
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            Booking Confirmed!
+            Order Successfully Placed!
           </h3>
           <p className="text-gray-600 text-sm">
-            Your service has been booked and saved to our database.
+            Your laundry service has been successfully booked. You will receive
+            a confirmation call shortly.
           </p>
         </div>
 
@@ -51,8 +52,10 @@ const BookingSuccessAlert: React.FC<BookingSuccessAlertProps> = ({
             </span>
           </div>
           <p className="text-green-700 text-xs">
-            Booking ID:{" "}
-            {booking._id || booking.bookingId || "Generated after save"}
+            Booking ID: #CC
+            {booking._id
+              ? booking._id.slice(-6).toUpperCase()
+              : new Date().getTime().toString().slice(-6)}
           </p>
         </div>
 
