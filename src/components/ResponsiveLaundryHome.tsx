@@ -1162,6 +1162,11 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
           onClose={() => setShowBookingDebugPanel(false)}
         />
 
+        {/* Admin Services Manager */}
+        {showAdminServices && (
+          <AdminServicesManager onClose={() => setShowAdminServices(false)} />
+        )}
+
         {/* Connection Status */}
         <ConnectionStatus />
       </div>
