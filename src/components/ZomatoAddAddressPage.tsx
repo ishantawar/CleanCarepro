@@ -368,18 +368,18 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         } else {
           console.error("Failed to get place details:", status);
           // Fallback to geocoding
-          try {
-            const geocodeResult = await locationService.geocodeAddress(
-              suggestion.description,
-            );
-            setSelectedLocation({
-              address: geocodeResult.formatted_address,
-              coordinates: geocodeResult.coordinates,
+          locationService
+            .geocodeAddress(suggestion.description)
+            .then((geocodeResult) => {
+              setSelectedLocation({
+                address: geocodeResult.formatted_address,
+                coordinates: geocodeResult.coordinates,
+              });
+              updateMapLocation(geocodeResult.coordinates);
+            })
+            .catch((geocodeError) => {
+              console.error("Geocoding fallback failed:", geocodeError);
             });
-            updateMapLocation(geocodeResult.coordinates);
-          } catch (geocodeError) {
-            console.error("Geocoding fallback failed:", geocodeError);
-          }
         }
       });
     } catch (error) {
