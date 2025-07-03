@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import {
   User,
 } from "lucide-react";
 import { locationService, Coordinates } from "@/services/locationService";
+import { Loader } from "@googlemaps/js-api-loader";
 
 interface AddressData {
   flatNo: string;
@@ -60,8 +61,71 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const [receiverPhone, setReceiverPhone] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+  const [placesService, setPlacesService] =
+    useState<google.maps.places.PlacesService | null>(null);
+  const [autocompleteService, setAutocompleteService] =
+    useState<google.maps.places.AutocompleteService | null>(null);
+  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
+  const [isMapLoading, setIsMapLoading] = useState(true);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Google Maps
+  useEffect(() => {
+    if (isOpen && mapRef.current && !mapInstance) {
+      initializeMap();
+    }
+  }, [isOpen]);
+
+  const initializeMap = async () => {
+    try {
+      const loader = new Loader({
+        apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+        version: "weekly",
+        libraries: ["places", "geometry"],
+      });
+
+      const google = await loader.load();
+
+      // Default to India center
+      const defaultCenter = { lat: 20.5937, lng: 78.9629 };
+
+      const map = new google.maps.Map(mapRef.current!, {
+        center: defaultCenter,
+        zoom: 5,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        styles: [
+          {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }],
+          },
+        ],
+      });
+
+      const placesService = new google.maps.places.PlacesService(map);
+      const autocompleteService = new google.maps.places.AutocompleteService();
+
+      setMapInstance(map);
+      setPlacesService(placesService);
+      setAutocompleteService(autocompleteService);
+      setIsMapLoading(false);
+
+      // Add click listener to map
+      map.addListener("click", (event: google.maps.MapMouseEvent) => {
+        if (event.latLng) {
+          handleMapClick(event.latLng);
+        }
+      });
+    } catch (error) {
+      console.error("Failed to initialize Google Maps:", error);
+      setIsMapLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -76,6 +140,11 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         setAddressType(editingAddress.type);
         setReceiverName(editingAddress.name || "");
         setReceiverPhone(editingAddress.phone || "");
+
+        // Update map position if editing
+        if (mapInstance && editingAddress.coordinates) {
+          updateMapLocation(editingAddress.coordinates);
+        }
       } else {
         // Clear all fields for new address
         setSearchQuery("");
@@ -86,7 +155,63 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         setReceiverPhone("");
       }
     }
-  }, [isOpen, editingAddress]);
+  }, [isOpen, editingAddress, mapInstance]);
+
+  const updateMapLocation = useCallback(
+    (coordinates: Coordinates) => {
+      if (!mapInstance) return;
+
+      mapInstance.setCenter(coordinates);
+      mapInstance.setZoom(16);
+
+      // Remove existing marker
+      if (marker) {
+        marker.setMap(null);
+      }
+
+      // Add new marker
+      const newMarker = new google.maps.Marker({
+        position: coordinates,
+        map: mapInstance,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+        icon: {
+          url: "data:image/svg+xml;charset=UTF-8,%3csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' fill='%2316a34a'/%3e%3ccircle cx='12' cy='10' r='3' fill='white'/%3e%3c/svg%3e",
+          scaledSize: new google.maps.Size(30, 30),
+          anchor: new google.maps.Point(15, 30),
+        },
+      });
+
+      // Add drag listener
+      newMarker.addListener(
+        "dragend",
+        async (event: google.maps.MapMouseEvent) => {
+          if (event.latLng) {
+            await handleMapClick(event.latLng);
+          }
+        },
+      );
+
+      setMarker(newMarker);
+    },
+    [mapInstance, marker],
+  );
+
+  const handleMapClick = async (latLng: google.maps.LatLng) => {
+    const coordinates = {
+      lat: latLng.lat(),
+      lng: latLng.lng(),
+    };
+
+    try {
+      const address = await locationService.reverseGeocode(coordinates);
+      setSelectedLocation({ address, coordinates });
+      setSearchQuery(address);
+      updateMapLocation(coordinates);
+    } catch (error) {
+      console.error("Reverse geocoding failed:", error);
+    }
+  };
 
   const handleCurrentLocation = async () => {
     setIsDetectingLocation(true);
@@ -101,6 +226,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
       setSelectedLocation({ address, coordinates });
       setSearchQuery(address);
+      updateMapLocation(coordinates);
     } catch (error) {
       console.error("Location detection failed:", error);
       // Use fallback location
@@ -111,6 +237,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         coordinates: fallbackCoords,
       });
       setSearchQuery(fallbackAddress);
+      updateMapLocation(fallbackCoords);
     } finally {
       setIsDetectingLocation(false);
     }
@@ -125,40 +252,139 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       return;
     }
 
-    try {
-      // Mock suggestions - in real app, use Google Places API
+    if (!autocompleteService) {
+      // Fallback to mock suggestions if Google Places API is not available
       const mockSuggestions = [
         {
           description: `${query}, Delhi, India`,
           main_text: query,
           secondary_text: "Delhi, India",
+          place_id: `mock_${query}_delhi`,
         },
         {
           description: `${query}, Gurgaon, Haryana, India`,
           main_text: query,
           secondary_text: "Gurgaon, Haryana, India",
+          place_id: `mock_${query}_gurgaon`,
         },
         {
           description: `${query}, Noida, Uttar Pradesh, India`,
           main_text: query,
           secondary_text: "Noida, Uttar Pradesh, India",
+          place_id: `mock_${query}_noida`,
         },
       ];
 
       setSuggestions(mockSuggestions);
       setShowSuggestions(true);
+      return;
+    }
+
+    try {
+      const request: google.maps.places.AutocompletionRequest = {
+        input: query,
+        componentRestrictions: { country: "in" }, // Restrict to India
+        types: ["address", "establishment", "geocode"],
+        fields: ["place_id", "description", "structured_formatting"],
+      };
+
+      autocompleteService.getPlacePredictions(
+        request,
+        (predictions, status) => {
+          if (
+            status === google.maps.places.PlacesServiceStatus.OK &&
+            predictions
+          ) {
+            const formattedSuggestions = predictions.map((prediction) => ({
+              description: prediction.description,
+              main_text:
+                prediction.structured_formatting?.main_text ||
+                prediction.description,
+              secondary_text:
+                prediction.structured_formatting?.secondary_text || "",
+              place_id: prediction.place_id,
+            }));
+
+            setSuggestions(formattedSuggestions);
+            setShowSuggestions(true);
+          } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+          }
+        },
+      );
     } catch (error) {
-      console.error("Search failed:", error);
+      console.error("Google Places search failed:", error);
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
-  const handleSuggestionSelect = (suggestion: any) => {
+  const handleSuggestionSelect = async (suggestion: any) => {
     setSearchQuery(suggestion.description);
-    setSelectedLocation({
-      address: suggestion.description,
-      coordinates: { lat: 28.6139, lng: 77.209 }, // Mock coordinates
-    });
     setShowSuggestions(false);
+
+    if (
+      !placesService ||
+      !suggestion.place_id ||
+      suggestion.place_id.startsWith("mock_")
+    ) {
+      // Handle mock suggestions or when places service is not available
+      const coordinates = { lat: 28.6139, lng: 77.209 }; // Default Delhi coordinates
+      setSelectedLocation({
+        address: suggestion.description,
+        coordinates,
+      });
+      updateMapLocation(coordinates);
+      return;
+    }
+
+    try {
+      const request: google.maps.places.PlaceDetailsRequest = {
+        placeId: suggestion.place_id,
+        fields: [
+          "geometry.location",
+          "formatted_address",
+          "address_components",
+        ],
+      };
+
+      placesService.getDetails(request, (place, status) => {
+        if (
+          status === google.maps.places.PlacesServiceStatus.OK &&
+          place?.geometry?.location
+        ) {
+          const coordinates = {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          };
+
+          setSelectedLocation({
+            address: place.formatted_address || suggestion.description,
+            coordinates,
+          });
+
+          updateMapLocation(coordinates);
+        } else {
+          console.error("Failed to get place details:", status);
+          // Fallback to geocoding
+          try {
+            const geocodeResult = await locationService.geocodeAddress(
+              suggestion.description,
+            );
+            setSelectedLocation({
+              address: geocodeResult.formatted_address,
+              coordinates: geocodeResult.coordinates,
+            });
+            updateMapLocation(geocodeResult.coordinates);
+          } catch (geocodeError) {
+            console.error("Geocoding fallback failed:", geocodeError);
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Place details request failed:", error);
+    }
   };
 
   const handleSave = () => {
@@ -262,47 +488,67 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
       {/* Map Area */}
       <div className="flex-1 bg-gray-100 relative overflow-hidden">
-        {/* Mock Map Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
-          <div className="text-center">
-            <MapIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Interactive Map Area</p>
-          </div>
-        </div>
+        {/* Google Maps Container */}
+        <div
+          ref={mapRef}
+          className="absolute inset-0 w-full h-full"
+          style={{ minHeight: "300px" }}
+        />
 
-        {/* Location Pin */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="bg-green-600 rounded-full p-3 shadow-lg">
-            <MapPin className="h-6 w-6 text-white" />
+        {/* Map Loading Overlay */}
+        {isMapLoading && (
+          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading map...</p>
+            </div>
           </div>
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-black bg-opacity-80 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap">
-            Move pin to your exact delivery location
-          </div>
-        </div>
+        )}
 
-        {/* Nearby Locations (Mock) */}
-        <div className="absolute top-4 left-4 flex gap-2">
-          <div className="bg-white rounded-lg p-2 shadow-md flex items-center gap-2">
-            <Home className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium">33</span>
-          </div>
-          <div className="bg-white rounded-lg p-2 shadow-md flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium">79</span>
-          </div>
-        </div>
+        {/* Map Controls Overlay */}
+        {!isMapLoading && (
+          <>
+            {/* Search Info Tooltip */}
+            {!selectedLocation && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-4 py-2 rounded-lg text-sm max-w-xs text-center">
+                Search for an address or click on the map to select location
+              </div>
+            )}
 
-        {/* Use Current Location Button */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-          <Button
-            onClick={handleCurrentLocation}
-            disabled={isDetectingLocation}
-            className="bg-white text-green-600 border border-green-600 hover:bg-green-50 rounded-full px-6 py-2"
-          >
-            <Navigation className="h-4 w-4 mr-2" />
-            {isDetectingLocation ? "Detecting..." : "Use current location"}
-          </Button>
-        </div>
+            {/* Use Current Location Button */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+              <Button
+                onClick={handleCurrentLocation}
+                disabled={isDetectingLocation}
+                className="bg-white text-green-600 border border-green-600 hover:bg-green-50 rounded-full px-6 py-2 shadow-lg"
+              >
+                <Navigation className="h-4 w-4 mr-2" />
+                {isDetectingLocation ? "Detecting..." : "Use current location"}
+              </Button>
+            </div>
+
+            {/* Map Type Toggle */}
+            <div className="absolute top-4 right-4">
+              <Button
+                onClick={() => {
+                  if (mapInstance) {
+                    const currentType = mapInstance.getMapTypeId();
+                    mapInstance.setMapTypeId(
+                      currentType === "roadmap" ? "satellite" : "roadmap",
+                    );
+                  }
+                }}
+                className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 text-xs px-3 py-1"
+                size="sm"
+              >
+                <MapIcon className="h-3 w-3 mr-1" />
+                {mapInstance?.getMapTypeId() === "satellite"
+                  ? "Map"
+                  : "Satellite"}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Form Section */}
