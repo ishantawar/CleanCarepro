@@ -579,7 +579,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                               </span>
                             </div>
 
-                            {service.popular && (
+                            {service.popular && !service.image && (
                               <Badge className="bg-green-100 text-green-700 text-xs">
                                 Popular
                               </Badge>
