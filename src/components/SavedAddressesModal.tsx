@@ -188,24 +188,6 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       }
     };
 
-    const getAvailableTypes = () => {
-      const usedTypes = addresses.map((addr) => addr.type);
-      const allTypes = [
-        {
-          value: "home",
-          label: "🏠 Home",
-          disabled: usedTypes.includes("home"),
-        },
-        {
-          value: "work",
-          label: "🏢 Office",
-          disabled: usedTypes.includes("work"),
-        },
-        { value: "other", label: "📍 Other", disabled: false }, // Allow multiple "other" addresses
-      ];
-      return allTypes;
-    };
-
     return (
       <>
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -389,7 +371,6 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
               <EnhancedAddressForm
                 onAddressUpdate={handleAddAddress}
                 showLabel={true}
-                availableTypes={getAvailableTypes()}
               />
             </div>
           </DialogContent>
@@ -413,10 +394,6 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                 initialAddress={editingAddress}
                 onAddressUpdate={handleEditAddress}
                 showLabel={true}
-                availableTypes={getAvailableTypes().map((type) => ({
-                  ...type,
-                  disabled: type.value !== editingAddress.type && type.disabled,
-                }))}
               />
             )}
           </DialogContent>
