@@ -434,7 +434,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-4 p-4 border-b border-gray-200">
+      <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
         <Button
           variant="ghost"
           size="sm"
@@ -443,245 +443,254 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
+        <h1 className="text-lg font-medium text-gray-900">Add Address</h1>
       </div>
 
-      {/* Search Bar */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="relative">
-          <div className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
-            <Search className="h-5 w-5 text-green-600" />
-            <Input
-              ref={searchInputRef}
-              placeholder="Search for area, street name..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              onFocus={() => {
-                if (suggestions.length > 0) {
-                  setShowSuggestions(true);
-                }
-              }}
-              className="border-0 bg-transparent p-0 focus:ring-0 text-base placeholder:text-gray-500"
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Search Bar */}
+        <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+          <div className="relative">
+            <div className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
+              <Search className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <Input
+                ref={searchInputRef}
+                placeholder="Search for area, street name..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => {
+                  if (suggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  // Delay hiding suggestions to allow clicking on them
+                  setTimeout(() => setShowSuggestions(false), 150);
+                }}
+                className="border-0 bg-transparent p-0 focus:ring-0 text-base placeholder:text-gray-500"
+              />
+            </div>
+
+            {/* Search Suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleSuggestionSelect(suggestion)}
+                    className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="text-sm font-medium text-gray-900">
+                      {suggestion.main_text}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {suggestion.secondary_text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Map Area - Reduced height for mobile */}
+        <div className="h-64 sm:h-80 bg-gray-100 relative overflow-hidden">
+          {/* Google Maps Container */}
+          <div
+            ref={mapRef}
+            className="absolute inset-0 w-full h-full"
+            style={{ minHeight: "200px" }}
+          />
+
+          {/* Map Loading Overlay */}
+          {isMapLoading && (
+            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 text-sm">Loading map...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Map Controls Overlay */}
+          {!isMapLoading && (
+            <>
+              {/* Search Info Tooltip - Hidden on mobile when too small */}
+              {!selectedLocation && (
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-3 py-2 rounded-lg text-xs max-w-xs text-center hidden sm:block">
+                  Search for an address or click on the map to select location
+                </div>
+              )}
+
+              {/* Use Current Location Button */}
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+                <Button
+                  onClick={handleCurrentLocation}
+                  disabled={isDetectingLocation}
+                  className="bg-white text-green-600 border border-green-600 hover:bg-green-50 rounded-full px-4 py-2 shadow-lg text-sm"
+                  size="sm"
+                >
+                  <Navigation className="h-4 w-4 mr-2" />
+                  {isDetectingLocation
+                    ? "Detecting..."
+                    : "Use current location"}
+                </Button>
+              </div>
+
+              {/* Map Type Toggle - Smaller for mobile */}
+              <div className="absolute top-2 right-2">
+                <Button
+                  onClick={() => {
+                    if (mapInstance) {
+                      const currentType = mapInstance.getMapTypeId();
+                      mapInstance.setMapTypeId(
+                        currentType === "roadmap" ? "satellite" : "roadmap",
+                      );
+                    }
+                  }}
+                  className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 text-xs px-2 py-1"
+                  size="sm"
+                >
+                  <MapIcon className="h-3 w-3 mr-1" />
+                  {mapInstance?.getMapTypeId() === "satellite"
+                    ? "Map"
+                    : "Satellite"}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Form Section - Now fully scrollable */}
+        <div className="bg-white p-4 space-y-6">
+          {/* Delivery Details */}
+          {selectedLocation && (
+            <div>
+              <h3 className="text-base font-medium text-gray-900 mb-3">
+                Delivery details
+              </h3>
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="bg-green-600 rounded-full p-1 mt-1 flex-shrink-0">
+                  <MapPin className="h-3 w-3 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 break-words">
+                    {selectedLocation.address.split(",")[0]}
+                  </p>
+                  <p className="text-xs text-gray-600 break-words">
+                    {selectedLocation.address
+                      .split(",")
+                      .slice(1)
+                      .join(",")
+                      .trim()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Additional Address Details */}
+          <div>
+            <Label
+              htmlFor="additional-details"
+              className="text-sm font-medium text-gray-700"
+            >
+              Additional address details*
+            </Label>
+            <Textarea
+              id="additional-details"
+              placeholder="E.g. Floor, House no."
+              value={additionalDetails}
+              onChange={(e) => setAdditionalDetails(e.target.value)}
+              className="mt-2 min-h-[80px] resize-none"
             />
           </div>
 
-          {/* Search Suggestions */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {suggestions.map((suggestion, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleSuggestionSelect(suggestion)}
-                  className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                >
-                  <div className="text-sm font-medium text-gray-900">
-                    {suggestion.main_text}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {suggestion.secondary_text}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Map Area */}
-      <div className="flex-1 bg-gray-100 relative overflow-hidden">
-        {/* Google Maps Container */}
-        <div
-          ref={mapRef}
-          className="absolute inset-0 w-full h-full"
-          style={{ minHeight: "300px" }}
-        />
-
-        {/* Map Loading Overlay */}
-        {isMapLoading && (
-          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading map...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Map Controls Overlay */}
-        {!isMapLoading && (
-          <>
-            {/* Search Info Tooltip */}
-            {!selectedLocation && (
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-4 py-2 rounded-lg text-sm max-w-xs text-center">
-                Search for an address or click on the map to select location
-              </div>
-            )}
-
-            {/* Use Current Location Button */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-              <Button
-                onClick={handleCurrentLocation}
-                disabled={isDetectingLocation}
-                className="bg-white text-green-600 border border-green-600 hover:bg-green-50 rounded-full px-6 py-2 shadow-lg"
-              >
-                <Navigation className="h-4 w-4 mr-2" />
-                {isDetectingLocation ? "Detecting..." : "Use current location"}
-              </Button>
-            </div>
-
-            {/* Map Type Toggle */}
-            <div className="absolute top-4 right-4">
-              <Button
-                onClick={() => {
-                  if (mapInstance) {
-                    const currentType = mapInstance.getMapTypeId();
-                    mapInstance.setMapTypeId(
-                      currentType === "roadmap" ? "satellite" : "roadmap",
-                    );
-                  }
-                }}
-                className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 text-xs px-3 py-1"
-                size="sm"
-              >
-                <MapIcon className="h-3 w-3 mr-1" />
-                {mapInstance?.getMapTypeId() === "satellite"
-                  ? "Map"
-                  : "Satellite"}
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Form Section */}
-      <div className="bg-white p-4 space-y-6 max-h-96 overflow-y-auto">
-        {/* Delivery Details */}
-        {selectedLocation && (
+          {/* Receiver Details */}
           <div>
             <h3 className="text-base font-medium text-gray-900 mb-3">
-              Delivery details
+              Receiver details for this address
             </h3>
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="bg-green-600 rounded-full p-1 mt-1">
-                <MapPin className="h-3 w-3 text-white" />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                <User className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <Input
+                  placeholder="Receiver name"
+                  value={receiverName}
+                  onChange={(e) => setReceiverName(e.target.value)}
+                  className="border-0 p-0 focus:ring-0"
+                />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  {selectedLocation.address.split(",")[0]}
-                </p>
-                <p className="text-xs text-gray-600">
-                  {selectedLocation.address
-                    .split(",")
-                    .slice(1)
-                    .join(",")
-                    .trim()}
-                </p>
+
+              <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                <Phone className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <span className="text-sm text-gray-900">
+                  {receiverName || "Receiver"},{" "}
+                </span>
+                <Input
+                  placeholder="Phone number"
+                  value={receiverPhone}
+                  onChange={(e) => setReceiverPhone(e.target.value)}
+                  className="border-0 p-0 focus:ring-0"
+                  type="tel"
+                />
               </div>
-              <Button variant="ghost" size="sm" className="p-1">
-                <ArrowLeft className="h-4 w-4 rotate-180" />
+            </div>
+          </div>
+
+          {/* Save Address As */}
+          <div>
+            <h3 className="text-base font-medium text-gray-900 mb-3">
+              Save address as
+            </h3>
+            <div className="flex gap-3">
+              <Button
+                variant={addressType === "home" ? "default" : "outline"}
+                onClick={() => setAddressType("home")}
+                className={`flex-1 ${
+                  addressType === "home"
+                    ? "bg-green-600 text-white border-green-600"
+                    : "text-gray-700 border-gray-300"
+                }`}
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+              <Button
+                variant={addressType === "office" ? "default" : "outline"}
+                onClick={() => setAddressType("office")}
+                className={`flex-1 ${
+                  addressType === "office"
+                    ? "bg-green-600 text-white border-green-600"
+                    : "text-gray-700 border-gray-300"
+                }`}
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                Work
+              </Button>
+              <Button
+                variant={addressType === "other" ? "default" : "outline"}
+                onClick={() => setAddressType("other")}
+                className={`flex-1 ${
+                  addressType === "other"
+                    ? "bg-green-600 text-white border-green-600"
+                    : "text-gray-700 border-gray-300"
+                }`}
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                Other
               </Button>
             </div>
           </div>
-        )}
 
-        {/* Additional Address Details */}
-        <div>
-          <Label
-            htmlFor="additional-details"
-            className="text-sm font-medium text-gray-700"
-          >
-            Additional address details*
-          </Label>
-          <Textarea
-            id="additional-details"
-            placeholder="E.g. Floor, House no."
-            value={additionalDetails}
-            onChange={(e) => setAdditionalDetails(e.target.value)}
-            className="mt-2 min-h-[60px] resize-none"
-          />
-        </div>
-
-        {/* Receiver Details */}
-        <div>
-          <h3 className="text-base font-medium text-gray-900 mb-3">
-            Receiver details for this address
-          </h3>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
-              <User className="h-5 w-5 text-gray-400" />
-              <Input
-                placeholder="Receiver name"
-                value={receiverName}
-                onChange={(e) => setReceiverName(e.target.value)}
-                className="border-0 p-0 focus:ring-0"
-              />
-            </div>
-
-            <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
-              <Phone className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-900">
-                {receiverName || "Chaman"},{" "}
-              </span>
-              <Input
-                placeholder="Phone number"
-                value={receiverPhone}
-                onChange={(e) => setReceiverPhone(e.target.value)}
-                className="border-0 p-0 focus:ring-0"
-              />
-              <Button variant="ghost" size="sm" className="p-1">
-                <ArrowLeft className="h-4 w-4 rotate-180" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Save Address As */}
-        <div>
-          <h3 className="text-base font-medium text-gray-900 mb-3">
-            Save address as
-          </h3>
-          <div className="flex gap-3">
-            <Button
-              variant={addressType === "home" ? "default" : "outline"}
-              onClick={() => setAddressType("home")}
-              className={`flex-1 ${
-                addressType === "home"
-                  ? "bg-green-600 text-white border-green-600"
-                  : "text-gray-700 border-gray-300"
-              }`}
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Home
-            </Button>
-            <Button
-              variant={addressType === "office" ? "default" : "outline"}
-              onClick={() => setAddressType("office")}
-              className={`flex-1 ${
-                addressType === "office"
-                  ? "bg-green-600 text-white border-green-600"
-                  : "text-gray-700 border-gray-300"
-              }`}
-            >
-              <Building2 className="h-4 w-4 mr-2" />
-              Work
-            </Button>
-            <Button
-              variant={addressType === "other" ? "default" : "outline"}
-              onClick={() => setAddressType("other")}
-              className={`flex-1 ${
-                addressType === "other"
-                  ? "bg-green-600 text-white border-green-600"
-                  : "text-gray-700 border-gray-300"
-              }`}
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              Other
-            </Button>
-          </div>
+          {/* Bottom spacing for save button */}
+          <div className="h-20"></div>
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="p-4 border-t border-gray-200">
+      {/* Save Button - Fixed at bottom */}
+      <div className="p-4 border-t border-gray-200 bg-white sticky bottom-0">
         <Button
           onClick={handleSave}
           disabled={!isFormValid()}
