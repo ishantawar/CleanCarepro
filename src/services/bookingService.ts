@@ -231,9 +231,13 @@ export class BookingService {
         });
       }
 
+      const message = backendSaveSuccess
+        ? "Booking created and saved to server successfully"
+        : "Booking created (saved locally, will sync when online)";
+
       return {
         success: true,
-        message: "Booking created successfully",
+        message,
         booking,
       };
     } catch (error) {
@@ -804,7 +808,7 @@ export class BookingService {
           currentUser.id ||
           (currentUser.phone ? `user_${currentUser.phone}` : null);
 
-        console.log("🔄 Syncing booking update to backend:", {
+        console.log("���� Syncing booking update to backend:", {
           bookingId,
           status: updates.status,
           userId,
