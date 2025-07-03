@@ -21,6 +21,7 @@ import BookingConfirmation from "./BookingConfirmation";
 import BookingSuccessAlert from "./BookingSuccessAlert";
 import { adaptiveBookingHelpers } from "@/integrations/adaptive/bookingHelpers";
 import { userValidation } from "@/utils/userValidation";
+import { bookingTestHelper } from "@/utils/bookingTestHelper";
 
 interface BookingFlowProps {
   provider?: any;
@@ -120,7 +121,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
   };
 
   const handleBookService = async () => {
+    console.log("🚀 Starting booking process...");
+    bookingTestHelper.runDiagnostic();
+
     if (!currentUser) {
+      console.log("❌ No current user found");
       setError("Please sign in first to book a service");
       setShowAuthModal(true);
       return;
@@ -137,14 +142,15 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
     }
 
     // Ensure we have a valid customer ID using robust validation
-
     if (!userValidation.isValidUser(currentUser)) {
+      console.log("❌ User validation failed:", currentUser);
       setError("Please sign in to book a service.");
       setShowAuthModal(true);
       return;
     }
 
     const customerId = currentUser._id;
+    console.log("✅ User validated. Customer ID:", customerId);
 
     setIsProcessing(true);
     setError("");
@@ -234,17 +240,31 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
         status: "pending",
       };
 
+      // Log the booking attempt
+      bookingTestHelper.logBookingAttempt(bookingData);
+
       const { data, error: bookingError } =
         await adaptiveBookingHelpers.createBooking(bookingData);
 
+      // Log the result
+      bookingTestHelper.logBookingResult(
+        { data, error: bookingError },
+        "AdaptiveBookingHelpers",
+      );
+
       if (bookingError) {
+        console.error("❌ Booking creation failed:", bookingError);
         setError(bookingError.message || "Failed to create booking");
-      } else {
+      } else if (data) {
+        console.log("✅ Booking created successfully:", data);
         // Store the completed booking data
         setCompletedBooking(data);
         // Close confirmation modal and show success alert
         setShowConfirmation(false);
         setShowBookingSuccess(true);
+      } else {
+        console.error("❌ No data returned from booking creation");
+        setError("No response from booking service. Please try again.");
       }
     } catch (error: any) {
       setError(
