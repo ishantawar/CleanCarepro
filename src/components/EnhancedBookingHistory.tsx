@@ -76,7 +76,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
       null,
     );
 
-    const loadBookings = async () => {
+    const loadBookings = async (forceRefresh = false) => {
       if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) {
         console.log("No user ID found for loading bookings");
         setLoading(false);
@@ -85,6 +85,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
       try {
         setLoading(true);
+
+        if (forceRefresh) {
+          console.log("🔄 Force refreshing bookings from backend...");
+        }
 
         // Import MongoDB helpers
         const { bookingHelpers } = await import(
