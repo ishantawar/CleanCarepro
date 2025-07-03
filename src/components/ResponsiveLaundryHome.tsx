@@ -79,12 +79,34 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
 
       // Location successful - reload the page to update location
       window.location.reload();
-    } catch (error) {
-      console.error("Location request failed:", error);
-      // Show a more helpful message to the user
-      alert(
-        "Please enable location access in your browser settings, then refresh the page.",
-      );
+    } catch (error: any) {
+      let errorMessage =
+        "Please enable location access in your browser settings, then refresh the page.";
+      if (error.code) {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage =
+              "Please enable location access in your browser settings, then refresh the page.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage =
+              "Location is unavailable. Please try again or enter your address manually.";
+            break;
+          case error.TIMEOUT:
+            errorMessage =
+              "Location request timed out. Please try again or enter your address manually.";
+            break;
+          default:
+            errorMessage =
+              "Location access failed. Please enter your address manually.";
+        }
+      }
+      console.error("Location request failed:", {
+        code: error.code,
+        message: error.message,
+        friendlyMessage: errorMessage,
+      });
+      alert(errorMessage);
     } finally {
       setIsRequestingLocation(false);
     }
@@ -900,7 +922,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                                   ? "🔥"
                                   : service.category.includes("Iron")
                                     ? "🏷️"
-                                    : "👕"}
+                                    : "���"}
                         </span>
                       </div>
 
