@@ -387,6 +387,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
               "Booking Updated",
               "Your booking has been updated successfully",
             ),
+
+          // Force reload bookings from backend to ensure consistency
+          setTimeout(() => {
+            loadBookings();
+          }, 1000);
           );
         } else {
           addNotification(
