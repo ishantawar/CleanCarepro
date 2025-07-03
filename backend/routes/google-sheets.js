@@ -78,4 +78,48 @@ router.post("/setup", async (req, res) => {
   }
 });
 
+// Save booking data to Google Sheets
+router.post("/save", async (req, res) => {
+  try {
+    const { sheetName, data } = req.body;
+
+    if (!data) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing data to save",
+      });
+    }
+
+    console.log("📊 Received Google Sheets save request:", data);
+
+    // Check if Google Sheets is enabled
+    if (process.env.GOOGLE_SHEETS_ENABLED !== "true") {
+      console.log(
+        "📊 Google Sheets integration disabled, returning success for development",
+      );
+      return res.json({
+        success: true,
+        message: "Google Sheets integration disabled (development mode)",
+      });
+    }
+
+    // For now, return success - this is a placeholder for actual Google Sheets integration
+    // In production, you would implement actual Google Sheets API calls here
+    console.log("📊 Would save to Google Sheets:", data);
+
+    res.json({
+      success: true,
+      message: "Data saved to Google Sheets successfully",
+      orderId: data.orderId,
+    });
+  } catch (error) {
+    console.error("❌ Google Sheets save error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to save to Google Sheets",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

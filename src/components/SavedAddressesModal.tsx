@@ -76,7 +76,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
 
       const userId = currentUser._id || currentUser.id || currentUser.phone;
-      const savedAddresses = localStorage.getItem(`addresses_${userId}`);
+      const savedAddresses = localStorage.getItem(addresses_${userId});
 
       if (savedAddresses) {
         const parsed = JSON.parse(savedAddresses);
@@ -90,8 +90,26 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
 
       const userId = currentUser._id || currentUser.id || currentUser.phone;
-      localStorage.setItem(`addresses_${userId}`, JSON.stringify(newAddresses));
+      localStorage.setItem(addresses_${userId}, JSON.stringify(newAddresses));
       setAddresses(newAddresses);
+    };
+
+    const handleEditAddress = (address: AddressData) => {
+      if (!editingAddress?.id) return;
+
+      const updatedAddresses = addresses.map((addr) =>
+        addr.id === editingAddress.id
+          ? {
+              ...address,
+              id: editingAddress.id,
+              updatedAt: new Date().toISOString(),
+            }
+          : addr,
+      );
+
+      saveAddresses(updatedAddresses);
+      setEditingAddress(null);
+      setShowAddForm(false);
     };
 
     const handleAddAddress = (address: AddressData) => {
@@ -127,7 +145,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
 
       const newAddress: AddressData = {
         ...address,
-        id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)},
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -148,16 +166,6 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       }
 
       setShowAddForm(false);
-    };
-
-    const handleEditAddress = (address: AddressData) => {
-      const updatedAddresses = addresses.map((addr) =>
-        addr.id === address.id
-          ? { ...address, updatedAt: new Date().toISOString() }
-          : addr,
-      );
-      saveAddresses(updatedAddresses);
-      setEditingAddress(null);
     };
 
     const handleDeleteAddress = (id: string) => {
@@ -208,7 +216,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                 <p className="text-sm text-gray-600">
                   {addresses.length === 0
                     ? "No saved addresses yet"
-                    : `${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}`}
+                    : ${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}}
                 </p>
                 <Button
                   onClick={() => setShowAddForm(true)}
@@ -237,7 +245,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                                 {address.label}
                               </h4>
                               <span
-                                className={`text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type || "other")}`}
+                                className={text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type || "other")}}
                               >
                                 {address.type
                                   ? address.type.charAt(0).toUpperCase() +
@@ -384,18 +392,18 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
           <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Address</DialogTitle>
-              <DialogDescription>
-                Update the address details below
-              </DialogDescription>
+              <DialogDescription>Update your address details</DialogDescription>
             </DialogHeader>
 
-            {editingAddress && (
-              <EnhancedAddressForm
-                initialAddress={editingAddress}
-                onAddressUpdate={handleEditAddress}
-                showLabel={true}
-              />
-            )}
+            <div className="space-y-4">
+              {editingAddress && (
+                <EnhancedAddressForm
+                  initialAddress={editingAddress}
+                  onAddressUpdate={handleEditAddress}
+                  showLabel={true}
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </>

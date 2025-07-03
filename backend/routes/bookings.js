@@ -108,6 +108,32 @@ router.post("/", async (req, res) => {
       });
     }
 
+    // Validate and sanitize address
+    let sanitizedAddress = address;
+    let addressObject = null;
+
+    if (typeof address === "object" && address !== null) {
+      // Store the address object for coordinates
+      addressObject = address;
+
+      // Create a readable string
+      sanitizedAddress = [
+        address.flatNo,
+        address.street,
+        address.landmark,
+        address.village,
+        address.city,
+        address.pincode,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      console.log("📍 Converted address object to string:", sanitizedAddress);
+    } else if (typeof address === "string") {
+      sanitizedAddress = address;
+      console.log("📍 Using string address:", sanitizedAddress);
+    }
+
     // Verify customer exists - handle both ObjectId and phone-based lookup
     let customer;
     let actualCustomerId = customer_id;
@@ -296,8 +322,20 @@ router.post("/", async (req, res) => {
       scheduled_date,
       scheduled_time,
       provider_name,
-      address,
-      coordinates,
+      address: sanitizedAddress, // Use sanitized string address
+      address_details: addressObject
+        ? {
+            flatNo: addressObject.flatNo,
+            street: addressObject.street,
+            landmark: addressObject.landmark,
+            village: addressObject.village,
+            city: addressObject.city,
+            pincode: addressObject.pincode,
+            type: addressObject.type || "other",
+          }
+        : undefined,
+      coordinates:
+        (addressObject && addressObject.coordinates) || coordinates || {},
       additional_details,
       total_price,
       discount_amount: discount_amount || 0,

@@ -3,6 +3,7 @@ import ResponsiveLaundryHome from "../components/ResponsiveLaundryHome";
 import LaundryCart from "../components/LaundryCart";
 import EnhancedBookingHistory from "@/components/EnhancedBookingHistory";
 import PhoneOtpAuthModal from "@/components/PhoneOtpAuthModal";
+import BookingConfirmed from "@/components/BookingConfirmed";
 import { DVHostingSmsService } from "../services/dvhostingSmsService";
 import PushNotificationService from "../services/pushNotificationService";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -201,11 +202,12 @@ const getReverseGeocodedLocation = async (
 const LaundryIndex = () => {
   const { addNotification } = useNotifications();
   const [currentView, setCurrentView] = useState<
-    "home" | "cart" | "bookings" | "auth"
+    "home" | "cart" | "bookings" | "auth" | "booking-confirmed"
   >("home");
   const [previousView, setPreviousView] = useState<
     "home" | "cart" | "bookings"
   >("home");
+  const [lastBookingData, setLastBookingData] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [currentLocation, setCurrentLocation] = useState<string>("");
@@ -526,12 +528,25 @@ const LaundryIndex = () => {
           await bookingService.createBooking(localBookingData);
         console.log("📝 Local booking result:", localResult);
 
+        // Store booking data for confirmation screen
+        const confirmationData = {
+          bookingId: mongoResult.data._id || `local_${Date.now()}`,
+          services: servicesArray,
+          totalAmount: cartData.totalAmount,
+          pickupDate: cartData.pickupDate,
+          pickupTime: cartData.pickupTime,
+          address: cartData.address,
+          customerName: currentUser.full_name || currentUser.name || "Customer",
+          customerPhone: currentUser.phone,
+        };
+
+        setLastBookingData(confirmationData);
+
         // Show success message
-        const bookingId = mongoResult.data._id || `local_${Date.now()}`;
         addNotification(
           createSuccessNotification(
             "Order Confirmed!",
-            `Your order has been placed successfully! Booking ID: ${bookingId.slice(-6)}`,
+            `Your order has been placed successfully! Booking ID: ${confirmationData.bookingId.slice(-6)}`,
           ),
         );
 
@@ -543,10 +558,8 @@ const LaundryIndex = () => {
         const clearCartEvent = new CustomEvent("clearCart");
         window.dispatchEvent(clearCartEvent);
 
-        // Redirect to booking history to show the new booking
-        setTimeout(() => {
-          setCurrentView("bookings");
-        }, 2000); // Wait 2 seconds to show success message
+        // Show booking confirmation screen
+        setCurrentView("booking-confirmed");
       } else {
         // If MongoDB fails, still try to save locally
         console.warn(
@@ -611,6 +624,21 @@ const LaundryIndex = () => {
             );
           }
 
+          // Store booking data for confirmation screen
+          const confirmationData = {
+            bookingId: `local_${Date.now()}`,
+            services: servicesArray,
+            totalAmount: cartData.totalAmount,
+            pickupDate: cartData.pickupDate,
+            pickupTime: cartData.pickupTime,
+            address: cartData.address,
+            customerName:
+              currentUser.full_name || currentUser.name || "Customer",
+            customerPhone: currentUser.phone,
+          };
+
+          setLastBookingData(confirmationData);
+
           // Show success but mention it will sync later
           addNotification(
             createSuccessNotification(
@@ -622,10 +650,8 @@ const LaundryIndex = () => {
           // Clear cart
           localStorage.removeItem("laundry_cart");
 
-          // Redirect to home page after successful booking
-          setTimeout(() => {
-            setCurrentView("home");
-          }, 2000); // Wait 2 seconds to show success message
+          // Show booking confirmation screen
+          setCurrentView("booking-confirmed");
         } else {
           console.error("❌ Local booking also failed:", localResult.error);
 
@@ -658,6 +684,22 @@ const LaundryIndex = () => {
 
             if (sheetsResult) {
               console.log("📊 Order saved to Google Sheets as backup");
+
+              // Store booking data for confirmation screen
+              const confirmationData = {
+                bookingId: `backup_${Date.now()}`,
+                services: servicesArray,
+                totalAmount: cartData.totalAmount,
+                pickupDate: cartData.pickupDate,
+                pickupTime: cartData.pickupTime,
+                address: cartData.address,
+                customerName:
+                  currentUser.full_name || currentUser.name || "Customer",
+                customerPhone: currentUser.phone,
+              };
+
+              setLastBookingData(confirmationData);
+
               addNotification(
                 createSuccessNotification(
                   "Order Saved to Backup!",
@@ -671,9 +713,7 @@ const LaundryIndex = () => {
               const clearCartEvent = new CustomEvent("clearCart");
               window.dispatchEvent(clearCartEvent);
 
-              setTimeout(() => {
-                setCurrentView("bookings");
-              }, 2000);
+              setCurrentView("booking-confirmed");
               return; // Exit early since we saved to sheets
             }
           } catch (sheetsError) {
@@ -761,6 +801,14 @@ const LaundryIndex = () => {
           onProceedToCheckout={handleProceedToCheckout}
           onLoginRequired={() => handleLoginRequired("cart")}
           currentUser={currentUser}
+        />
+      )}
+
+      {currentView === "booking-confirmed" && lastBookingData && (
+        <BookingConfirmed
+          bookingData={lastBookingData}
+          onGoHome={() => setCurrentView("home")}
+          onViewBookings={() => setCurrentView("bookings")}
         />
       )}
     </div>
