@@ -242,30 +242,83 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
 
   const getCartTotal = () => {
     return Object.entries(cart).reduce((total, [serviceId, count]) => {
-      const service = laundryServices
-        .flatMap((cat) => cat.services)
-        .find((s) => s.id === serviceId);
+      let service;
+      if (useStaticFallback) {
+        service = laundryServices
+          .flatMap((cat) => cat.services)
+          .find((s) => s.id === serviceId);
+      } else {
+        service = dynamicServices
+          .flatMap((cat) => cat.services)
+          .find((s) => s.id === serviceId);
+      }
       return total + (service ? service.price * count : 0);
     }, 0);
   };
 
-  const getFilteredServices = (): LaundryService[] => {
-    let services: LaundryService[] = [];
+  const getFilteredServices = (): (
+    | LaundryService
+    | DynamicLaundryService
+  )[] => {
+    if (isLoadingServices) return [];
+
+    let services: (LaundryService | DynamicLaundryService)[] = [];
 
     if (searchQuery) {
-      services = searchServices(searchQuery);
+      if (useStaticFallback) {
+        services = searchServices(searchQuery);
+      } else {
+        // Search in dynamic services
+        const searchTerm = searchQuery.toLowerCase();
+        services = dynamicServices.flatMap((category) =>
+          category.services.filter(
+            (service) =>
+              service.enabled !== false &&
+              (service.name.toLowerCase().includes(searchTerm) ||
+                service.category.toLowerCase().includes(searchTerm) ||
+                service.description?.toLowerCase().includes(searchTerm)),
+          ),
+        );
+      }
     } else if (selectedCategory === "all") {
-      services = getSortedServices();
+      if (useStaticFallback) {
+        services = getSortedServices();
+      } else {
+        // Get all services from dynamic categories
+        services = dynamicServices.flatMap((category) =>
+          category.services.filter((service) => service.enabled !== false),
+        );
+        // Sort: popular first, then alphabetically
+        services.sort((a, b) => {
+          if (a.popular && !b.popular) return -1;
+          if (!a.popular && b.popular) return 1;
+          return a.name.localeCompare(b.name);
+        });
+      }
     } else {
-      const category = laundryServices.find((c) => c.id === selectedCategory);
-      services = category
-        ? category.services.sort((a, b) => {
-            // Sort by popular first, then alphabetically
-            if (a.popular && !b.popular) return -1;
-            if (!a.popular && b.popular) return 1;
-            return a.name.localeCompare(b.name);
-          })
-        : [];
+      if (useStaticFallback) {
+        const category = laundryServices.find((c) => c.id === selectedCategory);
+        services = category
+          ? category.services.sort((a, b) => {
+              // Sort by popular first, then alphabetically
+              if (a.popular && !b.popular) return -1;
+              if (!a.popular && b.popular) return 1;
+              return a.name.localeCompare(b.name);
+            })
+          : [];
+      } else {
+        const category = dynamicServices.find((c) => c.id === selectedCategory);
+        services = category
+          ? category.services
+              .filter((service) => service.enabled !== false)
+              .sort((a, b) => {
+                // Sort by popular first, then alphabetically
+                if (a.popular && !b.popular) return -1;
+                if (!a.popular && b.popular) return 1;
+                return a.name.localeCompare(b.name);
+              })
+          : [];
+      }
     }
 
     return services;
