@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useNotifications } from "@/contexts/NotificationContext";
+import VirtualizedList from "./VirtualizedList";
 import {
   createSuccessNotification,
   createErrorNotification,
