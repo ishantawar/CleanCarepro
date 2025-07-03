@@ -59,7 +59,13 @@ const authLimiter = rateLimit({
   },
 });
 
-app.use(generalLimiter);
+// Apply rate limiting only to API endpoints
+if (productionConfig.isProduction()) {
+  app.use(generalLimiter);
+} else {
+  // In development, only rate limit API endpoints
+  app.use("/api", generalLimiter);
+}
 app.use("/api/auth", authLimiter);
 
 // Middleware to add cache control headers for iOS
