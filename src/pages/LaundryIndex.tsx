@@ -421,11 +421,24 @@ const LaundryIndex = () => {
 
       const bookingService = BookingService.getInstance();
 
-      // Prepare services array for MongoDB
+      // Prepare services array for MongoDB with quantities
       const servicesArray =
-        cartData.services?.map((service: any) =>
-          typeof service === "string" ? service : service.name,
-        ) || [];
+        cartData.services?.map((service: any) => {
+          if (typeof service === "string") {
+            return service;
+          }
+          return service.quantity > 1
+            ? `${service.name} x${service.quantity}`
+            : service.name;
+        }) || [];
+
+      // Prepare detailed services for confirmation
+      const detailedServices =
+        cartData.services?.map((service: any) => ({
+          name: typeof service === "string" ? service : service.name,
+          quantity: typeof service === "object" ? service.quantity || 1 : 1,
+          price: typeof service === "object" ? service.price || 0 : 0,
+        })) || [];
 
       // Create booking data for MongoDB backend
       const mongoBookingData = {
@@ -531,7 +544,7 @@ const LaundryIndex = () => {
         // Store booking data for confirmation screen
         const confirmationData = {
           bookingId: mongoResult.data._id || `local_${Date.now()}`,
-          services: servicesArray,
+          services: detailedServices, // Use detailed services with quantities
           totalAmount: cartData.totalAmount,
           pickupDate: cartData.pickupDate,
           pickupTime: cartData.pickupTime,
@@ -627,7 +640,7 @@ const LaundryIndex = () => {
           // Store booking data for confirmation screen
           const confirmationData = {
             bookingId: `local_${Date.now()}`,
-            services: servicesArray,
+            services: detailedServices, // Use detailed services with quantities
             totalAmount: cartData.totalAmount,
             pickupDate: cartData.pickupDate,
             pickupTime: cartData.pickupTime,
