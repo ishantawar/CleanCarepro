@@ -201,11 +201,12 @@ const getReverseGeocodedLocation = async (
 const LaundryIndex = () => {
   const { addNotification } = useNotifications();
   const [currentView, setCurrentView] = useState<
-    "home" | "cart" | "bookings" | "auth"
+    "home" | "cart" | "bookings" | "auth" | "booking-confirmed"
   >("home");
   const [previousView, setPreviousView] = useState<
     "home" | "cart" | "bookings"
   >("home");
+  const [lastBookingData, setLastBookingData] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [currentLocation, setCurrentLocation] = useState<string>("");
