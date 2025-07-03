@@ -520,7 +520,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
               updateMapLocation(geocodeResult.coordinates);
 
               // Fetch nearby places for geocoded location
-              await fetchNearbyPlaces(geocodeResult.coordinates);
+              fetchNearbyPlaces(geocodeResult.coordinates);
             })
             .catch((geocodeError) => {
               console.error("Geocoding fallback failed:", geocodeError);
