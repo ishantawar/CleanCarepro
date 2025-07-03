@@ -183,6 +183,15 @@ try {
   console.error("❌ Failed to load Address routes:", error.message);
 }
 
+// Google Sheets routes
+try {
+  const googleSheetsRoutes = require("./routes/google-sheets");
+  app.use("/api/sheets", googleSheetsRoutes);
+  console.log("🔗 Google Sheets routes registered at /api/sheets");
+} catch (error) {
+  console.error("❌ Failed to load Google Sheets routes:", error.message);
+}
+
 // Google Sheets integration endpoint
 app.post("/api/sheets/order", async (req, res) => {
   try {
