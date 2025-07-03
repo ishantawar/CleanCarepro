@@ -292,6 +292,11 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
               "Your booking has been cancelled successfully",
             ),
           );
+
+          // Force reload bookings from backend to ensure consistency
+          setTimeout(() => {
+            loadBookings();
+          }, 1000);
         } else {
           // Show a more user-friendly error message
           const errorMessage =
