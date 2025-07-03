@@ -854,29 +854,6 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                   </p>
                 </div>
               </div>
-
-              {/* Manual Address Edit Box */}
-              <div className="mt-3">
-                <Label
-                  htmlFor="manual-address"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Or edit address manually
-                </Label>
-                <Textarea
-                  id="manual-address"
-                  placeholder="Type the complete address..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setSelectedLocation({
-                      ...selectedLocation,
-                      address: e.target.value,
-                    });
-                  }}
-                  className="mt-2 min-h-[60px] resize-none text-sm"
-                />
-              </div>
             </div>
           )}
 
