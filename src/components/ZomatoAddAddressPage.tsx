@@ -474,7 +474,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       updateMapLocation(coordinates);
 
       // Fetch nearby places for mock location
-      await fetchNearbyPlaces(coordinates);
+      fetchNearbyPlaces(coordinates);
       return;
     }
 
