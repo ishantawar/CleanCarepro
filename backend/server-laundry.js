@@ -424,7 +424,7 @@ if (productionConfig.isDevelopment()) {
       success: true,
       message: "CleanCare Pro API Server",
       environment: "development",
-      frontend: "http://localhost:8080",
+      frontend: "http://localhost:10000",
       api: "http://localhost:3001/api",
       availableRoutes: [
         "/api/health",
