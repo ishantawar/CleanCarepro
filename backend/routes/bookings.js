@@ -323,6 +323,17 @@ router.post("/", async (req, res) => {
       scheduled_time,
       provider_name,
       address: sanitizedAddress, // Use sanitized string address
+      address_details: addressObject
+        ? {
+            flatNo: addressObject.flatNo,
+            street: addressObject.street,
+            landmark: addressObject.landmark,
+            village: addressObject.village,
+            city: addressObject.city,
+            pincode: addressObject.pincode,
+            type: addressObject.type || "other",
+          }
+        : undefined,
       coordinates:
         (addressObject && addressObject.coordinates) || coordinates || {},
       additional_details,
