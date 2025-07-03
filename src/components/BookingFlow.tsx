@@ -270,7 +270,12 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
         bookingData={{
           services: isMultipleServices
             ? services
-            : [{ name: provider?.name, price: provider?.price }],
+            : [
+                {
+                  name: provider?.name || "Service",
+                  price: provider?.price || 80,
+                },
+              ],
           selectedDate: selectedDate!,
           selectedTime,
           selectedAddress,
@@ -619,14 +624,14 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
               )}
 
               <Button
-                onClick={handleBookService}
-                disabled={isProcessing}
+                onClick={() => setShowConfirmation(true)}
+                disabled={
+                  !selectedDate || !selectedTime || !selectedAddress.trim()
+                }
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
                 size="lg"
               >
-                {isProcessing
-                  ? "Processing..."
-                  : `Confirm Booking - $${calculateFinalAmount()}`}
+                Review Booking - ${calculateFinalAmount()}
               </Button>
 
               <p className="text-xs text-gray-500 text-center">
