@@ -410,6 +410,10 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
               initialAddress={editingAddress}
               onAddressUpdate={handleEditAddress}
               showLabel={true}
+              availableTypes={getAvailableTypes().map((type) => ({
+                ...type,
+                disabled: type.value !== editingAddress.type && type.disabled,
+              }))}
             />
           )}
         </DialogContent>
