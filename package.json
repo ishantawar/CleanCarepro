@@ -14,11 +14,11 @@
     "preview": "vite preview",
     "start": "npm run start:prod",
     "start:prod": "npm run build && cd backend && NODE_ENV=production node server-laundry.js",
-    "start:backend": "cd backend && NODE_ENV=production node server-laundry.js",
+    "start:backend": "NODE_ENV=production node backend/server-laundry.js",
     "start:frontend": "npx serve -s dist -p 8080",
     "deploy": "chmod +x deploy.sh && ./deploy.sh",
     "render:build": "npm install && npm run build && cd backend && npm install --production && echo 'Build completed successfully'",
-    "render:start": "cd backend && NODE_ENV=production node server-laundry.js",
+    "render:start": "NODE_ENV=production node backend/server-laundry.js",
     "install:all": "npm install && cd backend && npm install",
     "build:production": "npm run install:all && npm run build"
   },
