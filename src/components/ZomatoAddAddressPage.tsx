@@ -80,6 +80,27 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     }
   }, [isOpen]);
 
+  // Handle clicking outside suggestions to close them
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        searchInputRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    if (showSuggestions) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showSuggestions]);
+
   const initializeMap = async () => {
     try {
       const loader = new Loader({
