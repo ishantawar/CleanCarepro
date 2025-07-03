@@ -927,16 +927,23 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
             </div>
             <div className="hidden lg:block">
               <div className="grid grid-cols-2 gap-4">
-                {laundryServices.slice(0, 4).map((category) => (
-                  <div
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center cursor-pointer hover:bg-white/20 transition-all duration-200 hover:scale-105 active:scale-95"
-                  >
-                    <span className="text-3xl block mb-2">{category.icon}</span>
-                    <span className="text-sm font-medium">{category.name}</span>
-                  </div>
-                ))}
+                {(useStaticFallback ? laundryServices : dynamicServices)
+                  .filter((category) => category.enabled !== false)
+                  .slice(0, 4)
+                  .map((category) => (
+                    <div
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center cursor-pointer hover:bg-white/20 transition-all duration-200 hover:scale-105 active:scale-95"
+                    >
+                      <span className="text-3xl block mb-2">
+                        {category.icon}
+                      </span>
+                      <span className="text-sm font-medium">
+                        {category.name}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -971,23 +978,25 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
               All Services
             </Button>
 
-            {laundryServices.map((category) => (
-              <Button
-                key={category.id}
-                variant={
-                  selectedCategory === category.id ? "default" : "outline"
-                }
-                onClick={() => setSelectedCategory(category.id)}
-                className={`flex-shrink-0 rounded-xl ${
-                  selectedCategory === category.id
-                    ? "bg-green-600 text-white"
-                    : "hover:bg-green-50 hover:border-green-200"
-                }`}
-              >
-                <span className="mr-2">{category.icon}</span>
-                {category.name}
-              </Button>
-            ))}
+            {(useStaticFallback ? laundryServices : dynamicServices)
+              .filter((category) => category.enabled !== false)
+              .map((category) => (
+                <Button
+                  key={category.id}
+                  variant={
+                    selectedCategory === category.id ? "default" : "outline"
+                  }
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex-shrink-0 rounded-xl ${
+                    selectedCategory === category.id
+                      ? "bg-green-600 text-white"
+                      : "hover:bg-green-50 hover:border-green-200"
+                  }`}
+                >
+                  <span className="mr-2">{category.icon}</span>
+                  {category.name}
+                </Button>
+              ))}
           </div>
         </div>
 
