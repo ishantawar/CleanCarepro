@@ -328,7 +328,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
           // Force reload bookings from backend to ensure consistency
           setTimeout(() => {
-            loadBookings();
+            loadBookings(true);
           }, 1000);
         } else {
           // Show a more user-friendly error message
@@ -429,7 +429,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
           // Force reload bookings from backend to ensure consistency
           setTimeout(() => {
-            loadBookings();
+            loadBookings(true);
           }, 1000);
         } else {
           addNotification(
