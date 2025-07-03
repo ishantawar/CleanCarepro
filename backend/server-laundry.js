@@ -372,6 +372,8 @@ app.use("*", (req, res) => {
       "/api/location",
       "/api/whatsapp",
       "/api/sheets/order",
+      "/api/sheets/test",
+      "/api/sheets/sync",
     ],
   });
 });
