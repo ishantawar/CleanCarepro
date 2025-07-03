@@ -470,7 +470,7 @@ const LaundryIndex = () => {
       // Save to MongoDB backend first
       console.log("💾 Saving to MongoDB backend...");
       console.log(
-        "📤 MongoDB booking data:",
+        "�� MongoDB booking data:",
         JSON.stringify(mongoBookingData, null, 2),
       );
       const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
@@ -481,7 +481,7 @@ const LaundryIndex = () => {
           mongoResult.data._id || "unknown_id",
         );
 
-        // Also save to Google Sheets
+        // Also save to Google Sheets (with graceful error handling)
         try {
           const GoogleSheetsService = (
             await import("../services/googleSheetsService")
@@ -508,14 +508,16 @@ const LaundryIndex = () => {
           const sheetsResult = await sheetsService.saveOrderToSheet(orderData);
 
           if (sheetsResult) {
-            console.log("📊 Order data successfully sent to Google Sheets");
-          } else {
             console.log(
-              "📊 Order data saved locally for later sync to Google Sheets",
+              "📊 Order data successfully processed for Google Sheets",
             );
           }
         } catch (sheetsError) {
-          console.error("❌ Failed to save to Google Sheets:", sheetsError);
+          console.warn(
+            "⚠️ Google Sheets save failed (non-critical):",
+            sheetsError.message,
+          );
+          // Don't fail the entire booking process for sheets issues
         }
 
         // Also save using booking service for local storage backup
@@ -633,11 +635,11 @@ const LaundryIndex = () => {
 
             const sheetsResult =
               await sheetsService.saveOrderToSheet(orderData);
-            console.log("📊 Fallback Google Sheets save result:", sheetsResult);
+            console.log("📊 Fallback Google Sheets processed:", sheetsResult);
           } catch (sheetsError) {
-            console.error(
-              "❌ Failed to save to Google Sheets (fallback):",
-              sheetsError,
+            console.warn(
+              "⚠️ Google Sheets fallback failed (non-critical):",
+              sheetsError.message,
             );
           }
 
