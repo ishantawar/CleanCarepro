@@ -3,6 +3,7 @@ import ResponsiveLaundryHome from "../components/ResponsiveLaundryHome";
 import LaundryCart from "../components/LaundryCart";
 import EnhancedBookingHistory from "@/components/EnhancedBookingHistory";
 import PhoneOtpAuthModal from "@/components/PhoneOtpAuthModal";
+import BookingConfirmed from "@/components/BookingConfirmed";
 import { DVHostingSmsService } from "../services/dvhostingSmsService";
 import PushNotificationService from "../services/pushNotificationService";
 import { useNotifications } from "@/contexts/NotificationContext";
