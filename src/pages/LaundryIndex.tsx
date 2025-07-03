@@ -701,7 +701,7 @@ const LaundryIndex = () => {
               // Store booking data for confirmation screen
               const confirmationData = {
                 bookingId: `backup_${Date.now()}`,
-                services: servicesArray,
+                services: detailedServices, // Use detailed services with quantities
                 totalAmount: cartData.totalAmount,
                 pickupDate: cartData.pickupDate,
                 pickupTime: cartData.pickupTime,
