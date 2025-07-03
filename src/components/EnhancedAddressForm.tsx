@@ -603,7 +603,13 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
             {
               input: searchValue,
               componentRestrictions: { country: "in" },
-              types: ["address", "establishment", "geocode"],
+              types: [
+                "address",
+                "establishment",
+                "geocode",
+                "locality",
+                "sublocality",
+              ],
             },
             async (predictions, status) => {
               if (searchComplete) return; // Prevent duplicate calls

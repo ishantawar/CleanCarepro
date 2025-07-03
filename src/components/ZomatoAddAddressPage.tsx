@@ -372,8 +372,14 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       const request: google.maps.places.AutocompletionRequest = {
         input: query,
         componentRestrictions: { country: "in" }, // Restrict to India
-        types: ["address", "establishment", "geocode"],
-        fields: ["place_id", "description", "structured_formatting"],
+        types: [
+          "address",
+          "establishment",
+          "geocode",
+          "locality",
+          "sublocality",
+        ],
+        fields: ["place_id", "description", "structured_formatting", "types"],
       };
 
       autocompleteService.getPlacePredictions(
