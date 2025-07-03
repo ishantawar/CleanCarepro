@@ -493,17 +493,16 @@ export class BookingService {
   }
 
   /**
-   * Sync booking to backend in background
+   * Sync booking to backend - now throws errors for better error handling
    */
   private async syncBookingToBackend(booking: BookingDetails): Promise<void> {
-    try {
-      // Skip backend sync if no API URL configured (fly.dev environment)
-      if (!this.apiBaseUrl) {
-        console.log(
-          "🌐 Skipping backend sync - no API URL configured (hosted environment)",
-        );
-        return;
-      }
+    // Skip backend sync if no API URL configured (fly.dev environment)
+    if (!this.apiBaseUrl) {
+      console.log(
+        "🌐 Skipping backend sync - no API URL configured (hosted environment)",
+      );
+      return;
+    }
 
       console.log("🔄 Syncing booking to backend:", booking.id);
 
@@ -808,7 +807,7 @@ export class BookingService {
           currentUser.id ||
           (currentUser.phone ? `user_${currentUser.phone}` : null);
 
-        console.log("���� Syncing booking update to backend:", {
+        console.log("🔄 Syncing booking update to backend:", {
           bookingId,
           status: updates.status,
           userId,
