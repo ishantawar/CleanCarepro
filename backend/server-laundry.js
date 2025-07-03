@@ -116,6 +116,15 @@ const connectDB = async () => {
 // Connect to database
 connectDB();
 
+// Initialize Google Sheets service
+const GoogleSheetsService = require('./services/googleSheetsService');
+const sheetsService = new GoogleSheetsService();
+
+// Initialize Google Sheets after MongoDB connection
+mongoose.connection.once('connected', async () => {
+  await sheetsService.initialize();
+});
+
 // Import routes with error handling
 let otpAuthRoutes, bookingRoutes, locationRoutes;
 
@@ -388,6 +397,11 @@ const gracefulShutdown = (signal) => {
     }
 
     console.log("✅ HTTP server closed");
+
+    // Cleanup Google Sheets service
+    if (sheetsService) {
+      await sheetsService.cleanup();
+    }
 
     // Close database connection
     mongoose.connection.close(false, (err) => {
