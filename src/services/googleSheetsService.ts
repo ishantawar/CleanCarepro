@@ -104,25 +104,59 @@ class GoogleSheetsService {
         },
       };
 
-      console.log("📊 Sending order data to Google Sheets:", sheetData);
+      console.log(
+        "📊 Sending order data to Google Sheets via backend:",
+        sheetData,
+      );
 
-      // Send to Google Apps Script with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Send via backend API to avoid CORS issues
+      try {
+        const response = await fetch("/api/sheets/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(sheetData),
+        });
 
-      const response = await fetch(this.config.webAppUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(sheetData),
-        signal: controller.signal,
-      });
+        if (!response.ok) {
+          throw new Error(`Backend Sheets API error: ${response.status}`);
+        }
 
-      clearTimeout(timeoutId);
+        const result = await response.json();
 
-      console.log("📊 Order data sent to Google Sheets:", orderId);
-      return true;
+        if (result.success) {
+          console.log(
+            "✅ Order data successfully saved to Google Sheets via backend:",
+            orderId,
+          );
+          return true;
+        } else {
+          throw new Error(result.error || "Backend response indicates failure");
+        }
+      } catch (backendError) {
+        console.error(
+          "❌ Backend API failed, falling back to direct call:",
+          backendError,
+        );
+
+        // Fallback to direct call if backend is unavailable
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(this.config.webAppUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(sheetData),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        console.log("📊 Order data sent directly to Google Sheets:", orderId);
+        return true;
+      }
     } catch (error) {
       console.error("❌ Failed to save to Google Sheets:", error);
 
