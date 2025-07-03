@@ -42,6 +42,19 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: [true, "Address is required"],
     },
+    address_details: {
+      flatNo: String,
+      street: String,
+      landmark: String,
+      village: String,
+      city: String,
+      pincode: String,
+      type: {
+        type: String,
+        enum: ["home", "office", "other"],
+        default: "other",
+      },
+    },
     coordinates: {
       lat: {
         type: Number,
