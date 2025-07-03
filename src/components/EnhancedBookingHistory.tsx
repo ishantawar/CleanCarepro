@@ -183,7 +183,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
         // Clear local cache first
         localStorage.removeItem("user_bookings");
 
-        await loadBookings();
+        await loadBookings(true);
         addNotification(
           createSuccessNotification(
             "Refreshed",
