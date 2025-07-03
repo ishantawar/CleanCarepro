@@ -23,6 +23,7 @@ import {
   Calendar,
   Loader2,
   CreditCard,
+  Home,
 } from "lucide-react";
 import { laundryServices, LaundryService } from "@/data/laundryServices";
 import { OTPAuthService } from "@/services/otpAuthService";
@@ -654,32 +655,66 @@ Confirm this booking?`;
           </CardContent>
         </Card>
 
-        {/* Enhanced Address Form - Compact */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-1 px-3 py-1">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <MapPin className="h-3 w-3" />
-                Address
-              </CardTitle>
-              {currentUser && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSavedAddresses(true)}
-                  className="h-6 px-2 text-xs"
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Saved
+        {/* Zomato-style Address Section */}
+        <Card className="shadow-sm border-0">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Home className="h-4 w-4 text-gray-600" />
+                <span className="font-medium">
+                  Delivery at{" "}
+                  {addressData?.type === "home"
+                    ? "Home"
+                    : addressData?.type === "office"
+                      ? "Office"
+                      : "Location"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {currentUser && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSavedAddresses(true)}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Saved
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" className="text-green-600">
+                  <ArrowLeft className="h-4 w-4 rotate-180" />
                 </Button>
-              )}
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0">
-            <EnhancedAddressForm
-              onAddressChange={setAddressData}
-              initialAddress={addressData}
-            />
+
+            {addressData && addressData.fullAddress ? (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  {addressData.flatNo && `${addressData.flatNo}, `}
+                  {addressData.fullAddress}
+                </p>
+                <p
+                  className="text-sm text-green-600 font-medium cursor-pointer"
+                  onClick={() => setAddressData(null)}
+                >
+                  Change address
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <EnhancedAddressForm
+                  onAddressChange={setAddressData}
+                  initialAddress={addressData}
+                />
+              </div>
+            )}
+
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-sm text-green-600">
+                Add instructions for delivery partner
+              </p>
+            </div>
           </CardContent>
         </Card>
 
