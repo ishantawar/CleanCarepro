@@ -65,13 +65,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      // Initialize with user data
-      if (currentUser) {
-        setReceiverName(currentUser.name || currentUser.full_name || "");
-        setReceiverPhone(currentUser.phone || "");
-      }
-
-      // If editing an address, populate the form
+      // Only populate if editing an existing address
       if (editingAddress) {
         setSearchQuery(editingAddress.fullAddress);
         setSelectedLocation({
@@ -80,11 +74,19 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         });
         setAdditionalDetails(editingAddress.flatNo || "");
         setAddressType(editingAddress.type);
-        setReceiverName(editingAddress.name || currentUser?.name || "");
-        setReceiverPhone(editingAddress.phone || currentUser?.phone || "");
+        setReceiverName(editingAddress.name || "");
+        setReceiverPhone(editingAddress.phone || "");
+      } else {
+        // Clear all fields for new address
+        setSearchQuery("");
+        setSelectedLocation(null);
+        setAdditionalDetails("");
+        setAddressType("home");
+        setReceiverName("");
+        setReceiverPhone("");
       }
     }
-  }, [isOpen, currentUser, editingAddress]);
+  }, [isOpen, editingAddress]);
 
   const handleCurrentLocation = async () => {
     setIsDetectingLocation(true);

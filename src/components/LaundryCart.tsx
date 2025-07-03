@@ -776,12 +776,6 @@ Confirm this booking?`;
                     </>
                   )}
                 </p>
-                <p
-                  className="text-sm text-green-600 font-medium cursor-pointer"
-                  onClick={() => setShowZomatoAddressSelector(true)}
-                >
-                  Change address
-                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -798,12 +792,6 @@ Confirm this booking?`;
                 </Button>
               </div>
             )}
-
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-sm text-green-600">
-                Add instructions for delivery partner
-              </p>
-            </div>
           </CardContent>
         </Card>
 
