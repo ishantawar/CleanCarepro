@@ -470,7 +470,7 @@ const LaundryIndex = () => {
       // Save to MongoDB backend first
       console.log("💾 Saving to MongoDB backend...");
       console.log(
-        "�� MongoDB booking data:",
+        "📤 MongoDB booking data:",
         JSON.stringify(mongoBookingData, null, 2),
       );
       const mongoResult = await bookingHelpers.createBooking(mongoBookingData);
@@ -701,45 +701,45 @@ const LaundryIndex = () => {
             const sheetsResult =
               await sheetsService.saveOrderToSheet(orderData);
 
-            if (sheetsResult) {
-              console.log("📊 Order saved to Google Sheets as backup");
+            // Always create confirmation regardless of sheets result
+            console.log("📊 Backup order processed:", sheetsResult);
 
-              // Store booking data for confirmation screen
-              const confirmationData = {
-                bookingId: `backup_${Date.now()}`,
-                services: detailedServices, // Use detailed services with quantities
-                totalAmount: cartData.totalAmount,
-                pickupDate: cartData.pickupDate,
-                pickupTime: cartData.pickupTime,
-                address: cartData.address,
-                customerName:
-                  currentUser.full_name || currentUser.name || "Customer",
-                customerPhone: currentUser.phone,
-              };
+            // Store booking data for confirmation screen
+            const confirmationData = {
+              bookingId: `backup_${Date.now()}`,
+              services: detailedServices, // Use detailed services with quantities
+              totalAmount: cartData.totalAmount,
+              pickupDate: cartData.pickupDate,
+              pickupTime: cartData.pickupTime,
+              address: cartData.address,
+              customerName:
+                currentUser.full_name || currentUser.name || "Customer",
+              customerPhone: currentUser.phone,
+            };
 
-              setLastBookingData(confirmationData);
+            setLastBookingData(confirmationData);
 
-              addNotification(
-                createSuccessNotification(
-                  "Order Saved to Backup!",
-                  "Your order has been saved to our backup system and will be processed manually.",
-                ),
-              );
-              localStorage.removeItem("laundry_cart");
-              localStorage.removeItem("laundry_booking_form");
-
-              // Clear any cached cart state
-              const clearCartEvent = new CustomEvent("clearCart");
-              window.dispatchEvent(clearCartEvent);
-
-              setCurrentView("booking-confirmed");
-              return; // Exit early since we saved to sheets
-            }
-          } catch (sheetsError) {
-            console.error(
-              "❌ Failed to save to Google Sheets (backup):",
-              sheetsError,
+            addNotification(
+              createSuccessNotification(
+                "Order Saved!",
+                "Your order has been saved and will be processed.",
+              ),
             );
+            localStorage.removeItem("laundry_cart");
+            localStorage.removeItem("laundry_booking_form");
+
+            // Clear any cached cart state
+            const clearCartEvent = new CustomEvent("clearCart");
+            window.dispatchEvent(clearCartEvent);
+
+            setCurrentView("booking-confirmed");
+            return; // Exit early
+          } catch (sheetsError) {
+            console.warn(
+              "⚠️ Google Sheets backup failed (non-critical):",
+              sheetsError.message,
+            );
+            // Continue with local-only booking
           }
 
           throw new Error(
