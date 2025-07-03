@@ -124,6 +124,14 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  // Dynamic services state
+  const [dynamicServices, setDynamicServices] = useState<
+    DynamicServiceCategory[]
+  >([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [useStaticFallback, setUseStaticFallback] = useState(false);
+  const dynamicServicesService = DynamicServicesService.getInstance();
+
   // Save cart to localStorage whenever it changes
   useEffect(() => {
     if (Object.keys(cart).length > 0) {
@@ -170,6 +178,34 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
     if (savedCart) {
       setCart(JSON.parse(savedCart));
     }
+  }, []);
+
+  // Load dynamic services
+  useEffect(() => {
+    const loadDynamicServices = async () => {
+      try {
+        setIsLoadingServices(true);
+        const services = await dynamicServicesService.getServices();
+        setDynamicServices(services);
+        setUseStaticFallback(false);
+        console.log(
+          "✅ Loaded dynamic services:",
+          services.length,
+          "categories",
+        );
+      } catch (error) {
+        console.warn(
+          "⚠️ Failed to load dynamic services, using static fallback:",
+          error,
+        );
+        setDynamicServices(laundryServices);
+        setUseStaticFallback(true);
+      } finally {
+        setIsLoadingServices(false);
+      }
+    };
+
+    loadDynamicServices();
   }, []);
 
   // Save cart to localStorage
