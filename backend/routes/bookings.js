@@ -322,8 +322,9 @@ router.post("/", async (req, res) => {
       scheduled_date,
       scheduled_time,
       provider_name,
-      address,
-      coordinates,
+      address: sanitizedAddress, // Use sanitized string address
+      coordinates:
+        (addressObject && addressObject.coordinates) || coordinates || {},
       additional_details,
       total_price,
       discount_amount: discount_amount || 0,
