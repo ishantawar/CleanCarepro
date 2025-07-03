@@ -90,7 +90,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
 
       const userId = currentUser._id || currentUser.id || currentUser.phone;
-      localStorage.setItem(addresses_${userId}, JSON.stringify(newAddresses));
+      localStorage.setItem(`addresses_${userId}`, JSON.stringify(newAddresses));
       setAddresses(newAddresses);
     };
 
