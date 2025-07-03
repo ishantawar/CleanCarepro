@@ -860,6 +860,24 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
             />
           </div>
 
+          {/* Address Type */}
+          <div>
+            <Label htmlFor="address-type" className="text-sm font-medium">
+              🏠 Address Type <span className="text-red-500">*</span>
+            </Label>
+            <select
+              id="address-type"
+              value={address.type || "other"}
+              onChange={(e) => handleFieldChange("type", e.target.value)}
+              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="home">🏠 Home</option>
+              <option value="office">🏢 Office</option>
+              <option value="other">📍 Other</option>
+            </select>
+          </div>
+
           {/* Address Label */}
           {showLabel && (
             <div>
