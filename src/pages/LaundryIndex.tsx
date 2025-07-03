@@ -310,8 +310,26 @@ const LaundryIndex = () => {
         }
       },
       (error) => {
-        console.error("Geolocation error:", error);
-        setCurrentLocation("Location access denied");
+        let errorMessage = "Location access denied";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location unavailable";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out";
+            break;
+          default:
+            errorMessage = "Unknown location error";
+        }
+        console.error("Geolocation error:", {
+          code: error.code,
+          message: error.message,
+          friendlyMessage: errorMessage,
+        });
+        setCurrentLocation(errorMessage);
       },
       {
         enableHighAccuracy: false,
