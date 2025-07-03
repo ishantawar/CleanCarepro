@@ -603,29 +603,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-sm text-gray-900 truncate">
-                            #{currentUser?.phone || currentUser?.name || "User"}
-                            {formatDate(
-                              booking.created_at ||
-                                booking.createdAt ||
-                                new Date().toISOString(),
-                            ).replace(/\s/g, "")}
-                            {booking.created_at || booking.createdAt
-                              ? new Date(
-                                  booking.created_at || booking.createdAt,
-                                )
-                                  .toLocaleTimeString("en-IN", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: false,
-                                  })
-                                  .replace(":", "")
-                              : new Date()
-                                  .toLocaleTimeString("en-IN", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: false,
-                                  })
-                                  .replace(":", "")}
+                            #CC{booking._id ? booking._id.slice(-6).toUpperCase() : (new Date(booking.created_at || booking.createdAt || Date.now()).getTime().toString().slice(-6))}
                           </h3>
                           <Badge
                             className={`${getStatusColor(booking.status)} text-xs px-1.5 py-0.5`}
@@ -682,26 +660,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
 
                         {/* Order placed time */}
                         <div className="text-xs text-gray-500 mt-1">
-                          Ordered:{" "}
-                          {formatDate(
-                            booking.created_at ||
-                              booking.createdAt ||
-                              new Date().toISOString(),
-                          )}{" "}
-                          at{" "}
-                          {booking.created_at || booking.createdAt
-                            ? new Date(
-                                booking.created_at || booking.createdAt,
-                              ).toLocaleTimeString("en-IN", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: true,
-                              })
-                            : new Date().toLocaleTimeString("en-IN", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: true,
-                              })}
+                          Ordered: {new Date(booking.created_at || booking.createdAt || Date.now()).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })} at {new Date(booking.created_at || booking.createdAt || Date.now()).toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -745,29 +712,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                           <div className="flex justify-between items-center text-xs">
                             <span className="text-gray-600">Order ID</span>
                             <span className="font-mono font-medium text-blue-600">
-                              #{currentUser?.phone || "User"}
-                              {formatDate(
-                                booking.created_at ||
-                                  booking.createdAt ||
-                                  new Date().toISOString(),
-                              ).replace(/\s/g, "")}
-                              {booking.created_at || booking.createdAt
-                                ? new Date(
-                                    booking.created_at || booking.createdAt,
-                                  )
-                                    .toLocaleTimeString("en-IN", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      hour12: false,
-                                    })
-                                    .replace(":", "")
-                                : new Date()
-                                    .toLocaleTimeString("en-IN", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      hour12: false,
-                                    })
-                                    .replace(":", "")}
+                              #CC{booking._id ? booking._id.slice(-6).toUpperCase() : (new Date(booking.created_at || booking.createdAt || Date.now()).getTime().toString().slice(-6))}
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">
@@ -790,13 +735,16 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> = ({
                               Order Placed Date
                             </span>
                             <span className="font-medium">
-                              {formatDate(
-                                booking.created_at ||
-                                  booking.createdAt ||
-                                  new Date().toISOString(),
-                              )}{" "}
-                              at{" "}
-                              {booking.created_at || booking.createdAt
+                              {new Date(booking.created_at || booking.createdAt || Date.now()).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              })} at {new Date(booking.created_at || booking.createdAt || Date.now()).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                            </span>
                                 ? new Date(
                                     booking.created_at || booking.createdAt,
                                   ).toLocaleTimeString("en-IN", {

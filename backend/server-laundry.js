@@ -23,7 +23,7 @@ try {
 }
 
 const app = express();
-const PORT = productionConfig.PORT;
+const PORT = process.env.PORT || productionConfig.PORT || 3001;
 
 // Security middleware
 app.use(
