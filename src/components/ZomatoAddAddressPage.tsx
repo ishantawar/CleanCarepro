@@ -246,19 +246,19 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
 
-    if (query.length < 3) {
+    if (query.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
     if (!autocompleteService) {
-      // Fallback to mock suggestions if Google Places API is not available
+      // Enhanced fallback to mock suggestions if Google Places API is not available
       const mockSuggestions = [
         {
-          description: `${query}, Delhi, India`,
+          description: `${query}, New Delhi, Delhi, India`,
           main_text: query,
-          secondary_text: "Delhi, India",
+          secondary_text: "New Delhi, Delhi, India",
           place_id: `mock_${query}_delhi`,
         },
         {
@@ -272,6 +272,18 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           main_text: query,
           secondary_text: "Noida, Uttar Pradesh, India",
           place_id: `mock_${query}_noida`,
+        },
+        {
+          description: `${query}, Mumbai, Maharashtra, India`,
+          main_text: query,
+          secondary_text: "Mumbai, Maharashtra, India",
+          place_id: `mock_${query}_mumbai`,
+        },
+        {
+          description: `${query}, Bangalore, Karnataka, India`,
+          main_text: query,
+          secondary_text: "Bangalore, Karnataka, India",
+          place_id: `mock_${query}_bangalore`,
         },
       ];
 
@@ -308,15 +320,39 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
             setSuggestions(formattedSuggestions);
             setShowSuggestions(true);
           } else {
-            setSuggestions([]);
-            setShowSuggestions(false);
+            // If Google API fails, show mock suggestions as fallback
+            const mockSuggestions = [
+              {
+                description: `${query}, New Delhi, Delhi, India`,
+                main_text: query,
+                secondary_text: "New Delhi, Delhi, India",
+                place_id: `mock_${query}_delhi`,
+              },
+              {
+                description: `${query}, Gurgaon, Haryana, India`,
+                main_text: query,
+                secondary_text: "Gurgaon, Haryana, India",
+                place_id: `mock_${query}_gurgaon`,
+              },
+            ];
+            setSuggestions(mockSuggestions);
+            setShowSuggestions(true);
           }
         },
       );
     } catch (error) {
       console.error("Google Places search failed:", error);
-      setSuggestions([]);
-      setShowSuggestions(false);
+      // Show fallback suggestions even when API fails
+      const mockSuggestions = [
+        {
+          description: `${query}, Delhi, India`,
+          main_text: query,
+          secondary_text: "Delhi, India",
+          place_id: `mock_${query}_delhi`,
+        },
+      ];
+      setSuggestions(mockSuggestions);
+      setShowSuggestions(true);
     }
   };
 
