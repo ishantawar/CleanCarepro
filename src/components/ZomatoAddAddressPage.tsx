@@ -140,12 +140,30 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       setAutocompleteService(autocompleteService);
       setIsMapLoading(false);
 
-      // Add click listener to map
+      // Add click listener to map for pin placement
       map.addListener("click", (event: google.maps.MapMouseEvent) => {
         if (event.latLng) {
           handleMapClick(event.latLng);
         }
       });
+
+      // Add default center marker for India
+      const defaultMarker = new google.maps.Marker({
+        position: defaultCenter,
+        map: map,
+        title: "Click anywhere on the map to select location",
+        icon: {
+          url: "data:image/svg+xml;charset=UTF-8,%3csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' fill='%23dc2626'/%3e%3ccircle cx='12' cy='10' r='3' fill='white'/%3e%3c/svg%3e",
+          scaledSize: new google.maps.Size(24, 24),
+          anchor: new google.maps.Point(12, 24),
+        },
+        animation: google.maps.Animation.BOUNCE,
+      });
+
+      // Remove default marker after 3 seconds
+      setTimeout(() => {
+        defaultMarker.setMap(null);
+      }, 3000);
     } catch (error) {
       console.error("Failed to initialize Google Maps:", error);
       setIsMapLoading(false);
@@ -171,16 +189,23 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           updateMapLocation(editingAddress.coordinates);
         }
       } else {
-        // Clear all fields for new address
+        // Clear all fields for new address and autofill from account
         setSearchQuery("");
         setSelectedLocation(null);
         setAdditionalDetails("");
         setAddressType("home");
-        setReceiverName("");
-        setReceiverPhone("");
+
+        // Autofill receiver details from current user account
+        if (currentUser) {
+          setReceiverName(currentUser.name || currentUser.full_name || "");
+          setReceiverPhone(currentUser.phone || "");
+        } else {
+          setReceiverName("");
+          setReceiverPhone("");
+        }
       }
     }
-  }, [isOpen, editingAddress, mapInstance]);
+  }, [isOpen, editingAddress, mapInstance, currentUser]);
 
   const updateMapLocation = useCallback(
     (coordinates: Coordinates) => {
@@ -194,28 +219,54 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         marker.setMap(null);
       }
 
-      // Add new marker
+      // Add new marker with enhanced visual feedback
       const newMarker = new google.maps.Marker({
         position: coordinates,
         map: mapInstance,
         draggable: true,
         animation: google.maps.Animation.DROP,
+        title: "Drag to adjust location or click map to move pin",
         icon: {
-          url: "data:image/svg+xml;charset=UTF-8,%3csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' fill='%2316a34a'/%3e%3ccircle cx='12' cy='10' r='3' fill='white'/%3e%3c/svg%3e",
-          scaledSize: new google.maps.Size(30, 30),
-          anchor: new google.maps.Point(15, 30),
+          url: "data:image/svg+xml;charset=UTF-8,%3csvg width='32' height='32' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' fill='%2316a34a' stroke='%23ffffff' stroke-width='1'/%3e%3ccircle cx='12' cy='10' r='3' fill='white'/%3e%3c/svg%3e",
+          scaledSize: new google.maps.Size(32, 32),
+          anchor: new google.maps.Point(16, 32),
         },
       });
 
-      // Add drag listener
+      // Add drag start listener for visual feedback
+      newMarker.addListener("dragstart", () => {
+        newMarker.setIcon({
+          url: "data:image/svg+xml;charset=UTF-8,%3csvg width='32' height='32' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' fill='%23059669' stroke='%23ffffff' stroke-width='2'/%3e%3ccircle cx='12' cy='10' r='3' fill='white'/%3e%3c/svg%3e",
+          scaledSize: new google.maps.Size(36, 36),
+          anchor: new google.maps.Point(18, 36),
+        });
+      });
+
+      // Add drag end listener with address update
       newMarker.addListener(
         "dragend",
         async (event: google.maps.MapMouseEvent) => {
           if (event.latLng) {
+            // Reset marker icon
+            newMarker.setIcon({
+              url: "data:image/svg+xml;charset=UTF-8,%3csvg width='32' height='32' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z' fill='%2316a34a' stroke='%23ffffff' stroke-width='1'/%3e%3ccircle cx='12' cy='10' r='3' fill='white'/%3e%3c/svg%3e",
+              scaledSize: new google.maps.Size(32, 32),
+              anchor: new google.maps.Point(16, 32),
+            });
+
+            // Update address
             await handleMapClick(event.latLng);
           }
         },
       );
+
+      // Add bounce animation on click
+      newMarker.addListener("click", () => {
+        newMarker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(() => {
+          newMarker.setAnimation(null);
+        }, 700);
+      });
 
       setMarker(newMarker);
     },
@@ -328,112 +379,149 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       return;
     }
 
-    if (!autocompleteService) {
-      // Enhanced fallback to mock suggestions if Google Places API is not available
-      const mockSuggestions = [
-        {
-          description: `${query}, New Delhi, Delhi, India`,
-          main_text: query,
-          secondary_text: "New Delhi, Delhi, India",
-          place_id: `mock_${query}_delhi`,
-        },
-        {
-          description: `${query}, Gurgaon, Haryana, India`,
-          main_text: query,
-          secondary_text: "Gurgaon, Haryana, India",
-          place_id: `mock_${query}_gurgaon`,
-        },
-        {
-          description: `${query}, Noida, Uttar Pradesh, India`,
-          main_text: query,
-          secondary_text: "Noida, Uttar Pradesh, India",
-          place_id: `mock_${query}_noida`,
-        },
-        {
-          description: `${query}, Mumbai, Maharashtra, India`,
-          main_text: query,
-          secondary_text: "Mumbai, Maharashtra, India",
-          place_id: `mock_${query}_mumbai`,
-        },
-        {
-          description: `${query}, Bangalore, Karnataka, India`,
-          main_text: query,
-          secondary_text: "Bangalore, Karnataka, India",
-          place_id: `mock_${query}_bangalore`,
-        },
-      ];
-
-      setSuggestions(mockSuggestions);
-      setShowSuggestions(true);
-      return;
-    }
-
+    // Try multiple search methods for better suggestions
     try {
-      const request: google.maps.places.AutocompletionRequest = {
-        input: query,
-        componentRestrictions: { country: "in" }, // Restrict to India
-        types: [
-          "address",
-          "establishment",
-          "geocode",
-          "locality",
-          "sublocality",
-        ],
-        fields: ["place_id", "description", "structured_formatting", "types"],
-      };
+      let suggestions = [];
 
-      autocompleteService.getPlacePredictions(
-        request,
-        (predictions, status) => {
-          if (
-            status === google.maps.places.PlacesServiceStatus.OK &&
-            predictions
-          ) {
-            const formattedSuggestions = predictions.map((prediction) => ({
-              description: prediction.description,
-              main_text:
-                prediction.structured_formatting?.main_text ||
-                prediction.description,
-              secondary_text:
-                prediction.structured_formatting?.secondary_text || "",
-              place_id: prediction.place_id,
+      // Method 1: Google Places API (primary)
+      if (autocompleteService) {
+        try {
+          const request: google.maps.places.AutocompletionRequest = {
+            input: query,
+            componentRestrictions: { country: "in" },
+            types: [
+              "address",
+              "establishment",
+              "geocode",
+              "locality",
+              "sublocality",
+            ],
+            fields: [
+              "place_id",
+              "description",
+              "structured_formatting",
+              "types",
+            ],
+          };
+
+          const predictions = await new Promise<
+            google.maps.places.AutocompletePrediction[]
+          >((resolve, reject) => {
+            autocompleteService.getPlacePredictions(
+              request,
+              (predictions, status) => {
+                if (
+                  status === google.maps.places.PlacesServiceStatus.OK &&
+                  predictions
+                ) {
+                  resolve(predictions);
+                } else {
+                  reject(new Error(`Places API error: ${status}`));
+                }
+              },
+            );
+          });
+
+          suggestions = predictions.map((prediction) => ({
+            description: prediction.description,
+            main_text:
+              prediction.structured_formatting?.main_text ||
+              prediction.description,
+            secondary_text:
+              prediction.structured_formatting?.secondary_text || "",
+            place_id: prediction.place_id,
+            source: "google_places",
+          }));
+        } catch (placesError) {
+          console.warn(
+            "Google Places API failed, trying alternatives:",
+            placesError,
+          );
+        }
+      }
+
+      // Method 2: Nominatim API fallback with enhanced search
+      if (suggestions.length === 0) {
+        try {
+          const nominatimResponse = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, India&limit=8&addressdetails=1&countrycodes=in`,
+            {
+              headers: {
+                "User-Agent": "LaundryFlash-App/1.0",
+              },
+            },
+          );
+
+          const nominatimData = await nominatimResponse.json();
+
+          if (nominatimData && nominatimData.length > 0) {
+            suggestions = nominatimData.map((item: any, index: number) => ({
+              description: item.display_name,
+              main_text: item.name || item.display_name.split(",")[0],
+              secondary_text: item.display_name
+                .split(",")
+                .slice(1)
+                .join(",")
+                .trim(),
+              place_id: `nominatim_${item.osm_id || index}`,
+              coordinates: {
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon),
+              },
+              source: "nominatim",
             }));
-
-            setSuggestions(formattedSuggestions);
-            setShowSuggestions(true);
-          } else {
-            // If Google API fails, show mock suggestions as fallback
-            const mockSuggestions = [
-              {
-                description: `${query}, New Delhi, Delhi, India`,
-                main_text: query,
-                secondary_text: "New Delhi, Delhi, India",
-                place_id: `mock_${query}_delhi`,
-              },
-              {
-                description: `${query}, Gurgaon, Haryana, India`,
-                main_text: query,
-                secondary_text: "Gurgaon, Haryana, India",
-                place_id: `mock_${query}_gurgaon`,
-              },
-            ];
-            setSuggestions(mockSuggestions);
-            setShowSuggestions(true);
           }
-        },
-      );
+        } catch (nominatimError) {
+          console.warn("Nominatim API failed:", nominatimError);
+        }
+      }
+
+      // Method 3: Enhanced local suggestions with better city coverage
+      if (suggestions.length === 0) {
+        const indianCities = [
+          { name: "New Delhi", state: "Delhi" },
+          { name: "Gurgaon", state: "Haryana" },
+          { name: "Noida", state: "Uttar Pradesh" },
+          { name: "Mumbai", state: "Maharashtra" },
+          { name: "Bangalore", state: "Karnataka" },
+          { name: "Chennai", state: "Tamil Nadu" },
+          { name: "Hyderabad", state: "Telangana" },
+          { name: "Pune", state: "Maharashtra" },
+          { name: "Kolkata", state: "West Bengal" },
+          { name: "Ahmedabad", state: "Gujarat" },
+          { name: "Jaipur", state: "Rajasthan" },
+          { name: "Chandigarh", state: "Punjab" },
+        ];
+
+        suggestions = indianCities
+          .filter(
+            (city) =>
+              city.name.toLowerCase().includes(query.toLowerCase()) ||
+              query.toLowerCase().includes(city.name.toLowerCase()),
+          )
+          .map((city) => ({
+            description: `${query}, ${city.name}, ${city.state}, India`,
+            main_text: query,
+            secondary_text: `${city.name}, ${city.state}, India`,
+            place_id: `local_${query}_${city.name.toLowerCase()}`,
+            source: "local",
+          }));
+      }
+
+      setSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
     } catch (error) {
-      console.error("Google Places search failed:", error);
-      // Show fallback suggestions even when API fails
-      const mockSuggestions = [
+      console.error("All search methods failed:", error);
+      // Ultimate fallback
+      setSuggestions([
         {
-          description: `${query}, Delhi, India`,
+          description: `${query}, India`,
           main_text: query,
-          secondary_text: "Delhi, India",
-          place_id: `mock_${query}_delhi`,
+          secondary_text: "India",
+          place_id: `fallback_${query}`,
+          source: "fallback",
         },
-      ];
-      setSuggestions(mockSuggestions);
+      ]);
       setShowSuggestions(true);
     }
   };
@@ -662,10 +750,27 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           {/* Map Controls Overlay */}
           {!isMapLoading && (
             <>
-              {/* Search Info Tooltip - Hidden on mobile when too small */}
+              {/* Enhanced Map Instructions */}
               {!selectedLocation && (
-                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-3 py-2 rounded-lg text-xs max-w-xs text-center hidden sm:block">
-                  Search for an address or click on the map to select location
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-90 text-white px-4 py-2 rounded-lg text-xs max-w-sm text-center hidden sm:block">
+                  <div className="flex items-center gap-2 justify-center mb-1">
+                    <MapPin className="h-3 w-3" />
+                    <span>Pin Selection</span>
+                  </div>
+                  <p>
+                    Search for an address or click anywhere on the map to place
+                    a pin
+                  </p>
+                </div>
+              )}
+
+              {selectedLocation && (
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-600 bg-opacity-90 text-white px-4 py-2 rounded-lg text-xs max-w-sm text-center hidden sm:block">
+                  <div className="flex items-center gap-2 justify-center mb-1">
+                    <MapPin className="h-3 w-3" />
+                    <span>Location Selected</span>
+                  </div>
+                  <p>Drag the pin to adjust or click elsewhere to move</p>
                 </div>
               )}
 
@@ -710,12 +815,28 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
         {/* Form Section - Now fully scrollable */}
         <div className="bg-white p-4 space-y-6">
-          {/* Delivery Details */}
+          {/* Delivery Details with Edit Option */}
           {selectedLocation && (
             <div>
-              <h3 className="text-base font-medium text-gray-900 mb-3">
-                Delivery details
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-medium text-gray-900">
+                  Delivery details
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery(selectedLocation.address);
+                    setShowSuggestions(false);
+                    if (searchInputRef.current) {
+                      searchInputRef.current.focus();
+                    }
+                  }}
+                  className="text-green-600 hover:text-green-700 text-sm px-2 py-1"
+                >
+                  Edit
+                </Button>
+              </div>
               <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="bg-green-600 rounded-full p-1 mt-1 flex-shrink-0">
                   <MapPin className="h-3 w-3 text-white" />
@@ -732,6 +853,29 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                       .trim()}
                   </p>
                 </div>
+              </div>
+
+              {/* Manual Address Edit Box */}
+              <div className="mt-3">
+                <Label
+                  htmlFor="manual-address"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Or edit address manually
+                </Label>
+                <Textarea
+                  id="manual-address"
+                  placeholder="Type the complete address..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSelectedLocation({
+                      ...selectedLocation,
+                      address: e.target.value,
+                    });
+                  }}
+                  className="mt-2 min-h-[60px] resize-none text-sm"
+                />
               </div>
             </div>
           )}
