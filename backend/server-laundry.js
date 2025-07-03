@@ -199,6 +199,15 @@ try {
   console.error("❌ Failed to load Google Sheets routes:", error.message);
 }
 
+// Dynamic Services routes
+try {
+  const dynamicServicesRoutes = require("./routes/dynamic-services");
+  app.use("/api/services", dynamicServicesRoutes);
+  console.log("🔗 Dynamic Services routes registered at /api/services");
+} catch (error) {
+  console.error("❌ Failed to load Dynamic Services routes:", error.message);
+}
+
 // Google Sheets integration endpoint
 app.post("/api/sheets/order", async (req, res) => {
   try {
