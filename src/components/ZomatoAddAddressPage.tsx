@@ -506,7 +506,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           updateMapLocation(coordinates);
 
           // Fetch nearby places for selected location
-          await fetchNearbyPlaces(coordinates);
+          fetchNearbyPlaces(coordinates);
         } else {
           console.error("Failed to get place details:", status);
           // Fallback to geocoding
