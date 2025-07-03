@@ -549,7 +549,10 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
             {/* Search Suggestions */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              <div
+                ref={suggestionsRef}
+                className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+              >
                 {suggestions.map((suggestion, index) => (
                   <div
                     key={index}
