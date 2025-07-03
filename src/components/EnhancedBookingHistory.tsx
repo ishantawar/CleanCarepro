@@ -1173,6 +1173,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                     )}
                   </Card>
                 );
+              })}
             </div>
           )}
         </div>
