@@ -145,7 +145,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
 
       const newAddress: AddressData = {
         ...address,
-        id: addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)},
+        id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -216,7 +216,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                 <p className="text-sm text-gray-600">
                   {addresses.length === 0
                     ? "No saved addresses yet"
-                    : ${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}}
+                    : `${addresses.length} saved ${addresses.length === 1 ? "address" : "addresses"}`}
                 </p>
                 <Button
                   onClick={() => setShowAddForm(true)}
@@ -245,7 +245,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                                 {address.label}
                               </h4>
                               <span
-                                className={text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type || "other")}}
+                                className={`text-xs px-2 py-1 rounded-full border ${getAddressTypeColor(address.type || "other")}`}
                               >
                                 {address.type
                                   ? address.type.charAt(0).toUpperCase() +
