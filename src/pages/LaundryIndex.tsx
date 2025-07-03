@@ -683,6 +683,22 @@ const LaundryIndex = () => {
 
             if (sheetsResult) {
               console.log("📊 Order saved to Google Sheets as backup");
+
+              // Store booking data for confirmation screen
+              const confirmationData = {
+                bookingId: `backup_${Date.now()}`,
+                services: servicesArray,
+                totalAmount: cartData.totalAmount,
+                pickupDate: cartData.pickupDate,
+                pickupTime: cartData.pickupTime,
+                address: cartData.address,
+                customerName:
+                  currentUser.full_name || currentUser.name || "Customer",
+                customerPhone: currentUser.phone,
+              };
+
+              setLastBookingData(confirmationData);
+
               addNotification(
                 createSuccessNotification(
                   "Order Saved to Backup!",
@@ -696,9 +712,7 @@ const LaundryIndex = () => {
               const clearCartEvent = new CustomEvent("clearCart");
               window.dispatchEvent(clearCartEvent);
 
-              setTimeout(() => {
-                setCurrentView("bookings");
-              }, 2000);
+              setCurrentView("booking-confirmed");
               return; // Exit early since we saved to sheets
             }
           } catch (sheetsError) {
