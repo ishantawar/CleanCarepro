@@ -30,6 +30,7 @@ app.use(
   helmet({
     contentSecurityPolicy: false, // Disable for API
     crossOriginEmbedderPolicy: false,
+    frameguard: false, // Allow iframe display for development
   }),
 );
 
