@@ -525,10 +525,14 @@ const LaundryIndex = () => {
           totalAmount: cartData.totalAmount,
           status: "pending" as const,
           pickupDate: cartData.pickupDate,
-          deliveryDate: cartData.deliveryDate,
+          deliveryDate: cartData.deliveryDate || cartData.pickupDate,
           pickupTime: cartData.pickupTime,
-          deliveryTime: cartData.deliveryTime,
-          address: cartData.address,
+          deliveryTime: cartData.deliveryTime || cartData.pickupTime,
+          address:
+            typeof cartData.address === "string"
+              ? cartData.address
+              : cartData.address?.fullAddress ||
+                JSON.stringify(cartData.address),
           contactDetails: {
             phone: cartData.phone || currentUser.phone,
             name: currentUser.full_name || currentUser.name || "User",
