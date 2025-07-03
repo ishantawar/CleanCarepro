@@ -590,20 +590,20 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                   containerHeight={600}
                   className="space-y-3"
                   renderItem={(booking: any, index) => {
-                const bookingId =
-                  booking.id || booking._id || `booking_${index}`;
-                const services = Array.isArray(booking.services)
-                  ? booking.services
-                  : [booking.service || "Home Service"];
-                const total = calculateTotal(booking);
-                const hasRealId =
-                  !!(booking.id || booking._id) &&
-                  !bookingId.startsWith("booking_");
-                const isExpanded = expandedCard === bookingId;
+                    const bookingId =
+                      booking.id || booking._id || `booking_${index}`;
+                    const services = Array.isArray(booking.services)
+                      ? booking.services
+                      : [booking.service || "Home Service"];
+                    const total = calculateTotal(booking);
+                    const hasRealId =
+                      !!(booking.id || booking._id) &&
+                      !bookingId.startsWith("booking_");
+                    const isExpanded = expandedCard === bookingId;
 
-                const toggleExpand = () => {
-                  setExpandedCard(isExpanded ? null : bookingId);
-                };
+                    const toggleExpand = () => {
+                      setExpandedCard(isExpanded ? null : bookingId);
+                    };
 
                 return (
                   <Card
