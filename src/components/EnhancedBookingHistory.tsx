@@ -203,6 +203,18 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
       loadBookings();
     }, [currentUser]);
 
+    // Auto-refresh bookings every 30 seconds to catch new bookings
+    useEffect(() => {
+      if (!currentUser) return;
+
+      const interval = setInterval(() => {
+        console.log("🔄 Auto-refreshing bookings...");
+        loadBookings();
+      }, 30000); // Refresh every 30 seconds
+
+      return () => clearInterval(interval);
+    }, [currentUser]);
+
     const getStatusColor = (status: string) => {
       switch (status?.toLowerCase()) {
         case "pending":
