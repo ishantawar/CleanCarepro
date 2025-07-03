@@ -502,7 +502,7 @@ const ZomatoStyleCart: React.FC<ZomatoStyleCartProps> = ({
                 {addressData.fullAddress || "Address not specified"}
               </p>
             ) : (
-              <EnhancedAddressForm
+              <SimplifiedAddressForm
                 onAddressChange={setAddressData}
                 initialAddress={addressData}
               />
