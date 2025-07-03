@@ -68,7 +68,7 @@ class GoogleSheetsService {
   }
 
   /**
-   * Save order data to Google Sheets
+   * Save order data to Google Sheets via backend API
    */
   public async saveOrderToSheet(orderData: OrderData): Promise<boolean> {
     // Check if Google Sheets integration is enabled
