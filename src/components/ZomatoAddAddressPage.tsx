@@ -366,7 +366,25 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       suggestion.place_id.startsWith("mock_")
     ) {
       // Handle mock suggestions or when places service is not available
-      const coordinates = { lat: 28.6139, lng: 77.209 }; // Default Delhi coordinates
+      let coordinates = { lat: 28.6139, lng: 77.209 }; // Default Delhi coordinates
+
+      // Provide better coordinates based on city
+      if (suggestion.description.includes("Mumbai")) {
+        coordinates = { lat: 19.076, lng: 72.8777 };
+      } else if (suggestion.description.includes("Bangalore")) {
+        coordinates = { lat: 12.9716, lng: 77.5946 };
+      } else if (suggestion.description.includes("Gurgaon")) {
+        coordinates = { lat: 28.4595, lng: 77.0266 };
+      } else if (suggestion.description.includes("Noida")) {
+        coordinates = { lat: 28.5355, lng: 77.391 };
+      } else if (suggestion.description.includes("Chennai")) {
+        coordinates = { lat: 13.0827, lng: 80.2707 };
+      } else if (suggestion.description.includes("Hyderabad")) {
+        coordinates = { lat: 17.385, lng: 78.4867 };
+      } else if (suggestion.description.includes("Pune")) {
+        coordinates = { lat: 18.5204, lng: 73.8567 };
+      }
+
       setSelectedLocation({
         address: suggestion.description,
         coordinates,
