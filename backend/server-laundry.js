@@ -117,11 +117,11 @@ const connectDB = async () => {
 connectDB();
 
 // Initialize Google Sheets service
-const GoogleSheetsService = require('./services/googleSheetsService');
+const GoogleSheetsService = require("./services/googleSheetsService");
 const sheetsService = new GoogleSheetsService();
 
 // Initialize Google Sheets after MongoDB connection
-mongoose.connection.once('connected', async () => {
+mongoose.connection.once("connected", async () => {
   await sheetsService.initialize();
 });
 
@@ -387,10 +387,10 @@ const server = app.listen(PORT, () => {
 });
 
 // Graceful shutdown handling
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = async (signal) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
 
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       console.error("❌ Error during server shutdown:", err);
       process.exit(1);
