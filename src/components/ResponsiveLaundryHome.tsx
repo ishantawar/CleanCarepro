@@ -28,6 +28,11 @@ import {
   searchServices,
   LaundryService,
 } from "@/data/laundryServices";
+import DynamicServicesService from "@/services/dynamicServicesService";
+import type {
+  DynamicLaundryService,
+  DynamicServiceCategory,
+} from "@/services/dynamicServicesService";
 import PhoneOtpAuthModal from "./PhoneOtpAuthModal";
 import EnhancedBookingHistoryModal from "./EnhancedBookingHistoryModal";
 import UserMenuDropdown from "./UserMenuDropdown";
@@ -36,6 +41,7 @@ import BookingDebugPanel from "./BookingDebugPanel";
 import ConnectionStatus from "./ConnectionStatus";
 import NotificationPanel from "./NotificationPanel";
 import VoiceSearch from "./VoiceSearch";
+import AdminServicesManager from "./AdminServicesManager";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import { saveCartData, getCartData } from "@/utils/formPersistence";
 
@@ -60,6 +66,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showBookingDebugPanel, setShowBookingDebugPanel] = useState(false);
+  const [showAdminServices, setShowAdminServices] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const dvhostingSmsService = DVHostingSmsService.getInstance();
 
@@ -103,6 +110,11 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
         event.preventDefault();
         setShowDebugPanel(true);
       }
+      // Ctrl+Shift+A to open admin services manager
+      if (event.ctrlKey && event.shiftKey && event.key === "A") {
+        event.preventDefault();
+        setShowAdminServices(true);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -118,6 +130,14 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
   const [deliveryTime, setDeliveryTime] = useState("2-3 hours");
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Dynamic services state
+  const [dynamicServices, setDynamicServices] = useState<
+    DynamicServiceCategory[]
+  >([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [useStaticFallback, setUseStaticFallback] = useState(false);
+  const dynamicServicesService = DynamicServicesService.getInstance();
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -167,6 +187,34 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
     }
   }, []);
 
+  // Load dynamic services
+  useEffect(() => {
+    const loadDynamicServices = async () => {
+      try {
+        setIsLoadingServices(true);
+        const services = await dynamicServicesService.getServices();
+        setDynamicServices(services);
+        setUseStaticFallback(false);
+        console.log(
+          "✅ Loaded dynamic services:",
+          services.length,
+          "categories",
+        );
+      } catch (error) {
+        console.warn(
+          "⚠️ Failed to load dynamic services, using static fallback:",
+          error,
+        );
+        setDynamicServices(laundryServices);
+        setUseStaticFallback(true);
+      } finally {
+        setIsLoadingServices(false);
+      }
+    };
+
+    loadDynamicServices();
+  }, []);
+
   // Save cart to localStorage
   useEffect(() => {
     localStorage.setItem("laundry_cart", JSON.stringify(cart));
@@ -201,30 +249,83 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
 
   const getCartTotal = () => {
     return Object.entries(cart).reduce((total, [serviceId, count]) => {
-      const service = laundryServices
-        .flatMap((cat) => cat.services)
-        .find((s) => s.id === serviceId);
+      let service;
+      if (useStaticFallback) {
+        service = laundryServices
+          .flatMap((cat) => cat.services)
+          .find((s) => s.id === serviceId);
+      } else {
+        service = dynamicServices
+          .flatMap((cat) => cat.services)
+          .find((s) => s.id === serviceId);
+      }
       return total + (service ? service.price * count : 0);
     }, 0);
   };
 
-  const getFilteredServices = (): LaundryService[] => {
-    let services: LaundryService[] = [];
+  const getFilteredServices = (): (
+    | LaundryService
+    | DynamicLaundryService
+  )[] => {
+    if (isLoadingServices) return [];
+
+    let services: (LaundryService | DynamicLaundryService)[] = [];
 
     if (searchQuery) {
-      services = searchServices(searchQuery);
+      if (useStaticFallback) {
+        services = searchServices(searchQuery);
+      } else {
+        // Search in dynamic services
+        const searchTerm = searchQuery.toLowerCase();
+        services = dynamicServices.flatMap((category) =>
+          category.services.filter(
+            (service) =>
+              service.enabled !== false &&
+              (service.name.toLowerCase().includes(searchTerm) ||
+                service.category.toLowerCase().includes(searchTerm) ||
+                service.description?.toLowerCase().includes(searchTerm)),
+          ),
+        );
+      }
     } else if (selectedCategory === "all") {
-      services = getSortedServices();
+      if (useStaticFallback) {
+        services = getSortedServices();
+      } else {
+        // Get all services from dynamic categories
+        services = dynamicServices.flatMap((category) =>
+          category.services.filter((service) => service.enabled !== false),
+        );
+        // Sort: popular first, then alphabetically
+        services.sort((a, b) => {
+          if (a.popular && !b.popular) return -1;
+          if (!a.popular && b.popular) return 1;
+          return a.name.localeCompare(b.name);
+        });
+      }
     } else {
-      const category = laundryServices.find((c) => c.id === selectedCategory);
-      services = category
-        ? category.services.sort((a, b) => {
-            // Sort by popular first, then alphabetically
-            if (a.popular && !b.popular) return -1;
-            if (!a.popular && b.popular) return 1;
-            return a.name.localeCompare(b.name);
-          })
-        : [];
+      if (useStaticFallback) {
+        const category = laundryServices.find((c) => c.id === selectedCategory);
+        services = category
+          ? category.services.sort((a, b) => {
+              // Sort by popular first, then alphabetically
+              if (a.popular && !b.popular) return -1;
+              if (!a.popular && b.popular) return 1;
+              return a.name.localeCompare(b.name);
+            })
+          : [];
+      } else {
+        const category = dynamicServices.find((c) => c.id === selectedCategory);
+        services = category
+          ? category.services
+              .filter((service) => service.enabled !== false)
+              .sort((a, b) => {
+                // Sort by popular first, then alphabetically
+                if (a.popular && !b.popular) return -1;
+                if (!a.popular && b.popular) return 1;
+                return a.name.localeCompare(b.name);
+              })
+          : [];
+      }
     }
 
     return services;
@@ -483,21 +584,25 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
               All
             </Button>
 
-            {laundryServices.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? "default" : "ghost"}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`flex-shrink-0 rounded-xl text-xs px-3 py-2 ${
-                  selectedCategory === category.id
-                    ? "bg-white text-green-600"
-                    : "bg-white/10 text-white hover:bg-white/20"
-                }`}
-              >
-                <span className="mr-1">{category.icon}</span>
-                <span className="whitespace-nowrap">{category.name}</span>
-              </Button>
-            ))}
+            {(useStaticFallback ? laundryServices : dynamicServices)
+              .filter((category) => category.enabled !== false)
+              .map((category) => (
+                <Button
+                  key={category.id}
+                  variant={
+                    selectedCategory === category.id ? "default" : "ghost"
+                  }
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex-shrink-0 rounded-xl text-xs px-3 py-2 ${
+                    selectedCategory === category.id
+                      ? "bg-white text-green-600"
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                >
+                  <span className="mr-1">{category.icon}</span>
+                  <span className="whitespace-nowrap">{category.name}</span>
+                </Button>
+              ))}
           </div>
         </div>
 
@@ -829,16 +934,23 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
             </div>
             <div className="hidden lg:block">
               <div className="grid grid-cols-2 gap-4">
-                {laundryServices.slice(0, 4).map((category) => (
-                  <div
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center cursor-pointer hover:bg-white/20 transition-all duration-200 hover:scale-105 active:scale-95"
-                  >
-                    <span className="text-3xl block mb-2">{category.icon}</span>
-                    <span className="text-sm font-medium">{category.name}</span>
-                  </div>
-                ))}
+                {(useStaticFallback ? laundryServices : dynamicServices)
+                  .filter((category) => category.enabled !== false)
+                  .slice(0, 4)
+                  .map((category) => (
+                    <div
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center cursor-pointer hover:bg-white/20 transition-all duration-200 hover:scale-105 active:scale-95"
+                    >
+                      <span className="text-3xl block mb-2">
+                        {category.icon}
+                      </span>
+                      <span className="text-sm font-medium">
+                        {category.name}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -873,23 +985,25 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
               All Services
             </Button>
 
-            {laundryServices.map((category) => (
-              <Button
-                key={category.id}
-                variant={
-                  selectedCategory === category.id ? "default" : "outline"
-                }
-                onClick={() => setSelectedCategory(category.id)}
-                className={`flex-shrink-0 rounded-xl ${
-                  selectedCategory === category.id
-                    ? "bg-green-600 text-white"
-                    : "hover:bg-green-50 hover:border-green-200"
-                }`}
-              >
-                <span className="mr-2">{category.icon}</span>
-                {category.name}
-              </Button>
-            ))}
+            {(useStaticFallback ? laundryServices : dynamicServices)
+              .filter((category) => category.enabled !== false)
+              .map((category) => (
+                <Button
+                  key={category.id}
+                  variant={
+                    selectedCategory === category.id ? "default" : "outline"
+                  }
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex-shrink-0 rounded-xl ${
+                    selectedCategory === category.id
+                      ? "bg-green-600 text-white"
+                      : "hover:bg-green-50 hover:border-green-200"
+                  }`}
+                >
+                  <span className="mr-2">{category.icon}</span>
+                  {category.name}
+                </Button>
+              ))}
           </div>
         </div>
 
@@ -1047,6 +1161,11 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
           isOpen={showBookingDebugPanel}
           onClose={() => setShowBookingDebugPanel(false)}
         />
+
+        {/* Admin Services Manager */}
+        {showAdminServices && (
+          <AdminServicesManager onClose={() => setShowAdminServices(false)} />
+        )}
 
         {/* Connection Status */}
         <ConnectionStatus />

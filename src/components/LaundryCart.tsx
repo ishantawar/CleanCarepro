@@ -23,6 +23,7 @@ import {
   Calendar,
   Loader2,
   CreditCard,
+  Home,
 } from "lucide-react";
 import { laundryServices, LaundryService } from "@/data/laundryServices";
 import { OTPAuthService } from "@/services/otpAuthService";
@@ -36,6 +37,8 @@ import EnhancedAddressForm from "./EnhancedAddressForm";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
 import { FormValidation, validateCheckoutForm } from "./FormValidation";
 import SavedAddressesModal from "./SavedAddressesModal";
+import ZomatoAddressSelector from "./ZomatoAddressSelector";
+import ZomatoAddAddressPage from "./ZomatoAddAddressPage";
 
 interface LaundryCartProps {
   onBack: () => void;
@@ -153,6 +156,35 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     localStorage.setItem("laundry_cart", JSON.stringify(cart));
   }, [cart]);
 
+  // Auto-load saved address when cart opens
+  useEffect(() => {
+    if (currentUser && !addressData) {
+      loadDefaultAddress();
+    }
+  }, [currentUser, addressData]);
+
+  const loadDefaultAddress = () => {
+    if (!currentUser) return;
+
+    const userId = currentUser._id || currentUser.id || currentUser.phone;
+    const savedAddressesKey = `addresses_${userId}`;
+    const addresses = JSON.parse(
+      localStorage.getItem(savedAddressesKey) || "[]",
+    );
+
+    if (addresses.length > 0) {
+      // Use the most recent address or the first home address
+      const defaultAddress =
+        addresses.find((addr: any) => addr.type === "home") || addresses[0];
+      setSelectedSavedAddress(defaultAddress);
+      setAddressData(defaultAddress);
+      console.log(
+        "✅ Auto-loaded saved address:",
+        defaultAddress.label || defaultAddress.type,
+      );
+    }
+  };
+
   const getAllServices = (): LaundryService[] => {
     return laundryServices.flatMap((category) => category.services);
   };
@@ -256,6 +288,11 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
+  const [showZomatoAddressSelector, setShowZomatoAddressSelector] =
+    useState(false);
+  const [showZomatoAddAddressPage, setShowZomatoAddAddressPage] =
+    useState(false);
+  const [selectedSavedAddress, setSelectedSavedAddress] = useState<any>(null);
 
   const handleProceedToCheckout = async () => {
     // Prevent multiple submissions
@@ -500,6 +537,46 @@ Confirm this booking?`;
     }
   };
 
+  // Handle address selection from Zomato selector
+  const handleAddressSelect = (address: any) => {
+    setSelectedSavedAddress(address);
+    setAddressData(address);
+    setShowZomatoAddressSelector(false);
+    console.log("✅ Address selected:", address.label || address.type);
+  };
+
+  // Handle new address creation
+  const handleNewAddressSave = (newAddress: any) => {
+    if (!currentUser) return;
+
+    try {
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const savedAddressesKey = `addresses_${userId}`;
+      const existingAddresses = JSON.parse(
+        localStorage.getItem(savedAddressesKey) || "[]",
+      );
+
+      const addressWithId = {
+        ...newAddress,
+        id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedAddresses = [...existingAddresses, addressWithId];
+      localStorage.setItem(savedAddressesKey, JSON.stringify(updatedAddresses));
+
+      // Auto-select the new address
+      setSelectedSavedAddress(addressWithId);
+      setAddressData(addressWithId);
+
+      setShowZomatoAddAddressPage(false);
+      console.log("✅ New address saved and selected");
+    } catch (error) {
+      console.error("Failed to save new address:", error);
+    }
+  };
+
   const saveAddressAfterBooking = async (orderAddress: any) => {
     if (!currentUser || !orderAddress) return;
 
@@ -654,32 +731,67 @@ Confirm this booking?`;
           </CardContent>
         </Card>
 
-        {/* Enhanced Address Form - Compact */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-1 px-3 py-1">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <MapPin className="h-3 w-3" />
-                Address
-              </CardTitle>
-              {currentUser && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSavedAddresses(true)}
-                  className="h-6 px-2 text-xs"
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Saved
-                </Button>
-              )}
+        {/* Zomato-style Address Section */}
+        <Card className="shadow-sm border-0">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Home className="h-4 w-4 text-gray-600" />
+                <span className="font-medium">
+                  Delivery at{" "}
+                  {selectedSavedAddress?.type === "home"
+                    ? "Home"
+                    : selectedSavedAddress?.type === "office"
+                      ? "Work"
+                      : addressData?.type === "home"
+                        ? "Home"
+                        : addressData?.type === "office"
+                          ? "Work"
+                          : "Location"}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-green-600"
+                onClick={() => setShowZomatoAddressSelector(true)}
+              >
+                <ArrowLeft className="h-4 w-4 rotate-180" />
+              </Button>
             </div>
-          </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0">
-            <EnhancedAddressForm
-              onAddressChange={setAddressData}
-              initialAddress={addressData}
-            />
+
+            {selectedSavedAddress || addressData?.fullAddress ? (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  {selectedSavedAddress ? (
+                    <>
+                      {selectedSavedAddress.flatNo &&
+                        `${selectedSavedAddress.flatNo}, `}
+                      {selectedSavedAddress.fullAddress}
+                    </>
+                  ) : (
+                    <>
+                      {addressData.flatNo && `${addressData.flatNo}, `}
+                      {addressData.fullAddress}
+                    </>
+                  )}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-500 mb-3">
+                  No address selected
+                </p>
+                <Button
+                  onClick={() => setShowZomatoAddressSelector(true)}
+                  variant="outline"
+                  className="w-full border-green-600 text-green-600 hover:bg-green-50"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Select Address
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -854,7 +966,28 @@ Confirm this booking?`;
         </div>
       </div>
 
-      {/* Saved Addresses Modal */}
+      {/* Zomato Address Selector */}
+      <ZomatoAddressSelector
+        isOpen={showZomatoAddressSelector}
+        onClose={() => setShowZomatoAddressSelector(false)}
+        onSelectAddress={handleAddressSelect}
+        onAddNewAddress={() => {
+          setShowZomatoAddressSelector(false);
+          setShowZomatoAddAddressPage(true);
+        }}
+        currentUser={currentUser}
+        selectedAddressId={selectedSavedAddress?.id}
+      />
+
+      {/* Zomato Add Address Page */}
+      <ZomatoAddAddressPage
+        isOpen={showZomatoAddAddressPage}
+        onClose={() => setShowZomatoAddAddressPage(false)}
+        onSave={handleNewAddressSave}
+        currentUser={currentUser}
+      />
+
+      {/* Saved Addresses Modal (fallback) */}
       <SavedAddressesModal
         isOpen={showSavedAddresses}
         onClose={() => setShowSavedAddresses(false)}

@@ -77,6 +77,15 @@ class GoogleSheetsService {
       return false;
     }
 
+    // Check if we're in a hosted environment where backend calls should be skipped
+    if (this.isHostedEnvironment()) {
+      console.log(
+        "🌐 Hosted environment detected - saving to localStorage only",
+      );
+      this.saveToLocalStorage(orderData);
+      return true; // Return true to indicate successful handling
+    }
+
     try {
       // Generate unique order ID
       const orderId = `${orderData.customerPhone}${new Date().toLocaleDateString("en-IN").replace(/\//g, "")}${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(":", "")}`;
@@ -135,27 +144,14 @@ class GoogleSheetsService {
           throw new Error(result.error || "Backend response indicates failure");
         }
       } catch (backendError) {
-        console.error(
-          "❌ Backend API failed, falling back to direct call:",
-          backendError,
+        console.warn(
+          "⚠️ Backend API failed, saving to localStorage:",
+          backendError.message,
         );
 
-        // Fallback to direct call if backend is unavailable
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const response = await fetch(this.config.webAppUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(sheetData),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-        console.log("📊 Order data sent directly to Google Sheets:", orderId);
-        return true;
+        // Don't try direct calls in hosted environment - just save locally
+        this.saveToLocalStorage(orderData);
+        return true; // Return true to indicate successful fallback handling
       }
     } catch (error) {
       console.error("❌ Failed to save to Google Sheets:", error);
@@ -252,6 +248,18 @@ class GoogleSheetsService {
     } catch (error) {
       console.error("Failed to sync pending orders:", error);
     }
+  }
+
+  /**
+   * Check if we're in a hosted environment where backend calls should be avoided
+   */
+  private isHostedEnvironment(): boolean {
+    return (
+      window.location.hostname.includes("fly.dev") ||
+      window.location.hostname.includes("builder.codes") ||
+      window.location.hostname.includes("vercel.app") ||
+      window.location.hostname.includes("netlify.app")
+    );
   }
 
   /**

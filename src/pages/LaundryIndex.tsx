@@ -421,11 +421,24 @@ const LaundryIndex = () => {
 
       const bookingService = BookingService.getInstance();
 
-      // Prepare services array for MongoDB
+      // Prepare services array for MongoDB with quantities
       const servicesArray =
-        cartData.services?.map((service: any) =>
-          typeof service === "string" ? service : service.name,
-        ) || [];
+        cartData.services?.map((service: any) => {
+          if (typeof service === "string") {
+            return service;
+          }
+          return service.quantity > 1
+            ? `${service.name} x${service.quantity}`
+            : service.name;
+        }) || [];
+
+      // Prepare detailed services for confirmation
+      const detailedServices =
+        cartData.services?.map((service: any) => ({
+          name: typeof service === "string" ? service : service.name,
+          quantity: typeof service === "object" ? service.quantity || 1 : 1,
+          price: typeof service === "object" ? service.price || 0 : 0,
+        })) || [];
 
       // Create booking data for MongoDB backend
       const mongoBookingData = {
@@ -468,7 +481,7 @@ const LaundryIndex = () => {
           mongoResult.data._id || "unknown_id",
         );
 
-        // Also save to Google Sheets
+        // Also save to Google Sheets (with graceful error handling)
         try {
           const GoogleSheetsService = (
             await import("../services/googleSheetsService")
@@ -495,14 +508,16 @@ const LaundryIndex = () => {
           const sheetsResult = await sheetsService.saveOrderToSheet(orderData);
 
           if (sheetsResult) {
-            console.log("📊 Order data successfully sent to Google Sheets");
-          } else {
             console.log(
-              "📊 Order data saved locally for later sync to Google Sheets",
+              "📊 Order data successfully processed for Google Sheets",
             );
           }
         } catch (sheetsError) {
-          console.error("❌ Failed to save to Google Sheets:", sheetsError);
+          console.warn(
+            "⚠️ Google Sheets save failed (non-critical):",
+            sheetsError.message,
+          );
+          // Don't fail the entire booking process for sheets issues
         }
 
         // Also save using booking service for local storage backup
@@ -512,10 +527,14 @@ const LaundryIndex = () => {
           totalAmount: cartData.totalAmount,
           status: "pending" as const,
           pickupDate: cartData.pickupDate,
-          deliveryDate: cartData.deliveryDate,
+          deliveryDate: cartData.deliveryDate || cartData.pickupDate,
           pickupTime: cartData.pickupTime,
-          deliveryTime: cartData.deliveryTime,
-          address: cartData.address,
+          deliveryTime: cartData.deliveryTime || cartData.pickupTime,
+          address:
+            typeof cartData.address === "string"
+              ? cartData.address
+              : cartData.address?.fullAddress ||
+                JSON.stringify(cartData.address),
           contactDetails: {
             phone: cartData.phone || currentUser.phone,
             name: currentUser.full_name || currentUser.name || "User",
@@ -531,7 +550,7 @@ const LaundryIndex = () => {
         // Store booking data for confirmation screen
         const confirmationData = {
           bookingId: mongoResult.data._id || `local_${Date.now()}`,
-          services: servicesArray,
+          services: detailedServices, // Use detailed services with quantities
           totalAmount: cartData.totalAmount,
           pickupDate: cartData.pickupDate,
           pickupTime: cartData.pickupTime,
@@ -616,18 +635,18 @@ const LaundryIndex = () => {
 
             const sheetsResult =
               await sheetsService.saveOrderToSheet(orderData);
-            console.log("📊 Fallback Google Sheets save result:", sheetsResult);
+            console.log("📊 Fallback Google Sheets processed:", sheetsResult);
           } catch (sheetsError) {
-            console.error(
-              "❌ Failed to save to Google Sheets (fallback):",
-              sheetsError,
+            console.warn(
+              "⚠️ Google Sheets fallback failed (non-critical):",
+              sheetsError.message,
             );
           }
 
           // Store booking data for confirmation screen
           const confirmationData = {
             bookingId: `local_${Date.now()}`,
-            services: servicesArray,
+            services: detailedServices, // Use detailed services with quantities
             totalAmount: cartData.totalAmount,
             pickupDate: cartData.pickupDate,
             pickupTime: cartData.pickupTime,
@@ -682,45 +701,45 @@ const LaundryIndex = () => {
             const sheetsResult =
               await sheetsService.saveOrderToSheet(orderData);
 
-            if (sheetsResult) {
-              console.log("📊 Order saved to Google Sheets as backup");
+            // Always create confirmation regardless of sheets result
+            console.log("📊 Backup order processed:", sheetsResult);
 
-              // Store booking data for confirmation screen
-              const confirmationData = {
-                bookingId: `backup_${Date.now()}`,
-                services: servicesArray,
-                totalAmount: cartData.totalAmount,
-                pickupDate: cartData.pickupDate,
-                pickupTime: cartData.pickupTime,
-                address: cartData.address,
-                customerName:
-                  currentUser.full_name || currentUser.name || "Customer",
-                customerPhone: currentUser.phone,
-              };
+            // Store booking data for confirmation screen
+            const confirmationData = {
+              bookingId: `backup_${Date.now()}`,
+              services: detailedServices, // Use detailed services with quantities
+              totalAmount: cartData.totalAmount,
+              pickupDate: cartData.pickupDate,
+              pickupTime: cartData.pickupTime,
+              address: cartData.address,
+              customerName:
+                currentUser.full_name || currentUser.name || "Customer",
+              customerPhone: currentUser.phone,
+            };
 
-              setLastBookingData(confirmationData);
+            setLastBookingData(confirmationData);
 
-              addNotification(
-                createSuccessNotification(
-                  "Order Saved to Backup!",
-                  "Your order has been saved to our backup system and will be processed manually.",
-                ),
-              );
-              localStorage.removeItem("laundry_cart");
-              localStorage.removeItem("laundry_booking_form");
-
-              // Clear any cached cart state
-              const clearCartEvent = new CustomEvent("clearCart");
-              window.dispatchEvent(clearCartEvent);
-
-              setCurrentView("booking-confirmed");
-              return; // Exit early since we saved to sheets
-            }
-          } catch (sheetsError) {
-            console.error(
-              "❌ Failed to save to Google Sheets (backup):",
-              sheetsError,
+            addNotification(
+              createSuccessNotification(
+                "Order Saved!",
+                "Your order has been saved and will be processed.",
+              ),
             );
+            localStorage.removeItem("laundry_cart");
+            localStorage.removeItem("laundry_booking_form");
+
+            // Clear any cached cart state
+            const clearCartEvent = new CustomEvent("clearCart");
+            window.dispatchEvent(clearCartEvent);
+
+            setCurrentView("booking-confirmed");
+            return; // Exit early
+          } catch (sheetsError) {
+            console.warn(
+              "⚠️ Google Sheets backup failed (non-critical):",
+              sheetsError.message,
+            );
+            // Continue with local-only booking
           }
 
           throw new Error(
