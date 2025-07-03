@@ -577,22 +577,25 @@ export class BookingService {
       if (error instanceof Error) {
         if (error.name === "AbortError") {
           console.warn("⚠️ Backend sync timed out for booking:", booking.id);
+          throw new Error("Backend sync timed out");
         } else if (error.message.includes("Failed to fetch")) {
           console.warn(
             "⚠️ Network error - backend sync failed for booking:",
             booking.id,
           );
+          throw new Error("Network error during backend sync");
         } else {
           console.warn(
             "⚠️ Backend sync failed for booking:",
             booking.id,
             error.message,
           );
+          throw error;
         }
       } else {
         console.warn("⚠️ Unknown error during backend sync:", error);
+        throw new Error("Unknown error during backend sync");
       }
-      // Could implement retry logic here if needed
     }
   }
 
