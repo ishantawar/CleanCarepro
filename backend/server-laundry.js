@@ -116,13 +116,17 @@ const connectDB = async () => {
 // Connect to database
 connectDB();
 
-// Initialize Google Sheets service
+// Initialize Google Sheets services
 const GoogleSheetsService = require("./services/googleSheetsService");
+const MultiSheetManager = require("./services/multiSheetManager");
+
 const sheetsService = new GoogleSheetsService();
+const multiSheetManager = new MultiSheetManager();
 
 // Initialize Google Sheets after MongoDB connection
 mongoose.connection.once("connected", async () => {
   await sheetsService.initialize();
+  await multiSheetManager.initialize();
 });
 
 // Import routes with error handling
@@ -208,7 +212,7 @@ try {
   console.error("❌ Failed to load Dynamic Services routes:", error.message);
 }
 
-// Google Sheets integration endpoint
+// Google Sheets integration endpoint - Enhanced with multi-sheet support
 app.post("/api/sheets/order", async (req, res) => {
   try {
     const orderData = req.body;
@@ -222,55 +226,87 @@ app.post("/api/sheets/order", async (req, res) => {
       return res.status(400).json({ error: "Missing required order data" });
     }
 
-    // Prepare data for Google Sheets
-    const sheetData = {
-      sheetName: "Orders",
-      data: {
-        orderId: orderData.orderId,
-        timestamp: new Date().toISOString(),
-        customerName: orderData.customerName,
-        customerPhone: orderData.customerPhone,
-        customerAddress: orderData.customerAddress || "",
-        services: Array.isArray(orderData.services)
-          ? orderData.services.join(", ")
-          : orderData.services || "",
-        totalAmount: orderData.totalAmount || 0,
-        pickupDate: orderData.pickupDate || "",
-        pickupTime: orderData.pickupTime || "",
-        status: orderData.status || "pending",
-        paymentStatus: orderData.paymentStatus || "pending",
-        coordinates: orderData.coordinates
-          ? `${orderData.coordinates.lat},${orderData.coordinates.lng}`
-          : "",
-        city: orderData.city || "",
-        pincode: orderData.pincode || "",
-      },
-    };
+    let sheetSuccess = false;
+    let fallbackSuccess = false;
 
-    // Send to Google Apps Script (if URL is configured)
-    const webAppUrl =
-      process.env.GOOGLE_APPS_SCRIPT_URL ||
-      "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec";
+    // Try multi-sheet manager first (preferred method)
+    try {
+      await multiSheetManager.addOrderToSheet(orderData);
+      sheetSuccess = true;
+      console.log(
+        "📊 Order saved to dedicated orders sheet:",
+        orderData.orderId,
+      );
+    } catch (multiSheetError) {
+      console.warn(
+        "⚠️ Multi-sheet manager failed, trying fallback:",
+        multiSheetError.message,
+      );
 
-    if (process.env.GOOGLE_SHEETS_ENABLED !== "false") {
-      try {
-        const response = await fetch(webAppUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(sheetData),
-        });
+      // Fallback to original Google Apps Script method
+      const sheetData = {
+        sheetName: "Orders",
+        data: {
+          orderId: orderData.orderId,
+          timestamp: new Date().toISOString(),
+          customerName: orderData.customerName,
+          customerPhone: orderData.customerPhone,
+          customerAddress: orderData.customerAddress || "",
+          services: Array.isArray(orderData.services)
+            ? orderData.services.join(", ")
+            : orderData.services || "",
+          totalAmount: orderData.totalAmount || 0,
+          pickupDate: orderData.pickupDate || "",
+          pickupTime: orderData.pickupTime || "",
+          status: orderData.status || "pending",
+          paymentStatus: orderData.paymentStatus || "pending",
+          coordinates: orderData.coordinates
+            ? `${orderData.coordinates.lat},${orderData.coordinates.lng}`
+            : "",
+          city: orderData.city || "",
+          pincode: orderData.pincode || "",
+        },
+      };
 
-        console.log("📊 Order data sent to Google Sheets:", orderData.orderId);
-      } catch (sheetError) {
-        console.error("❌ Failed to send to Google Sheets:", sheetError);
-        // Don't fail the request if Google Sheets fails
+      const webAppUrl =
+        process.env.GOOGLE_APPS_SCRIPT_URL ||
+        "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec";
+
+      if (process.env.GOOGLE_SHEETS_ENABLED !== "false") {
+        try {
+          const response = await fetch(webAppUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(sheetData),
+          });
+
+          if (response.ok) {
+            fallbackSuccess = true;
+            console.log(
+              "📊 Order data sent via fallback Google Apps Script:",
+              orderData.orderId,
+            );
+          }
+        } catch (fallbackError) {
+          console.error(
+            "❌ Fallback Google Sheets also failed:",
+            fallbackError.message,
+          );
+        }
       }
     }
 
     res.json({
-      data: { message: "Order processed successfully" },
+      data: {
+        message: "Order processed successfully",
+        sheetMethod: sheetSuccess
+          ? "multi-sheet"
+          : fallbackSuccess
+            ? "apps-script"
+            : "none",
+      },
       error: null,
     });
   } catch (error) {
