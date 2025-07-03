@@ -201,7 +201,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
         label: "🏢 Office",
         disabled: usedTypes.includes("work"),
       },
-      { value: "other", label: "📍 Other", disabled: false },
+      { value: "other", label: "📍 Other", disabled: false }, // Allow multiple "other" addresses
     ];
     return allTypes;
   };
