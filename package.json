@@ -9,7 +9,7 @@
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\"",
     "build": "vite build && node scripts/optimize-build.js",
     "build:check": "tsc -b && vite build && node scripts/optimize-build.js",
-    "build:analyze": "vite build --mode production && npx vite-bundle-analyzer dist/assets/*.js",
+    "build:analyze": "vite build --mode production && node scripts/bundle-analyzer.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "npm run start:prod",
