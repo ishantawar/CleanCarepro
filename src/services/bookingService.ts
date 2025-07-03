@@ -148,20 +148,24 @@ export class BookingService {
 
       // Always save to localStorage first for immediate availability
       this.saveBookingToLocalStorage(booking);
+      console.log("💾 Booking saved to localStorage:", booking.id);
 
-      // Save to MongoDB
+      // Save to MongoDB (with improved error handling)
       try {
         const mongoBooking = await this.mongoService.saveBooking(booking);
         if (mongoBooking) {
           console.log("✅ Booking saved to MongoDB:", booking.id);
         } else {
-          console.log("⚠️ MongoDB save failed, using localStorage");
+          console.log(
+            "⚠️ MongoDB save failed, but localStorage backup available",
+          );
         }
       } catch (error) {
-        console.warn("⚠️ MongoDB save error:", error);
+        console.warn(
+          "⚠️ MongoDB save error, but localStorage backup available:",
+          error,
+        );
       }
-
-      console.log("💾 Booking saved to localStorage:", booking.id);
 
       // Save to Google Sheets
       try {
@@ -189,8 +193,18 @@ export class BookingService {
 
         this.googleSheetsService
           .saveOrderToSheet(googleSheetsData)
+          .then((result) => {
+            if (result) {
+              console.log("✅ Booking saved to Google Sheets");
+            } else {
+              console.log("ℹ️ Google Sheets save skipped or failed silently");
+            }
+          })
           .catch((error) => {
-            console.warn("Google Sheets save failed:", error);
+            console.warn(
+              "⚠️ Google Sheets save failed, but booking is saved locally:",
+              error,
+            );
           });
       } catch (error) {
         console.warn("Google Sheets integration error:", error);

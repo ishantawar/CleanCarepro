@@ -15,12 +15,13 @@ import {
   Phone,
 } from "lucide-react";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
-import PhoneAuth from "./PhoneAuth";
+import PhoneOtpAuthModal from "./PhoneOtpAuthModal";
 import LocationDetector from "./LocationDetector.tsx";
 import BookingConfirmation from "./BookingConfirmation";
 import BookingSuccessAlert from "./BookingSuccessAlert";
 import { adaptiveBookingHelpers } from "@/integrations/adaptive/bookingHelpers";
 import { userValidation } from "@/utils/userValidation";
+import { bookingTestHelper } from "@/utils/bookingTestHelper";
 
 interface BookingFlowProps {
   provider?: any;
@@ -120,7 +121,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
   };
 
   const handleBookService = async () => {
+    console.log("🚀 Starting booking process...");
+    bookingTestHelper.runDiagnostic();
+
     if (!currentUser) {
+      console.log("❌ No current user found");
       setError("Please sign in first to book a service");
       setShowAuthModal(true);
       return;
@@ -137,14 +142,15 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
     }
 
     // Ensure we have a valid customer ID using robust validation
-
     if (!userValidation.isValidUser(currentUser)) {
+      console.log("❌ User validation failed:", currentUser);
       setError("Please sign in to book a service.");
       setShowAuthModal(true);
       return;
     }
 
     const customerId = currentUser._id;
+    console.log("✅ User validated. Customer ID:", customerId);
 
     setIsProcessing(true);
     setError("");
@@ -189,15 +195,15 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           ? "Multiple Services"
           : "Single Service",
         services: isMultipleServices
-          ? services.map((s) => `${s.name} (x${s.quantity})`)
+          ? services.map((s) => s.name)
           : [provider?.name || "Service"],
         scheduled_date: selectedDate.toISOString().split("T")[0],
         scheduled_time: selectedTime,
         provider_name: isMultipleServices
-          ? "Multiple Providers"
-          : provider?.provider || "Home Services",
+          ? "CleanCare Pro"
+          : provider?.provider || "CleanCare Pro",
         address: completeAddress || selectedAddress,
-        coordinates: addressCoordinates,
+        coordinates: addressCoordinates || { lat: 0, lng: 0 },
         additional_details: [
           additionalDetails,
           addressDetails.instructions &&
@@ -207,6 +213,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           .join("\n"),
         total_price: calculateTotalPrice(),
         final_amount: calculateFinalAmount(),
+        discount_amount: getCouponDiscount(),
         special_instructions: [
           additionalDetails,
           addressDetails.instructions,
@@ -216,27 +223,48 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           .filter(Boolean)
           .join(", "),
         address_details: addressDetails,
-        item_prices: itemPrices, // Add item prices for accurate history
+        item_prices: itemPrices,
         charges_breakdown: {
           base_price: calculateTotalPrice(),
           service_fee: getDeliveryCharge(),
-          delivery_fee: 50, // Standard delivery fee
+          delivery_fee: 50,
           tax_amount: (calculateTotalPrice() + getDeliveryCharge()) * 0.12,
           discount: getCouponDiscount(),
         },
+        // For backward compatibility with different booking systems
+        pickupDate: selectedDate.toISOString().split("T")[0],
+        pickupTime: selectedTime,
+        totalAmount: calculateFinalAmount(),
+        userId: customerId,
+        paymentStatus: "pending",
+        status: "pending",
       };
+
+      // Log the booking attempt
+      bookingTestHelper.logBookingAttempt(bookingData);
 
       const { data, error: bookingError } =
         await adaptiveBookingHelpers.createBooking(bookingData);
 
+      // Log the result
+      bookingTestHelper.logBookingResult(
+        { data, error: bookingError },
+        "AdaptiveBookingHelpers",
+      );
+
       if (bookingError) {
+        console.error("❌ Booking creation failed:", bookingError);
         setError(bookingError.message || "Failed to create booking");
-      } else {
+      } else if (data) {
+        console.log("✅ Booking created successfully:", data);
         // Store the completed booking data
         setCompletedBooking(data);
         // Close confirmation modal and show success alert
         setShowConfirmation(false);
         setShowBookingSuccess(true);
+      } else {
+        console.error("❌ No data returned from booking creation");
+        setError("No response from booking service. Please try again.");
       }
     } catch (error: any) {
       setError(
@@ -270,7 +298,12 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
         bookingData={{
           services: isMultipleServices
             ? services
-            : [{ name: provider?.name, price: provider?.price }],
+            : [
+                {
+                  name: provider?.name || "Service",
+                  price: provider?.price || 80,
+                },
+              ],
           selectedDate: selectedDate!,
           selectedTime,
           selectedAddress,
@@ -619,14 +652,14 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
               )}
 
               <Button
-                onClick={handleBookService}
-                disabled={isProcessing}
+                onClick={() => setShowConfirmation(true)}
+                disabled={
+                  !selectedDate || !selectedTime || !selectedAddress.trim()
+                }
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
                 size="lg"
               >
-                {isProcessing
-                  ? "Processing..."
-                  : `Confirm Booking - $${calculateFinalAmount()}`}
+                Review Booking - ${calculateFinalAmount()}
               </Button>
 
               <p className="text-xs text-gray-500 text-center">
@@ -638,7 +671,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
       </div>
 
       {/* Authentication Modal */}
-      <PhoneAuth
+      <PhoneOtpAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleLoginSuccess}

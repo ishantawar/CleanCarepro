@@ -1,4 +1,5 @@
 // Performance monitoring utility for CleanCare Pro
+import React from "react";
 
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;

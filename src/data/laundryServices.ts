@@ -285,6 +285,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 300,
         unit: "per piece",
         description: "Professional jacket cleaning",
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2Fc97d5a75b4604b65bd2bd6fccd499b08%2Fb935c8c1aa864281bd31c892116f9719?format=webp&width=800",
         popular: true,
       },
       {

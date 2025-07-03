@@ -149,6 +149,13 @@ try {
   console.error("❌ Failed to load Location routes:", error.message);
 }
 
+// Serve static frontend files in production
+if (productionConfig.isProduction()) {
+  const frontendPath = path.join(__dirname, "../dist");
+  app.use(express.static(frontendPath));
+  console.log("📁 Serving frontend static files from:", frontendPath);
+}
+
 // API Routes with error handling
 if (otpAuthRoutes) {
   app.use("/api/auth", otpAuthRoutes);
@@ -378,11 +385,25 @@ app.use("*", (req, res) => {
   });
 });
 
+// Catch-all handler: send back React's index.html file for frontend routing
+if (productionConfig.isProduction()) {
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../dist/index.html"));
+  });
+  console.log(
+    "🔗 Frontend routing configured - all non-API routes serve index.html",
+  );
+}
+
 // Start server with error handling
 const server = app.listen(PORT, () => {
   console.log(`🚀 CleanCare Pro server running on port ${PORT}`);
   console.log(`📱 Environment: ${productionConfig.NODE_ENV}`);
-  console.log(`📱 API available at: http://localhost:${PORT}/api`);
+  if (productionConfig.isProduction()) {
+    console.log(`🌐 Frontend and API available at: http://localhost:${PORT}`);
+  } else {
+    console.log(`📱 API available at: http://localhost:${PORT}/api`);
+  }
   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔒 Security: Helmet enabled`);
   console.log(`⚡ Compression: Enabled`);
