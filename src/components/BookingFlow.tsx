@@ -189,15 +189,15 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           ? "Multiple Services"
           : "Single Service",
         services: isMultipleServices
-          ? services.map((s) => `${s.name} (x${s.quantity})`)
+          ? services.map((s) => s.name)
           : [provider?.name || "Service"],
         scheduled_date: selectedDate.toISOString().split("T")[0],
         scheduled_time: selectedTime,
         provider_name: isMultipleServices
-          ? "Multiple Providers"
-          : provider?.provider || "Home Services",
+          ? "CleanCare Pro"
+          : provider?.provider || "CleanCare Pro",
         address: completeAddress || selectedAddress,
-        coordinates: addressCoordinates,
+        coordinates: addressCoordinates || { lat: 0, lng: 0 },
         additional_details: [
           additionalDetails,
           addressDetails.instructions &&
@@ -207,6 +207,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           .join("\n"),
         total_price: calculateTotalPrice(),
         final_amount: calculateFinalAmount(),
+        discount_amount: getCouponDiscount(),
         special_instructions: [
           additionalDetails,
           addressDetails.instructions,
@@ -216,14 +217,21 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
           .filter(Boolean)
           .join(", "),
         address_details: addressDetails,
-        item_prices: itemPrices, // Add item prices for accurate history
+        item_prices: itemPrices,
         charges_breakdown: {
           base_price: calculateTotalPrice(),
           service_fee: getDeliveryCharge(),
-          delivery_fee: 50, // Standard delivery fee
+          delivery_fee: 50,
           tax_amount: (calculateTotalPrice() + getDeliveryCharge()) * 0.12,
           discount: getCouponDiscount(),
         },
+        // For backward compatibility with different booking systems
+        pickupDate: selectedDate.toISOString().split("T")[0],
+        pickupTime: selectedTime,
+        totalAmount: calculateFinalAmount(),
+        userId: customerId,
+        paymentStatus: "pending",
+        status: "pending",
       };
 
       const { data, error: bookingError } =
