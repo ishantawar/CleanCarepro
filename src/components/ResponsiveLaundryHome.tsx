@@ -519,20 +519,42 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
                     className="border-0 shadow-lg rounded-2xl overflow-hidden service-card"
                   >
                     <CardContent className="p-3 card-content">
-                      <div className="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-xl mb-3 flex items-center justify-center">
-                        <span className="text-3xl">
-                          {service.category.includes("Men")
-                            ? "👔"
-                            : service.category.includes("Women")
-                              ? "👗"
-                              : service.category.includes("Woolen")
-                                ? "🧥"
-                                : service.category.includes("Steam")
-                                  ? "🔥"
-                                  : service.category.includes("Iron")
-                                    ? "🏷️"
-                                    : "👕"}
-                        </span>
+                      <div className="aspect-square bg-gradient-to-br from-green-100 to-green-200 rounded-xl mb-3 flex items-center justify-center relative overflow-hidden">
+                        {service.image ? (
+                          <>
+                            <img
+                              src={service.image}
+                              alt={service.name}
+                              className="w-full h-full object-cover rounded-xl"
+                            />
+                            {service.popular && (
+                              <div className="absolute bottom-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                Popular
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-3xl">
+                              {service.category.includes("Men")
+                                ? "👔"
+                                : service.category.includes("Women")
+                                  ? "👗"
+                                  : service.category.includes("Woolen")
+                                    ? "🧥"
+                                    : service.category.includes("Steam")
+                                      ? "🔥"
+                                      : service.category.includes("Iron")
+                                        ? "🏷️"
+                                        : "👕"}
+                            </span>
+                            {service.popular && (
+                              <div className="absolute bottom-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                Popular
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
 
                       <div className="card-details">

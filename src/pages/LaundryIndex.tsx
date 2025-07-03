@@ -776,7 +776,9 @@ const LaundryIndex = () => {
           <div className="w-full max-w-md">
             <PhoneOtpAuthModal
               isOpen={true}
-              onClose={() => setCurrentView("home")}
+              onClose={() =>
+                setCurrentView(previousView === "cart" ? "cart" : "home")
+              }
               onSuccess={(user) => {
                 handleLoginSuccess(user);
                 // Return to the view they were trying to access
