@@ -583,7 +583,13 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
             </Card>
           ) : (
             <div className="space-y-3">
-              {bookings.map((booking: any, index) => {
+              {bookings.length > 20 ? (
+                <VirtualizedList
+                  items={bookings}
+                  itemHeight={120}
+                  containerHeight={600}
+                  className="space-y-3"
+                  renderItem={(booking: any, index) => {
                 const bookingId =
                   booking.id || booking._id || `booking_${index}`;
                 const services = Array.isArray(booking.services)
