@@ -68,6 +68,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     useState<google.maps.places.AutocompleteService | null>(null);
   const [marker, setMarker] = useState<google.maps.Marker | null>(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
+  const [nearbyPlaces, setNearbyPlaces] = useState<any[]>([]);
+  const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
+  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -230,8 +233,53 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       setSelectedLocation({ address, coordinates });
       setSearchQuery(address);
       updateMapLocation(coordinates);
+
+      // Fetch nearby places when location is selected
+      await fetchNearbyPlaces(coordinates);
     } catch (error) {
       console.error("Reverse geocoding failed:", error);
+    }
+  };
+
+  const fetchNearbyPlaces = async (coordinates: Coordinates) => {
+    if (!placesService) return;
+
+    setIsLoadingNearby(true);
+    try {
+      const request: google.maps.places.PlaceSearchRequest = {
+        location: coordinates,
+        radius: 500, // 500 meters radius
+        type: "establishment", // Search for businesses/establishments
+      };
+
+      placesService.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+          // Filter and format nearby places
+          const formattedPlaces = results
+            .filter((place) => place.name && place.vicinity)
+            .slice(0, 8) // Limit to 8 places
+            .map((place) => ({
+              name: place.name,
+              vicinity: place.vicinity,
+              types: place.types,
+              rating: place.rating,
+              place_id: place.place_id,
+              geometry: place.geometry,
+              icon: place.icon,
+              photos: place.photos,
+            }));
+
+          setNearbyPlaces(formattedPlaces);
+          setShowNearbyPlaces(formattedPlaces.length > 0);
+        } else {
+          setNearbyPlaces([]);
+          setShowNearbyPlaces(false);
+        }
+        setIsLoadingNearby(false);
+      });
+    } catch (error) {
+      console.error("Failed to fetch nearby places:", error);
+      setIsLoadingNearby(false);
     }
   };
 
@@ -249,6 +297,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       setSelectedLocation({ address, coordinates });
       setSearchQuery(address);
       updateMapLocation(coordinates);
+
+      // Fetch nearby places for current location
+      await fetchNearbyPlaces(coordinates);
     } catch (error) {
       console.error("Location detection failed:", error);
       // Use fallback location
@@ -260,6 +311,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       });
       setSearchQuery(fallbackAddress);
       updateMapLocation(fallbackCoords);
+
+      // Fetch nearby places for fallback location
+      await fetchNearbyPlaces(fallbackCoords);
     } finally {
       setIsDetectingLocation(false);
     }
@@ -318,8 +372,14 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       const request: google.maps.places.AutocompletionRequest = {
         input: query,
         componentRestrictions: { country: "in" }, // Restrict to India
-        types: ["address", "establishment", "geocode"],
-        fields: ["place_id", "description", "structured_formatting"],
+        types: [
+          "address",
+          "establishment",
+          "geocode",
+          "locality",
+          "sublocality",
+        ],
+        fields: ["place_id", "description", "structured_formatting", "types"],
       };
 
       autocompleteService.getPlacePredictions(
@@ -412,6 +472,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         coordinates,
       });
       updateMapLocation(coordinates);
+
+      // Fetch nearby places for mock location
+      fetchNearbyPlaces(coordinates);
       return;
     }
 
@@ -441,6 +504,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           });
 
           updateMapLocation(coordinates);
+
+          // Fetch nearby places for selected location
+          fetchNearbyPlaces(coordinates);
         } else {
           console.error("Failed to get place details:", status);
           // Fallback to geocoding
@@ -452,6 +518,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                 coordinates: geocodeResult.coordinates,
               });
               updateMapLocation(geocodeResult.coordinates);
+
+              // Fetch nearby places for geocoded location
+              fetchNearbyPlaces(geocodeResult.coordinates);
             })
             .catch((geocodeError) => {
               console.error("Geocoding fallback failed:", geocodeError);
@@ -664,6 +733,88 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Nearby Places */}
+          {selectedLocation && (showNearbyPlaces || isLoadingNearby) && (
+            <div>
+              <h3 className="text-base font-medium text-gray-900 mb-3">
+                Nearby places
+              </h3>
+
+              {isLoadingNearby ? (
+                <div className="flex items-center justify-center p-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                  <span className="ml-2 text-sm text-gray-600">
+                    Finding nearby places...
+                  </span>
+                </div>
+              ) : nearbyPlaces.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {nearbyPlaces.map((place, index) => (
+                      <div
+                        key={index}
+                        className="p-3 bg-white border border-gray-200 rounded-lg hover:border-green-300 transition-colors cursor-pointer"
+                        onClick={() => {
+                          // Add place name as a landmark reference
+                          const currentLandmark = additionalDetails;
+                          const newLandmark = currentLandmark
+                            ? `${currentLandmark}, Near ${place.name}`
+                            : `Near ${place.name}`;
+                          setAdditionalDetails(newLandmark);
+                        }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0">
+                            {place.types?.includes("restaurant")
+                              ? "🍽️"
+                              : place.types?.includes("hospital")
+                                ? "🏥"
+                                : place.types?.includes("school")
+                                  ? "🏫"
+                                  : place.types?.includes("gas_station")
+                                    ? "⛽"
+                                    : place.types?.includes("bank")
+                                      ? "🏦"
+                                      : place.types?.includes("pharmacy")
+                                        ? "💊"
+                                        : place.types?.includes("shopping_mall")
+                                          ? "🛒"
+                                          : place.types?.includes("gym")
+                                            ? "💪"
+                                            : "📍"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {place.name}
+                            </p>
+                            <p className="text-xs text-gray-600 truncate">
+                              {place.vicinity}
+                            </p>
+                            {place.rating && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <span className="text-yellow-400">⭐</span>
+                                <span className="text-xs text-gray-600">
+                                  {place.rating.toFixed(1)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    👆 Tap any place to add it as a landmark reference
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-500">
+                  <p className="text-sm">No nearby places found</p>
+                </div>
+              )}
             </div>
           )}
 

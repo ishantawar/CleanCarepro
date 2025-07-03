@@ -5,6 +5,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import LaundryIndex from "@/pages/LaundryIndex";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import InstallPrompt from "@/components/InstallPrompt";
+import AddressSearchDemo from "@/components/AddressSearchDemo";
 import { DVHostingSmsService } from "@/services/dvhostingSmsService";
 import "./App.css";
 import "./styles/mobile-fixes.css";
@@ -31,6 +32,7 @@ function App() {
           <div className="App">
             <Routes>
               <Route path="/" element={<LaundryIndex />} />
+              <Route path="/address-demo" element={<AddressSearchDemo />} />
               <Route path="*" element={<LaundryIndex />} />
             </Routes>
             <Toaster />

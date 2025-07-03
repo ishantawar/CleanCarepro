@@ -506,11 +506,12 @@ export class BookingService {
       }
 
       console.log("🔄 Syncing booking to backend:", booking.id);
+      console.log("📦 Original booking data:", booking);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const backendBooking = {
-        customer_id: booking.userId,
+        customer_id: booking.userId || "anonymous",
         service: Array.isArray(booking.services)
           ? booking.services.join(", ")
           : booking.services || "Home Service",
@@ -534,13 +535,16 @@ export class BookingService {
           booking.contactDetails?.instructions ||
           booking.additional_details ||
           "",
-        total_price: booking.totalAmount || booking.total_price || 0,
+        total_price: Math.max(
+          booking.totalAmount || booking.total_price || 50,
+          1,
+        ),
         discount_amount: booking.discount_amount || 0,
         final_amount:
           booking.totalAmount ||
           booking.final_amount ||
           booking.total_price ||
-          0,
+          Math.max(booking.totalAmount || booking.total_price || 50, 1),
         special_instructions:
           booking.contactDetails?.instructions ||
           booking.additional_details ||
@@ -552,6 +556,36 @@ export class BookingService {
           discount: 0,
         },
       };
+
+      console.log(
+        "📦 Booking Payload to /api/bookings:",
+        JSON.stringify(backendBooking, null, 2),
+      );
+
+      // Validate payload before sending
+      const validation = {
+        customer_id: !!backendBooking.customer_id,
+        service: !!backendBooking.service,
+        service_type: !!backendBooking.service_type,
+        services:
+          Array.isArray(backendBooking.services) &&
+          backendBooking.services.length > 0,
+        scheduled_date: !!backendBooking.scheduled_date,
+        scheduled_time: !!backendBooking.scheduled_time,
+        provider_name: !!backendBooking.provider_name,
+        address: !!backendBooking.address,
+        total_price:
+          !isNaN(backendBooking.total_price) && backendBooking.total_price > 0,
+      };
+      console.log("🔍 Payload validation:", validation);
+
+      const missingFields = Object.entries(validation)
+        .filter(([key, valid]) => !valid)
+        .map(([key]) => key);
+
+      if (missingFields.length > 0) {
+        console.error("❌ Missing or invalid fields:", missingFields);
+      }
 
       const response = await fetch(`${this.apiBaseUrl}/bookings`, {
         method: "POST",
@@ -570,6 +604,13 @@ export class BookingService {
         console.log("✅ Booking synced to backend:", booking.id, result);
       } else {
         const errorText = await response.text();
+        console.error("❌ Backend API Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          url: `${this.apiBaseUrl}/bookings`,
+          payload: backendBooking,
+        });
         throw new Error(
           `Backend sync failed with status: ${response.status} - ${errorText}`,
         );
