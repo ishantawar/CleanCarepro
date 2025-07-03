@@ -859,6 +859,22 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
               className="mt-1"
             />
           </div>
+
+          {/* Address Label */}
+          {showLabel && (
+            <div>
+              <Label htmlFor="address-label" className="text-sm font-medium">
+                🏷️ Address Label (Optional)
+              </Label>
+              <Input
+                id="address-label"
+                placeholder="e.g., My Home, Office, Mom's Place"
+                value={address.label}
+                onChange={(e) => handleFieldChange("label", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          )}
         </div>
 
         {/* Location Status */}

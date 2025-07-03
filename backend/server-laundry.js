@@ -23,7 +23,7 @@ try {
 }
 
 const app = express();
-const PORT = productionConfig.PORT;
+const PORT = process.env.PORT || productionConfig.PORT || 3001;
 
 // Security middleware
 app.use(
@@ -116,6 +116,15 @@ const connectDB = async () => {
 // Connect to database
 connectDB();
 
+// Initialize Google Sheets service
+const GoogleSheetsService = require("./services/googleSheetsService");
+const sheetsService = new GoogleSheetsService();
+
+// Initialize Google Sheets after MongoDB connection
+mongoose.connection.once("connected", async () => {
+  await sheetsService.initialize();
+});
+
 // Import routes with error handling
 let otpAuthRoutes, bookingRoutes, locationRoutes;
 
@@ -172,6 +181,15 @@ try {
   console.log("🔗 Address routes registered at /api/addresses");
 } catch (error) {
   console.error("❌ Failed to load Address routes:", error.message);
+}
+
+// Google Sheets routes
+try {
+  const googleSheetsRoutes = require("./routes/google-sheets");
+  app.use("/api/sheets", googleSheetsRoutes);
+  console.log("🔗 Google Sheets routes registered at /api/sheets");
+} catch (error) {
+  console.error("❌ Failed to load Google Sheets routes:", error.message);
 }
 
 // Google Sheets integration endpoint
@@ -354,6 +372,8 @@ app.use("*", (req, res) => {
       "/api/location",
       "/api/whatsapp",
       "/api/sheets/order",
+      "/api/sheets/test",
+      "/api/sheets/sync",
     ],
   });
 });
@@ -378,16 +398,21 @@ const server = app.listen(PORT, () => {
 });
 
 // Graceful shutdown handling
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = async (signal) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
 
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       console.error("❌ Error during server shutdown:", err);
       process.exit(1);
     }
 
     console.log("✅ HTTP server closed");
+
+    // Cleanup Google Sheets service
+    if (sheetsService) {
+      await sheetsService.cleanup();
+    }
 
     // Close database connection
     mongoose.connection.close(false, (err) => {
