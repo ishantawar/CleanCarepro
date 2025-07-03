@@ -340,7 +340,7 @@ export class BookingService {
     try {
       const mongoBookings = await this.mongoService.getUserBookings(userId);
       if (mongoBookings && mongoBookings.length > 0) {
-        console.log("���� Bookings loaded from MongoDB:", mongoBookings.length);
+        console.log("��� Bookings loaded from MongoDB:", mongoBookings.length);
         // Transform MongoDB bookings to match frontend format
         const transformedBookings = mongoBookings.map((booking) =>
           this.transformBackendBooking(booking),
@@ -535,13 +535,16 @@ export class BookingService {
           booking.contactDetails?.instructions ||
           booking.additional_details ||
           "",
-        total_price: booking.totalAmount || booking.total_price || 0,
+        total_price: Math.max(
+          booking.totalAmount || booking.total_price || 50,
+          1,
+        ),
         discount_amount: booking.discount_amount || 0,
         final_amount:
           booking.totalAmount ||
           booking.final_amount ||
           booking.total_price ||
-          0,
+          Math.max(booking.totalAmount || booking.total_price || 50, 1),
         special_instructions:
           booking.contactDetails?.instructions ||
           booking.additional_details ||
@@ -786,7 +789,7 @@ export class BookingService {
 
       allBookings[bookingIndex] = { ...allBookings[bookingIndex], ...updates };
       localStorage.setItem("user_bookings", JSON.stringify(allBookings));
-      console.log("��� Booking updated in localStorage");
+      console.log("💾 Booking updated in localStorage");
 
       return allBookings[bookingIndex];
     } catch (error) {
