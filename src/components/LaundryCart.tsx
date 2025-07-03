@@ -33,7 +33,7 @@ import {
   saveCartData,
   getCartData,
 } from "@/utils/formPersistence";
-import EnhancedAddressForm from "./EnhancedAddressForm";
+import SimplifiedAddressForm from "./SimplifiedAddressForm";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
 import { FormValidation, validateCheckoutForm } from "./FormValidation";
 import SavedAddressesModal from "./SavedAddressesModal";

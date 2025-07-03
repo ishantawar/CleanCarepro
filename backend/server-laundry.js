@@ -30,6 +30,7 @@ app.use(
   helmet({
     contentSecurityPolicy: false, // Disable for API
     crossOriginEmbedderPolicy: false,
+    frameguard: false, // Allow iframe display for development
   }),
 );
 
@@ -409,6 +410,31 @@ app.use((err, req, res, next) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Development root route to prevent 404s
+if (productionConfig.isDevelopment()) {
+  app.get("/", (req, res) => {
+    res.json({
+      success: true,
+      message: "CleanCare Pro API Server",
+      environment: "development",
+      frontend: "http://localhost:8080",
+      api: "http://localhost:3001/api",
+      availableRoutes: [
+        "/api/health",
+        "/api/test",
+        "/api/auth",
+        "/api/bookings",
+        "/api/addresses",
+        "/api/location",
+        "/api/whatsapp",
+        "/api/sheets/order",
+        "/api/sheets/test",
+        "/api/sheets/sync",
+      ],
+    });
+  });
+}
 
 // Handle 404 routes
 app.use("*", (req, res) => {

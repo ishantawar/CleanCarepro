@@ -33,7 +33,7 @@ import {
 } from "@/utils/notificationUtils";
 import DynamicServicesService from "@/services/dynamicServicesService";
 import type { DynamicLaundryService } from "@/services/dynamicServicesService";
-import EnhancedAddressForm from "./EnhancedAddressForm";
+import SimplifiedAddressForm from "./SimplifiedAddressForm";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
 import { FormValidation, validateCheckoutForm } from "./FormValidation";
 import SavedAddressesModal from "./SavedAddressesModal";
@@ -502,7 +502,7 @@ const ZomatoStyleCart: React.FC<ZomatoStyleCartProps> = ({
                 {addressData.fullAddress || "Address not specified"}
               </p>
             ) : (
-              <EnhancedAddressForm
+              <SimplifiedAddressForm
                 onAddressChange={setAddressData}
                 initialAddress={addressData}
               />
