@@ -215,6 +215,23 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
       return () => clearInterval(interval);
     }, [currentUser]);
 
+    // Refresh when user comes back to the page
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        if (!document.hidden && currentUser) {
+          console.log("👁️ Page visible, refreshing bookings...");
+          loadBookings();
+        }
+      };
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () =>
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange,
+        );
+    }, [currentUser]);
+
     const getStatusColor = (status: string) => {
       switch (status?.toLowerCase()) {
         case "pending":
