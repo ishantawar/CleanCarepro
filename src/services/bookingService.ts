@@ -799,12 +799,27 @@ export class BookingService {
           },
         );
 
+        console.log("📡 Backend response status:", response.status);
+
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP ${response.status}`);
+          const errorText = await response.text();
+          console.error("❌ Backend error response:", errorText);
+
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText };
+          }
+
+          throw new Error(
+            errorData.error || `HTTP ${response.status}: ${errorText}`,
+          );
         }
 
         const data = await response.json();
+        console.log("✅ Backend update successful:", data);
+
         return {
           success: true,
           booking: data.booking,
