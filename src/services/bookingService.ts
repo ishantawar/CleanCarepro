@@ -506,6 +506,7 @@ export class BookingService {
       }
 
       console.log("🔄 Syncing booking to backend:", booking.id);
+      console.log("📦 Original booking data:", booking);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -552,6 +553,11 @@ export class BookingService {
           discount: 0,
         },
       };
+
+      console.log(
+        "📦 Booking Payload to /api/bookings:",
+        JSON.stringify(backendBooking, null, 2),
+      );
 
       const response = await fetch(`${this.apiBaseUrl}/bookings`, {
         method: "POST",
