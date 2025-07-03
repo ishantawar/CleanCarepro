@@ -27,6 +27,7 @@ interface EnhancedAddressFormProps {
   initialData?: any;
   className?: string;
   showLabel?: boolean;
+  availableTypes?: Array<{ value: string; label: string; disabled: boolean }>;
 }
 
 declare global {
