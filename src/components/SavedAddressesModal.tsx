@@ -168,16 +168,6 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       setShowAddForm(false);
     };
 
-    const handleEditAddress = (address: AddressData) => {
-      const updatedAddresses = addresses.map((addr) =>
-        addr.id === address.id
-          ? { ...address, updatedAt: new Date().toISOString() }
-          : addr,
-      );
-      saveAddresses(updatedAddresses);
-      setEditingAddress(null);
-    };
-
     const handleDeleteAddress = (id: string) => {
       const updatedAddresses = addresses.filter((addr) => addr.id !== id);
       saveAddresses(updatedAddresses);
