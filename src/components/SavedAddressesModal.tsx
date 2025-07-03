@@ -94,6 +94,24 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       setAddresses(newAddresses);
     };
 
+    const handleEditAddress = (address: AddressData) => {
+      if (!editingAddress?.id) return;
+
+      const updatedAddresses = addresses.map((addr) =>
+        addr.id === editingAddress.id
+          ? {
+              ...address,
+              id: editingAddress.id,
+              updatedAt: new Date().toISOString(),
+            }
+          : addr,
+      );
+
+      saveAddresses(updatedAddresses);
+      setEditingAddress(null);
+      setShowAddForm(false);
+    };
+
     const handleAddAddress = (address: AddressData) => {
       // Check for duplicate addresses by comparing full address and key components
       const existingAddresses = [...addresses];
