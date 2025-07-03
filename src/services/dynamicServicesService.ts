@@ -58,6 +58,15 @@ class DynamicServicesService {
       return this.cache;
     }
 
+    // Check if we're in a hosted environment where backend calls should be skipped
+    const isHostedEnv = this.isHostedEnvironment();
+
+    if (isHostedEnv) {
+      console.log("🌐 Hosted environment detected - using static services");
+      await this.loadStaticFallback();
+      return this.cache;
+    }
+
     try {
       await this.fetchFromGoogleSheets();
     } catch (error) {
@@ -70,6 +79,15 @@ class DynamicServicesService {
     }
 
     return this.cache;
+  }
+
+  private isHostedEnvironment(): boolean {
+    return (
+      window.location.hostname.includes("fly.dev") ||
+      window.location.hostname.includes("builder.codes") ||
+      window.location.hostname.includes("vercel.app") ||
+      window.location.hostname.includes("netlify.app")
+    );
   }
 
   private async fetchFromGoogleSheets(): Promise<void> {
@@ -115,7 +133,7 @@ class DynamicServicesService {
     }));
 
     this.lastFetch = Date.now();
-    console.log("✅ Loaded static services as fallback");
+    console.log("��� Loaded static services as fallback");
   }
 
   async refreshServices(): Promise<DynamicServiceCategory[]> {
