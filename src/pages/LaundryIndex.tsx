@@ -803,6 +803,14 @@ const LaundryIndex = () => {
           currentUser={currentUser}
         />
       )}
+
+      {currentView === "booking-confirmed" && lastBookingData && (
+        <BookingConfirmed
+          bookingData={lastBookingData}
+          onGoHome={() => setCurrentView("home")}
+          onViewBookings={() => setCurrentView("bookings")}
+        />
+      )}
     </div>
   );
 };
