@@ -347,7 +347,7 @@ class LocationService {
   }
 
   /**
-   * Get place autocomplete suggestions
+   * Get place autocomplete suggestions with enhanced types
    */
   async getPlaceAutocomplete(
     input: string,
@@ -359,7 +359,7 @@ class LocationService {
     }
 
     try {
-      let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${this.GOOGLE_MAPS_API_KEY}`;
+      let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${this.GOOGLE_MAPS_API_KEY}&components=country:in&types=address|establishment|geocode`;
 
       if (location) {
         url += `&location=${location.lat},${location.lng}`;
@@ -379,6 +379,64 @@ class LocationService {
     } catch (error) {
       console.warn("Place autocomplete failed:", error);
       return [];
+    }
+  }
+
+  /**
+   * Search for nearby places of interest
+   */
+  async getNearbyPlaces(
+    coordinates: Coordinates,
+    radius: number = 500,
+    type?: string,
+  ): Promise<any[]> {
+    if (!this.GOOGLE_MAPS_API_KEY) {
+      return [];
+    }
+
+    try {
+      let url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=${radius}&key=${this.GOOGLE_MAPS_API_KEY}`;
+
+      if (type) {
+        url += `&type=${type}`;
+      }
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.status === "OK") {
+        return data.results || [];
+      }
+
+      return [];
+    } catch (error) {
+      console.warn("Nearby places search failed:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get place details by place ID
+   */
+  async getPlaceDetails(placeId: string): Promise<any> {
+    if (!this.GOOGLE_MAPS_API_KEY) {
+      return null;
+    }
+
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,types,rating,vicinity&key=${this.GOOGLE_MAPS_API_KEY}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.status === "OK") {
+        return data.result;
+      }
+
+      return null;
+    } catch (error) {
+      console.warn("Place details failed:", error);
+      return null;
     }
   }
 
