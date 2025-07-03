@@ -76,7 +76,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
 
       const userId = currentUser._id || currentUser.id || currentUser.phone;
-      const savedAddresses = localStorage.getItem(addresses_${userId});
+      const savedAddresses = localStorage.getItem(`addresses_${userId}`);
 
       if (savedAddresses) {
         const parsed = JSON.parse(savedAddresses);
