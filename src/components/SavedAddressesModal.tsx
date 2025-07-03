@@ -72,14 +72,24 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       }
     }, [isOpen, currentUser]);
 
-
     const loadSavedAddresses = () => {
       if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
 
       const userId = currentUser._id || currentUser.id || currentUser.phone;
       const savedAddresses = localStorage.getItem(`addresses_${userId}`);
 
-
+      if (savedAddresses) {
+        try {
+          const parsedAddresses = JSON.parse(savedAddresses);
+          setAddresses(Array.isArray(parsedAddresses) ? parsedAddresses : []);
+        } catch (error) {
+          console.error("Error parsing saved addresses:", error);
+          setAddresses([]);
+        }
+      } else {
+        setAddresses([]);
+      }
+    };
 
     const saveAddresses = (newAddresses: AddressData[]) => {
       if (!currentUser?.id && !currentUser?._id && !currentUser?.phone) return;
