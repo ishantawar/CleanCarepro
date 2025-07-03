@@ -861,6 +861,54 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
               className="mt-1"
             />
           </div>
+
+          {/* Address Type Selection */}
+          {availableTypes.length > 0 && (
+            <div>
+              <Label className="text-sm font-medium">🏷️ Address Type</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {availableTypes.map((type) => (
+                  <Button
+                    key={type.value}
+                    type="button"
+                    variant={
+                      address.type === type.value ? "default" : "outline"
+                    }
+                    disabled={type.disabled}
+                    className={`p-3 h-auto ${type.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    onClick={() => {
+                      if (!type.disabled) {
+                        handleFieldChange("type", type.value);
+                      }
+                    }}
+                  >
+                    {type.label}
+                    {type.disabled && (
+                      <span className="text-xs block text-gray-500">
+                        Already added
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Address Label */}
+          {showLabel && (
+            <div>
+              <Label htmlFor="address-label" className="text-sm font-medium">
+                🏷️ Address Label (Optional)
+              </Label>
+              <Input
+                id="address-label"
+                placeholder="e.g., My Home, Office, Mom's Place"
+                value={address.label}
+                onChange={(e) => handleFieldChange("label", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          )}
         </div>
 
         {/* Location Status */}
