@@ -15,7 +15,7 @@ import {
   Phone,
 } from "lucide-react";
 import ProfessionalDateTimePicker from "./ProfessionalDateTimePicker";
-import PhoneAuth from "./PhoneAuth";
+import PhoneOtpAuthModal from "./PhoneOtpAuthModal";
 import LocationDetector from "./LocationDetector.tsx";
 import BookingConfirmation from "./BookingConfirmation";
 import BookingSuccessAlert from "./BookingSuccessAlert";
@@ -651,7 +651,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({
       </div>
 
       {/* Authentication Modal */}
-      <PhoneAuth
+      <PhoneOtpAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleLoginSuccess}
