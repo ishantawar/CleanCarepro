@@ -113,14 +113,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
           !!import.meta.env.VITE_API_BASE_URL ||
           window.location.hostname === "localhost";
 
-        if (!isBackendAvailable) {
+        if (!isBackendAvailable && forceRefresh) {
           console.log("🌐 Running in demo mode - using local storage only");
           addNotification({
             id: `demo-mode-${Date.now()}`,
             type: "info",
-            title: "Demo Mode",
-            message: "Running in demo mode - bookings are stored locally only.",
-            duration: 5000,
+            title: "Demo Mode Active",
+            message:
+              "App is running in demo mode. Bookings are stored locally and will reset on browser refresh.",
+            duration: 7000,
           });
         }
 
