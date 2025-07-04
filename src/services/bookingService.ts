@@ -934,9 +934,55 @@ export class BookingService {
       const allBookings = JSON.parse(
         localStorage.getItem("user_bookings") || "[]",
       );
-      return allBookings.filter(
-        (booking: BookingDetails) => booking.userId === userId,
+
+      console.log("🔍 Searching localStorage for user ID:", userId);
+      console.log("📊 Total localStorage bookings:", allBookings.length);
+      console.log(
+        "📋 Available booking user IDs:",
+        allBookings.map((b) => b.userId).slice(0, 5),
       );
+
+      // Flexible filtering to handle different user ID formats
+      const matchingBookings = allBookings.filter((booking: BookingDetails) => {
+        const bookingUserId = booking.userId;
+
+        // Direct match
+        if (bookingUserId === userId) {
+          return true;
+        }
+
+        // Handle user_ prefix variations
+        if (
+          userId.startsWith("user_") &&
+          bookingUserId === userId.replace("user_", "")
+        ) {
+          return true;
+        }
+
+        if (
+          bookingUserId?.startsWith("user_") &&
+          bookingUserId.replace("user_", "") === userId
+        ) {
+          return true;
+        }
+
+        // Handle phone number variations
+        if (userId.startsWith("user_")) {
+          const phone = userId.replace("user_", "");
+          if (bookingUserId === phone) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+
+      console.log(
+        "✅ Found matching bookings in localStorage:",
+        matchingBookings.length,
+      );
+
+      return matchingBookings;
     } catch (error) {
       console.error("Failed to load bookings from localStorage:", error);
       return [];
