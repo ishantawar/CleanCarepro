@@ -61,6 +61,7 @@ router.post("/", async (req, res) => {
       provider_name,
       address,
       total_price,
+      final_amount,
     };
 
     const missingFields = Object.entries(requiredFields)
