@@ -220,7 +220,14 @@ router.post(
     res.status(200).json({
       success: true,
       message: "Verified",
-      data: { user, token, expiresIn: 2592000 },
+      data: {
+        user: {
+          ...user.toObject(),
+          customer_id: user.customer_id,
+        },
+        token,
+        expiresIn: 2592000,
+      },
     });
   },
 );
