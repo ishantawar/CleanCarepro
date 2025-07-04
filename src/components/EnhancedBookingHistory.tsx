@@ -88,6 +88,9 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
         if (forceRefresh) {
           console.log("🔄 Force refreshing bookings from backend...");
+          // Clear any cached data on force refresh
+          localStorage.removeItem("booking_history");
+          localStorage.removeItem("user_bookings");
         }
 
         // Import MongoDB helpers
@@ -96,57 +99,90 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
         );
         const bookingService = BookingService.getInstance();
 
-        console.log(
-          "Loading bookings from MongoDB for user:",
-          currentUser._id || currentUser.id,
-        );
+        const userId = currentUser._id || currentUser.id || currentUser.phone;
+        console.log("🔍 DEBUG: Loading bookings for user:", {
+          userId,
+          currentUser: currentUser,
+          forceRefresh,
+        });
 
         // Try MongoDB first (but it will gracefully fallback if no backend)
         let mongoBookings = [];
-        const userId = currentUser._id || currentUser.id || currentUser.phone;
 
         if (userId) {
+          console.log("📡 Attempting MongoDB fetch...");
           const mongoResponse = await bookingHelpers.getUserBookings(userId);
+
+          console.log("📊 MongoDB Response:", {
+            hasData: !!mongoResponse.data,
+            isArray: Array.isArray(mongoResponse.data),
+            dataLength: mongoResponse.data?.length || 0,
+            error: mongoResponse.error,
+            rawData: mongoResponse.data,
+          });
+
           if (
             mongoResponse.data &&
             Array.isArray(mongoResponse.data) &&
             mongoResponse.data.length > 0
           ) {
-            mongoBookings = filterProductionBookings(mongoResponse.data).map(
-              (booking: any) => ({
-                id: booking._id,
-                userId: booking.customer_id,
-                services: booking.services || [booking.service],
-                totalAmount: booking.final_amount || booking.total_price,
-                status: booking.status,
-                pickupDate: booking.scheduled_date,
-                deliveryDate: booking.scheduled_date, // Could calculate +1 day
-                pickupTime: booking.scheduled_time,
-                deliveryTime: "18:00",
-                address: booking.address,
-                contactDetails: {
-                  phone: currentUser.phone,
-                  name: currentUser.full_name || currentUser.name,
-                  instructions:
-                    booking.additional_details || booking.special_instructions,
-                },
-                paymentStatus: booking.payment_status,
-                createdAt: booking.created_at || booking.createdAt,
-                updatedAt: booking.updated_at || booking.updatedAt,
-              }),
-            );
+            const rawMongoBookings = mongoResponse.data;
             console.log(
-              "✅ Loaded bookings from MongoDB (filtered):",
-              mongoBookings.length,
+              "🔍 Raw MongoDB bookings before filtering:",
+              rawMongoBookings,
             );
+
+            const filteredBookings = filterProductionBookings(rawMongoBookings);
+            console.log("🔍 After filtering:", filteredBookings);
+
+            mongoBookings = filteredBookings.map((booking: any) => ({
+              id: booking._id,
+              userId: booking.customer_id,
+              services: booking.services || [booking.service],
+              totalAmount: booking.final_amount || booking.total_price,
+              status: booking.status,
+              pickupDate: booking.scheduled_date,
+              deliveryDate: booking.scheduled_date, // Could calculate +1 day
+              pickupTime: booking.scheduled_time,
+              deliveryTime: "18:00",
+              address: booking.address,
+              contactDetails: {
+                phone: currentUser.phone,
+                name: currentUser.full_name || currentUser.name,
+                instructions:
+                  booking.additional_details || booking.special_instructions,
+              },
+              paymentStatus: booking.payment_status,
+              createdAt: booking.created_at || booking.createdAt,
+              updatedAt: booking.updated_at || booking.updatedAt,
+              _originalData: booking, // Keep original for debugging
+            }));
+
+            console.log("✅ Processed MongoDB bookings:", {
+              count: mongoBookings.length,
+              processedBookings: mongoBookings,
+            });
+
             setBookings(mongoBookings);
             return;
+          } else {
+            console.log(
+              "⚠️ No valid MongoDB data, trying BookingService fallback",
+            );
           }
         }
 
         // Fallback to BookingService
-        console.log("Loading bookings from BookingService...");
+        console.log("📡 Attempting BookingService fetch...");
         const response = await bookingService.getCurrentUserBookings();
+
+        console.log("📊 BookingService Response:", {
+          success: response.success,
+          hasBookings: !!response.bookings,
+          bookingsLength: response.bookings?.length || 0,
+          error: response.error,
+          rawBookings: response.bookings,
+        });
 
         if (response.success && response.bookings) {
           // Filter out demo bookings for production
@@ -154,17 +190,19 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
             response.bookings,
           );
 
-          console.log(
-            "✅ Bookings loaded from BookingService (filtered):",
-            productionBookings.length,
-          );
+          console.log("✅ Final BookingService bookings:", {
+            originalCount: response.bookings.length,
+            filteredCount: productionBookings.length,
+            bookings: productionBookings,
+          });
+
           setBookings(productionBookings);
         } else {
-          console.log("No bookings found or error:", response.error);
+          console.log("❌ No bookings found or error:", response.error);
           setBookings([]);
         }
       } catch (error) {
-        console.error("Error loading bookings:", error);
+        console.error("💥 Error loading bookings:", error);
         setBookings([]);
         addNotification(
           createErrorNotification(
