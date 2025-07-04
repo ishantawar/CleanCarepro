@@ -64,9 +64,6 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
-  const [nearbyPlaces, setNearbyPlaces] = useState<any[]>([]);
-  const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
-  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
 
   const autocompleteRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -207,51 +204,6 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     });
   };
 
-  const fetchNearbyPlaces = async (coordinates: Coordinates) => {
-    if (!window.google?.maps?.places) return;
-
-    setIsLoadingNearby(true);
-    try {
-      // Create a temporary div for PlacesService
-      const map = new window.google.maps.Map(document.createElement("div"));
-      const service = new window.google.maps.places.PlacesService(map);
-
-      const request: google.maps.places.PlaceSearchRequest = {
-        location: coordinates,
-        radius: 300, // 300 meters radius
-        type: "establishment",
-      };
-
-      service.nearbySearch(request, (results, status) => {
-        if (
-          status === window.google.maps.places.PlacesServiceStatus.OK &&
-          results
-        ) {
-          const formattedPlaces = results
-            .filter((place) => place.name && place.vicinity)
-            .slice(0, 6) // Limit to 6 places for this form
-            .map((place) => ({
-              name: place.name,
-              vicinity: place.vicinity,
-              types: place.types,
-              rating: place.rating,
-              place_id: place.place_id,
-            }));
-
-          setNearbyPlaces(formattedPlaces);
-          setShowNearbyPlaces(formattedPlaces.length > 0);
-        } else {
-          setNearbyPlaces([]);
-          setShowNearbyPlaces(false);
-        }
-        setIsLoadingNearby(false);
-      });
-    } catch (error) {
-      console.error("Failed to fetch nearby places:", error);
-      setIsLoadingNearby(false);
-    }
-  };
-
   const parseGoogleMapsPlace = (place: any) => {
     const components = place.address_components;
     const newAddress: AddressData = {
@@ -341,11 +293,6 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     if (onAddressChange) {
       onAddressChange(newAddress);
     }
-
-    // Fetch nearby places if coordinates are available
-    if (newAddress.coordinates) {
-      fetchNearbyPlaces(newAddress.coordinates);
-    }
   };
 
   const detectCurrentLocation = async () => {
@@ -381,15 +328,11 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
 
       // Get address details and fill the form
       await parseLocationData(coordinates);
-
-      // Fetch nearby places for detected location
-      await fetchNearbyPlaces(coordinates);
     } catch (error) {
       console.error("Error detecting location:", error);
       // Final fallback with default coordinates
       const fallbackCoords = { lat: 28.56, lng: 76.9989 };
       await parseLocationData(fallbackCoords);
-      await fetchNearbyPlaces(fallbackCoords);
     } finally {
       setIsDetectingLocation(false);
     }
@@ -957,80 +900,6 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
             </div>
           )}
         </div>
-
-        {/* Nearby Places */}
-        {address.coordinates && (showNearbyPlaces || isLoadingNearby) && (
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">
-              🗺️ Nearby places (tap to add as landmark)
-            </Label>
-
-            {isLoadingNearby ? (
-              <div className="flex items-center justify-center p-3 bg-gray-50 rounded-lg">
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600 mr-2" />
-                <span className="text-sm text-gray-600">
-                  Finding nearby places...
-                </span>
-              </div>
-            ) : nearbyPlaces.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {nearbyPlaces.map((place, index) => (
-                  <div
-                    key={index}
-                    className="p-2 bg-gray-50 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
-                    onClick={() => {
-                      const currentLandmark = address.landmark;
-                      const newLandmark = currentLandmark
-                        ? `${currentLandmark}, Near ${place.name}`
-                        : `Near ${place.name}`;
-                      handleFieldChange("landmark", newLandmark);
-                    }}
-                  >
-                    <div className="flex items-start gap-1">
-                      <span className="text-xs">
-                        {place.types?.includes("restaurant")
-                          ? "🍽️"
-                          : place.types?.includes("hospital")
-                            ? "🏥"
-                            : place.types?.includes("school")
-                              ? "🏫"
-                              : place.types?.includes("gas_station")
-                                ? "⛽"
-                                : place.types?.includes("bank")
-                                  ? "🏦"
-                                  : place.types?.includes("pharmacy")
-                                    ? "💊"
-                                    : place.types?.includes("shopping_mall")
-                                      ? "🛒"
-                                      : "📍"}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-900 truncate">
-                          {place.name}
-                        </p>
-                        <p className="text-xs text-gray-600 truncate">
-                          {place.vicinity}
-                        </p>
-                        {place.rating && (
-                          <div className="flex items-center gap-1">
-                            <span className="text-yellow-400 text-xs">⭐</span>
-                            <span className="text-xs text-gray-600">
-                              {place.rating.toFixed(1)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-lg text-center">
-                <p className="text-sm text-gray-500">No nearby places found</p>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Location Status */}
         {address.coordinates && (

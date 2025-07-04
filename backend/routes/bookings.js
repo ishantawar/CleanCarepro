@@ -42,7 +42,6 @@ router.post("/", async (req, res) => {
       Object.entries(req.body).map(([key, value]) => `${key}: ${typeof value}`),
     );
 
-
     const {
       customer_id,
       service,
@@ -83,7 +82,6 @@ router.post("/", async (req, res) => {
         ([key, value]) => `${key}: ${!!value} (${typeof value})`,
       ),
     );
-
 
     const missingFields = Object.entries(requiredFields)
       .filter(([key, value]) => !value)
@@ -180,14 +178,12 @@ router.post("/", async (req, res) => {
     console.log("📊 Final amount < 0:", final_amount < 0);
     console.log("📊 Final amount parsed as Number:", Number(final_amount));
 
-
     if (
       final_amount === undefined ||
       final_amount === null ||
       isNaN(final_amount) ||
       final_amount < 0
     ) {
-
       console.log("❌ ERROR: Final amount validation failed!");
       const reasons = [];
       if (final_amount === undefined) reasons.push("Final amount is undefined");
@@ -257,20 +253,22 @@ router.post("/", async (req, res) => {
     }
     console.log("👤 Actual customer_id to use:", actualCustomerId);
 
-    // Try to find by ObjectId first
-    if (mongoose.Types.ObjectId.isValid(actualCustomerId)) {
-      customer = await User.findById(actualCustomerId);
-    }
-
-    // If not found and actualCustomerId looks like a phone number, try to find by phone
+    // Primary strategy: Always look up by phone number first to ensure consistency
     if (
-      !customer &&
       typeof actualCustomerId === "string" &&
       actualCustomerId.match(/^\d{10,}$/)
     ) {
       customer = await User.findOne({ phone: actualCustomerId });
       console.log(
         `🔍 Looking for customer by phone: ${actualCustomerId}, found: ${!!customer}`,
+      );
+    }
+
+    // Secondary strategy: Try ObjectId lookup only if phone lookup failed
+    if (!customer && mongoose.Types.ObjectId.isValid(actualCustomerId)) {
+      customer = await User.findById(actualCustomerId);
+      console.log(
+        `🔍 Looking for customer by ObjectId: ${actualCustomerId}, found: ${!!customer}`,
       );
     }
 
@@ -342,40 +340,43 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // If customer not found, create a basic customer record
+    // If customer not found and we have a phone number, create a customer record
     if (!customer && actualCustomerId.match(/^\d{10,}$/)) {
       console.log(`👤 Creating new customer with phone: ${actualCustomerId}`);
 
-      // Check if user already exists with this phone
+      // Double-check to prevent race conditions
       const existingUserByPhone = await User.findOne({
         phone: actualCustomerId,
       });
 
       if (existingUserByPhone) {
         customer = existingUserByPhone;
-        console.log("✅ Found existing customer by phone:", customer._id);
+        console.log(
+          "✅ Found existing customer by phone (race condition avoided):",
+          customer._id,
+        );
       } else {
-        customer = new User({
-          phone: actualCustomerId,
-          name: `User ${actualCustomerId.slice(-4)}`,
-          full_name: `User ${actualCustomerId.slice(-4)}`,
-          user_type: "customer",
-          is_verified: true,
-          phone_verified: true,
-        });
-
         try {
+          customer = new User({
+            phone: actualCustomerId,
+            name: `User ${actualCustomerId.slice(-4)}`,
+            full_name: `User ${actualCustomerId.slice(-4)}`,
+            user_type: "customer",
+            is_verified: true,
+            phone_verified: true,
+          });
+
           await customer.save();
           console.log("✅ Auto-created customer:", customer._id);
         } catch (createError) {
-          console.error("Failed to auto-create customer:", createError);
-          // Check if it's a duplicate key error - in that case, try to find the existing user
-          if (createError.code === 11000) {
-            if (createError.keyValue?.phone) {
-              customer = await User.findOne({
-                phone: createError.keyValue.phone,
-              });
-            }
+          // Handle duplicate key error gracefully
+          if (createError.code === 11000 && createError.keyValue?.phone) {
+            console.log(
+              "📞 Duplicate phone detected, finding existing user...",
+            );
+            customer = await User.findOne({
+              phone: createError.keyValue.phone,
+            });
 
             if (customer) {
               console.log(
@@ -383,11 +384,14 @@ router.post("/", async (req, res) => {
                 customer._id,
               );
             } else {
-              return res
-                .status(500)
-                .json({ error: "Failed to create customer record" });
+              console.error("❌ Could not find customer after duplicate error");
+              return res.status(500).json({
+                error: "Customer creation failed due to database inconsistency",
+                phone: actualCustomerId,
+              });
             }
           } else {
+            console.error("❌ Customer creation failed:", createError);
             return res
               .status(500)
               .json({ error: "Failed to create customer record" });
@@ -503,7 +507,6 @@ router.post("/", async (req, res) => {
     // Handle specific MongoDB validation errors
 
     if (error.name === "ValidationError") {
-
       console.log("❌ MongoDB Validation Error Details:");
       console.log("❌ Validation errors:", Object.keys(error.errors));
       Object.entries(error.errors).forEach(([field, err]) => {
@@ -520,7 +523,6 @@ router.post("/", async (req, res) => {
           value: err.value,
 
           kind: err.kind,
-
         })),
         timestamp: new Date().toISOString(),
       });
