@@ -243,6 +243,26 @@ export class BookingService {
   }
 
   /**
+   * Force refresh bookings without clearing cache - preserves local additions
+   */
+  async forceRefreshCurrentUserBookings(): Promise<BookingResponse> {
+    try {
+      const userId = await this.getCurrentUserIdForBooking();
+      console.log("🔄 Force refreshing bookings for user:", userId);
+
+      // Get the latest bookings and merge them properly
+      return this.getUserBookings(userId);
+    } catch (error) {
+      console.error("Failed to force refresh bookings:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to refresh bookings",
+      };
+    }
+  }
+
+  /**
    * Get user bookings
    */
   async getUserBookings(userId: string): Promise<BookingResponse> {
