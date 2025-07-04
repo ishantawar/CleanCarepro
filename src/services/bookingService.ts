@@ -176,34 +176,7 @@ export class BookingService {
         }
       }
 
-      // Save to Google Sheets
-      try {
-        const authService = DVHostingSmsService.getInstance();
-        const currentUser = authService.getCurrentUser();
-
-        const googleSheetsData = {
-          orderId: `${currentUser?.phone || "User"}${new Date().toLocaleDateString("en-IN").replace(/\//g, "")}${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(":", "")}`,
-          customerName:
-            currentUser?.name || currentUser?.full_name || "Customer",
-          customerPhone: currentUser?.phone || "",
-          customerAddress:
-            typeof booking.address === "object"
-              ? JSON.stringify(booking.address)
-              : booking.address,
-          services: Array.isArray(booking.services)
-            ? booking.services
-            : [booking.services],
-          totalAmount: booking.totalAmount,
-          pickupDate: booking.pickupDate,
-          pickupTime: booking.pickupTime,
-          status: booking.status,
-          createdAt: booking.createdAt,
-        };
-
-        // Google Sheets integration removed
-      } catch (error) {
-        console.warn("Google Sheets integration error:", error);
-      }
+      // Google Sheets integration removed
 
       // Background sync is no longer needed as we already synced above
       // This prevents duplicate API calls that were causing the 400 errors
