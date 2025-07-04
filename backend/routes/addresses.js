@@ -49,9 +49,16 @@ router.get("/default", verifyUser, async (req, res) => {
 // Create new address
 router.post("/", verifyUser, async (req, res) => {
   try {
+    // Get user's customer_id
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const addressData = {
       ...req.body,
       user_id: req.userId,
+      customer_id: user.customer_id,
     };
 
     const address = new Address(addressData);
