@@ -70,24 +70,43 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
       setLoading(true);
       const bookingService = BookingService.getInstance();
 
-      console.log("Loading bookings for current user...");
+      console.log("📋 Loading bookings for current user:", {
+        id: currentUser?.id,
+        _id: currentUser?._id,
+        phone: currentUser?.phone,
+        name: currentUser?.name || currentUser?.full_name,
+      });
+
       // Use the new method that automatically handles user ID resolution
       const response = await bookingService.getCurrentUserBookings();
+
+      console.log("📊 Booking service response:", {
+        success: response.success,
+        bookingsCount: response.bookings?.length || 0,
+        error: response.error,
+        bookingsSample: response.bookings?.slice(0, 2)?.map((b) => ({
+          id: b.id,
+          userId: b.userId,
+          status: b.status,
+          services: b.services,
+        })),
+      });
 
       if (response.success && response.bookings) {
         // Filter out demo bookings for production
         const productionBookings = filterProductionBookings(response.bookings);
         console.log(
-          "Bookings loaded successfully (filtered):",
+          "✅ Bookings loaded successfully (filtered):",
           productionBookings.length,
         );
+        console.log("📊 Sample bookings:", productionBookings.slice(0, 2));
         setBookings(productionBookings);
       } else {
-        console.log("No bookings found or error:", response.error);
+        console.log("⚠️ No bookings found or error:", response.error);
         setBookings([]);
       }
     } catch (error) {
-      console.error("Error loading bookings:", error);
+      console.error("❌ Error loading bookings:", error);
       setBookings([]);
     } finally {
       setLoading(false);
