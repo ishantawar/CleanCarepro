@@ -7,25 +7,28 @@ const getApiBaseUrl = () => {
     return envUrl;
   }
 
-  // Try the backend URL - update to correct endpoint
-  if (
+  // For hosted/demo environments, disable backend calls to prevent errors
+  const isHostedEnv =
+    window.location.hostname.includes("fly.dev") ||
     window.location.hostname.includes("vercel.app") ||
-    window.location.hostname.includes("builder.codes")
-  ) {
-    // Use the correct render.com backend URL
-    return "https://cleancarepro-95it.onrender.com/api";
-  }
-
-  // For hosted environment, detect if we're on fly.dev and disable backend calls
-  const isHostedEnv = window.location.hostname.includes("fly.dev");
+    window.location.hostname.includes("builder.codes") ||
+    window.location.hostname.includes("netlify.app");
 
   if (isHostedEnv) {
-    console.log("🌐 Hosted environment detected - MongoDB backend disabled");
+    console.log(
+      "🌐 Hosted environment detected - MongoDB backend disabled for demo mode",
+    );
     return null; // This will cause graceful fallback to local storage
   }
 
-  // Local development fallback
-  return "http://localhost:3001/api";
+  // Only try backend for local development
+  if (window.location.hostname === "localhost") {
+    return "http://localhost:3001/api";
+  }
+
+  // For all other cases, disable backend to prevent errors
+  console.log("🔒 Backend disabled - using localStorage only");
+  return null;
 };
 
 const API_BASE_URL = getApiBaseUrl();
