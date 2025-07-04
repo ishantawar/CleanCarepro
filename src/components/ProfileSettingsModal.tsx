@@ -147,6 +147,21 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               </p>
             </div>
 
+            {currentUser?.customer_id && (
+              <div>
+                <Label htmlFor="customer-id">Customer ID</Label>
+                <Input
+                  id="customer-id"
+                  value={currentUser.customer_id}
+                  disabled={true}
+                  className="bg-blue-50 font-mono"
+                />
+                <p className="text-xs text-blue-600 mt-1">
+                  Your unique customer identifier for bookings
+                </p>
+              </div>
+            )}
+
             <div>
               <Label htmlFor="email">Email Address</Label>
               <Input
