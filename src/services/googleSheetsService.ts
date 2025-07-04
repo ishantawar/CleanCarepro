@@ -73,13 +73,12 @@ class GoogleSheetsService {
   public async saveOrderToSheet(orderData: OrderData): Promise<boolean> {
     // Check if Google Sheets integration is enabled
     if (!this.config.enabled) {
-      console.log("📊 Google Sheets integration is disabled");
+      console.log("📊 Google Sheets integration disabled in configuration");
       return false;
     }
 
-    // Note: Google Sheets integration is now enabled in all environments
     console.log(
-      "📊 Google Sheets integration active - attempting to save to sheets",
+      "✅ Google Sheets integration enabled - saving booking to sheets",
     );
 
     try {
