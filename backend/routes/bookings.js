@@ -61,6 +61,7 @@ router.post("/", async (req, res) => {
       provider_name,
       address,
       total_price,
+      final_amount,
     };
 
     const missingFields = Object.entries(requiredFields)
@@ -569,7 +570,7 @@ router.put("/:bookingId/status", async (req, res) => {
     const { bookingId } = req.params;
     const { status, rider_id, user_id, user_type } = req.body;
 
-    console.log("📝 Booking status update request:", {
+    console.log("�� Booking status update request:", {
       bookingId,
       status,
       rider_id,
