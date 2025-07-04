@@ -693,17 +693,45 @@ export class BookingService {
         const result = await response.json();
         console.log("✅ Booking synced to backend:", booking.id, result);
       } else {
-        const errorText = await response.text();
+        let errorDetails;
+        const contentType = response.headers.get("content-type");
+
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            errorDetails = await response.json();
+          } catch (parseError) {
+            errorDetails = { error: "Failed to parse error response" };
+          }
+        } else {
+          const errorText = await response.text();
+          errorDetails = { error: errorText };
+        }
+
         console.error("❌ Backend API Error:", {
           status: response.status,
           statusText: response.statusText,
-          errorText,
+          errorDetails,
           url: `${this.apiBaseUrl}/bookings`,
           payload: backendBooking,
         });
-        throw new Error(
-          `Backend sync failed with status: ${response.status} - ${errorText}`,
-        );
+
+        // Provide more specific error messages based on status code
+        let errorMessage = `Backend sync failed with status: ${response.status}`;
+
+        if (response.status === 400) {
+          errorMessage += ` - Validation Error: ${errorDetails.error || "Invalid data format"}`;
+          if (errorDetails.missing) {
+            errorMessage += ` Missing fields: ${errorDetails.missing.join(", ")}`;
+          }
+        } else if (response.status === 404) {
+          errorMessage += ` - Customer not found or invalid customer ID: ${backendBooking.customer_id}`;
+        } else if (response.status === 500) {
+          errorMessage += ` - Server error: ${errorDetails.error || "Internal server error"}`;
+        } else {
+          errorMessage += ` - ${errorDetails.error || response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
       }
     } catch (error) {
       if (error instanceof Error) {
