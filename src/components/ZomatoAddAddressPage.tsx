@@ -390,10 +390,10 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       if (suggestions.length === 0) {
         try {
           const nominatimResponse = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, India&limit=8&addressdetails=1&countrycodes=in`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, India&limit=10&addressdetails=1&countrycodes=in&extratags=1`,
             {
               headers: {
-                "User-Agent": "LaundryFlash-App/1.0",
+                "User-Agent": "CleanCare-App/1.0",
               },
             },
           );
