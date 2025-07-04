@@ -80,7 +80,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
       addNotification(
         createSuccessNotification(
           "Services Refreshed",
-          "Services have been updated from Google Sheets.",
+          "Services have been updated.",
         ),
       );
     } catch (error) {
@@ -88,7 +88,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
       addNotification(
         createErrorNotification(
           "Refresh Failed",
-          "Could not refresh services from Google Sheets.",
+          "Could not refresh services.",
         ),
       );
     } finally {
@@ -122,7 +122,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
         addNotification(
           createWarningNotification(
             "Update Pending",
-            "Service update request sent. Please update manually in Google Sheets.",
+            "Service update request sent.",
           ),
         );
       }
@@ -141,12 +141,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
     setEditingService(null);
   };
 
-  const openGoogleSheets = () => {
-    // This would open the Google Sheets document
-    // You would need to configure the actual URL
-    const sheetsUrl = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_SERVICES_SHEET_ID}/edit`;
-    window.open(sheetsUrl, "_blank");
-  };
+  // Google Sheets integration removed
 
   const setupInitialSheet = async () => {
     try {
