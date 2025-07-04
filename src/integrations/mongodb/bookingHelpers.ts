@@ -127,7 +127,10 @@ const safeParseJSON = async (response: Response) => {
 };
 export const bookingHelpers = {
   // ✅ Create new booking
-  async createBooking(bookingData: Partial<Booking>) {
+  async createBooking(
+    bookingData: Partial<Booking>,
+    options: { skipApiCall?: boolean } = {},
+  ) {
     try {
       const user = JSON.parse(localStorage.getItem("current_user") || "{}");
 
@@ -149,6 +152,19 @@ export const bookingHelpers = {
       if (!user._id && user.phone) {
         console.log("🔄 User missing MongoDB ID, using phone:", user.phone);
         customerId = user.phone; // Use phone as fallback ID
+      }
+
+      // Check if we should skip API call (to prevent duplicates from BookingService)
+      if (options.skipApiCall) {
+        console.log("🚫 Skipping MongoDB API call to prevent duplicates");
+        return {
+          data: {
+            _id: `mongo_${Date.now()}`,
+            customer_id: customerId,
+            ...bookingData,
+          },
+          error: null,
+        };
       }
 
       // Check if backend is available
