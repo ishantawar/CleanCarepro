@@ -101,6 +101,23 @@ router.post("/", async (req, res) => {
       });
     }
 
+    if (
+      final_amount === undefined ||
+      final_amount === null ||
+      isNaN(final_amount) ||
+      final_amount < 0
+    ) {
+      console.log("❌ Final amount validation failed:", {
+        final_amount,
+        type: typeof final_amount,
+      });
+      return res.status(400).json({
+        error: "Final amount must be a valid number >= 0",
+        finalAmountReceived: final_amount,
+        finalAmountType: typeof final_amount,
+      });
+    }
+
     // Validate and sanitize address
     let sanitizedAddress = address;
     let addressObject = null;
