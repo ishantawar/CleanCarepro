@@ -207,6 +207,18 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
       loadBookings();
     }, [currentUser]);
 
+    // Listen for booking refresh events
+    useEffect(() => {
+      const handleRefreshBookings = () => {
+        console.log("🔄 Received booking refresh event");
+        loadBookings(true);
+      };
+
+      window.addEventListener("refreshBookings", handleRefreshBookings);
+      return () =>
+        window.removeEventListener("refreshBookings", handleRefreshBookings);
+    }, [currentUser]);
+
     // Auto-refresh bookings every 30 seconds to catch new bookings
     useEffect(() => {
       if (!currentUser) return;
