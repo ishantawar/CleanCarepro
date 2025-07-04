@@ -968,14 +968,17 @@ export class BookingService {
       );
       const bookingIndex = allBookings.findIndex((booking: BookingDetails) => {
         const bid = booking.id || (booking as any)._id;
+        const customOrderId = (booking as any).custom_order_id;
         const targetId = bookingId.toString();
 
-        // More comprehensive ID matching
+        // More comprehensive ID matching including custom order ID
         return (
           bid === bookingId ||
           bid === targetId ||
           bid?.toString() === targetId ||
           bid?.toString() === bookingId ||
+          customOrderId === bookingId ||
+          customOrderId === targetId ||
           // Handle cases where one might have ObjectId format
           (typeof bid === "object" && bid.toString() === targetId) ||
           (typeof bookingId === "object" && bookingId.toString() === bid) ||

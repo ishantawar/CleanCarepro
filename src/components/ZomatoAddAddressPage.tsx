@@ -62,6 +62,32 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const [area, setArea] = useState("");
   const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
+
+  // Auto-update full address when individual fields change
+  useEffect(() => {
+    const buildFullAddress = () => {
+      const parts = [
+        flatNo && `${flatNo}`,
+        building && `${building}`,
+        street && `${street}`,
+        landmark && `${landmark}`,
+        area && `${area}`,
+        city && `${city}`,
+        pincode && `${pincode}`,
+      ].filter(Boolean);
+
+      if (parts.length > 0) {
+        const fullAddress = parts.join(", ");
+        setSearchQuery(fullAddress);
+        setSelectedLocation({
+          address: fullAddress,
+          coordinates: selectedLocation?.coordinates || { lat: 0, lng: 0 },
+        });
+      }
+    };
+
+    buildFullAddress();
+  }, [flatNo, building, street, landmark, area, city, pincode]);
   const [addressType, setAddressType] = useState<"home" | "office" | "other">(
     "home",
   );

@@ -981,7 +981,60 @@ router.get("/:bookingId", async (req, res) => {
   }
 });
 
-// Cancel booking
+// Cancel booking (PUT route)
+router.put("/:bookingId/cancel", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const userId = req.headers["user-id"];
+
+    console.log("🚫 Booking cancellation request:", { bookingId, userId });
+
+    // Get booking details first
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      console.log("❌ Booking not found:", bookingId);
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // Check if user has permission to cancel (simplified - just check customer_id)
+    const canCancel = booking.customer_id.toString() === userId;
+
+    if (!canCancel) {
+      console.log("❌ Access denied:", {
+        bookingCustomerId: booking.customer_id,
+        userId,
+      });
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    // Can't cancel if already completed or cancelled
+    if (booking.status === "completed") {
+      return res.status(400).json({ error: "Cannot cancel completed booking" });
+    }
+
+    if (booking.status === "cancelled") {
+      return res.status(400).json({ error: "Booking is already cancelled" });
+    }
+
+    // Update booking status to cancelled
+    booking.status = "cancelled";
+    booking.updated_at = new Date();
+    await booking.save();
+
+    console.log("✅ Booking cancelled successfully:", bookingId);
+
+    res.json({
+      success: true,
+      message: "Booking cancelled successfully",
+      booking,
+    });
+  } catch (error) {
+    console.error("Booking cancellation error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Cancel booking (DELETE route - legacy support)
 router.delete("/:bookingId", async (req, res) => {
   try {
     const { bookingId } = req.params;

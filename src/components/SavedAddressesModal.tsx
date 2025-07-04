@@ -69,6 +69,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
       null,
     );
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
       if (isOpen) {

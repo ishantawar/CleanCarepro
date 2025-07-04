@@ -720,17 +720,19 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold text-sm text-gray-900 truncate">
-                              #CC
-                              {booking._id
-                                ? booking._id.slice(-6).toUpperCase()
-                                : new Date(
-                                    booking.created_at ||
-                                      booking.createdAt ||
-                                      Date.now(),
-                                  )
-                                    .getTime()
-                                    .toString()
-                                    .slice(-6)}
+                              #
+                              {booking.custom_order_id ||
+                                "CC" +
+                                  (booking._id
+                                    ? booking._id.slice(-6).toUpperCase()
+                                    : new Date(
+                                        booking.created_at ||
+                                          booking.createdAt ||
+                                          Date.now(),
+                                      )
+                                        .getTime()
+                                        .toString()
+                                        .slice(-6))}
                             </h3>
                             <Badge
                               className={`${getStatusColor(booking.status)} text-xs px-1.5 py-0.5`}
@@ -850,17 +852,19 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                             <div className="flex justify-between items-center text-xs">
                               <span className="text-gray-600">Order ID</span>
                               <span className="font-mono font-medium text-blue-600">
-                                #CC
-                                {booking._id
-                                  ? booking._id.slice(-6).toUpperCase()
-                                  : new Date(
-                                      booking.created_at ||
-                                        booking.createdAt ||
-                                        Date.now(),
-                                    )
-                                      .getTime()
-                                      .toString()
-                                      .slice(-6)}
+                                #
+                                {booking.custom_order_id ||
+                                  "CC" +
+                                    (booking._id
+                                      ? booking._id.slice(-6).toUpperCase()
+                                      : new Date(
+                                          booking.created_at ||
+                                            booking.createdAt ||
+                                            Date.now(),
+                                        )
+                                          .getTime()
+                                          .toString()
+                                          .slice(-6))}
                               </span>
                             </div>
                             <div className="flex justify-between items-center text-xs">

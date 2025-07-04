@@ -640,7 +640,7 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-sm text-gray-900 truncate">
-                            Order #{bookingId}
+                            Order #{safeBooking.custom_order_id || bookingId}
                           </h3>
                           <Badge
                             className={`${getStatusColor(safeBooking.status)} text-xs px-1.5 py-0.5`}
