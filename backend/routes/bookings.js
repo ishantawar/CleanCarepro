@@ -93,7 +93,7 @@ router.post("/", async (req, res) => {
       console.log("📦 All received fields:", Object.keys(req.body));
 
       console.log(
-        "��� Field values:",
+        "📊 Field values:",
         Object.entries(req.body).map(
           ([key, value]) =>
             `${key}: ${JSON.stringify(value)} (${typeof value})`,
@@ -232,7 +232,7 @@ router.post("/", async (req, res) => {
       console.log("📍 Using string address:", sanitizedAddress);
     }
 
-    console.log("���� VALIDATION STEP 5: Customer lookup process...");
+    console.log("🔍 VALIDATION STEP 5: Customer lookup process...");
     console.log("👤 Original customer_id:", customer_id);
     console.log("📊 Customer_id type:", typeof customer_id);
 
@@ -570,67 +570,163 @@ router.get("/customer/:customerId", async (req, res) => {
     const { customerId } = req.params;
     const { status, limit = 50, offset = 0 } = req.query;
 
-    // Handle different customer ID formats
-    let customerIds = [];
+    console.log("📋 Fetching bookings for customer:", customerId);
+    console.log("📊 Customer ID type:", typeof customerId);
 
-    // If it's a valid ObjectId, add it
-    if (mongoose.Types.ObjectId.isValid(customerId)) {
-      customerIds.push(customerId);
-    }
+    // CONSOLIDATED CUSTOMER LOOKUP - Same logic as booking creation
+    let targetCustomerId = null;
+    let extractedPhone = null;
 
-    // If it looks like a phone number, find corresponding user IDs
-    if (typeof customerId === "string" && customerId.match(/^\d{10,}$/)) {
-      try {
-        const usersWithPhone = await User.find({ phone: customerId });
-        customerIds.push(...usersWithPhone.map((u) => u._id));
-
-        // Also check CleanCareUser collection
-        try {
-          const CleanCareUser = mongoose.model("CleanCareUser");
-          const cleanCareUsers = await CleanCareUser.find({
-            phone: customerId,
-          });
-          customerIds.push(...cleanCareUsers.map((u) => u._id));
-        } catch (cleanCareError) {
-          console.warn("CleanCareUser lookup failed:", cleanCareError);
-        }
-      } catch (phoneError) {
-        console.warn("Phone lookup failed:", phoneError);
-      }
-    }
-
-    // If customerId starts with "user_", extract phone number
+    // Extract phone number from different formats
     if (typeof customerId === "string" && customerId.startsWith("user_")) {
       const phone = customerId.replace("user_", "");
       if (phone.match(/^\d{10,}$/)) {
-        try {
-          const usersWithPhone = await User.find({ phone: phone });
-          customerIds.push(...usersWithPhone.map((u) => u._id));
+        extractedPhone = phone;
+        console.log(`📞 Extracted phone from user_ format: ${phone}`);
+      }
+    } else if (
+      typeof customerId === "string" &&
+      customerId.match(/^\d{10,}$/)
+    ) {
+      extractedPhone = customerId;
+      console.log(`📞 Using direct phone number: ${customerId}`);
+    }
 
-          // Also check CleanCareUser collection
-          try {
-            const CleanCareUser = mongoose.model("CleanCareUser");
-            const cleanCareUsers = await CleanCareUser.find({ phone: phone });
-            customerIds.push(...cleanCareUsers.map((u) => u._id));
-          } catch (cleanCareError) {
-            console.warn("CleanCareUser lookup failed:", cleanCareError);
+    // Step 1: Find the definitive User record for this phone/ID
+    if (extractedPhone) {
+      console.log(`🔍 Looking for User by phone: ${extractedPhone}`);
+      const userRecord = await User.findOne({ phone: extractedPhone });
+
+      if (userRecord) {
+        targetCustomerId = userRecord._id;
+        console.log(`✅ Found User record: ${targetCustomerId}`);
+      } else {
+        console.log(`❌ No User record found for phone: ${extractedPhone}`);
+
+        // Check if CleanCareUser exists but no User record (inconsistent state)
+        try {
+          const CleanCareUser = mongoose.model("CleanCareUser");
+          const cleanCareUser = await CleanCareUser.findOne({
+            phone: extractedPhone,
+          });
+
+          if (cleanCareUser) {
+            console.log(
+              `⚠️ Found CleanCareUser but no User record - data inconsistency detected`,
+            );
+            console.log(
+              `🔧 Creating missing User record for phone: ${extractedPhone}`,
+            );
+
+            // Create the missing User record to maintain consistency
+            try {
+              const newUser = new User({
+                phone: cleanCareUser.phone,
+                name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                full_name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                email: cleanCareUser.email,
+                user_type: "customer",
+                is_verified: cleanCareUser.isVerified || false,
+                phone_verified: cleanCareUser.isVerified || false,
+              });
+
+              await newUser.save();
+              targetCustomerId = newUser._id;
+              console.log(
+                `✅ Created missing User record: ${targetCustomerId}`,
+              );
+            } catch (createError) {
+              if (createError.code === 11000) {
+                // Race condition - try to find the user again
+                const raceUser = await User.findOne({ phone: extractedPhone });
+                if (raceUser) {
+                  targetCustomerId = raceUser._id;
+                  console.log(
+                    `✅ Found User after race condition: ${targetCustomerId}`,
+                  );
+                }
+              } else {
+                console.error(
+                  "Failed to create missing User record:",
+                  createError,
+                );
+              }
+            }
           }
-        } catch (phoneError) {
-          console.warn("Phone lookup failed:", phoneError);
+        } catch (cleanCareError) {
+          console.error("CleanCareUser lookup error:", cleanCareError);
+        }
+      }
+    } else if (mongoose.Types.ObjectId.isValid(customerId)) {
+      // Fallback: Direct ObjectId lookup
+      console.log(`🔍 Looking for User by ObjectId: ${customerId}`);
+      const userRecord = await User.findById(customerId);
+
+      if (userRecord) {
+        targetCustomerId = userRecord._id;
+        console.log(`✅ Found User by ObjectId: ${targetCustomerId}`);
+      } else {
+        // Check if this is a CleanCareUser ObjectId
+        try {
+          const CleanCareUser = mongoose.model("CleanCareUser");
+          const cleanCareUser = await CleanCareUser.findById(customerId);
+
+          if (cleanCareUser) {
+            console.log(
+              `🔍 Found CleanCareUser, looking for corresponding User...`,
+            );
+            const correspondingUser = await User.findOne({
+              phone: cleanCareUser.phone,
+            });
+
+            if (correspondingUser) {
+              targetCustomerId = correspondingUser._id;
+              console.log(`✅ Found corresponding User: ${targetCustomerId}`);
+            } else {
+              console.log(`⚠️ No corresponding User found, creating one...`);
+              try {
+                const newUser = new User({
+                  phone: cleanCareUser.phone,
+                  name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                  full_name:
+                    cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                  email: cleanCareUser.email,
+                  user_type: "customer",
+                  is_verified: cleanCareUser.isVerified || false,
+                  phone_verified: cleanCareUser.isVerified || false,
+                });
+
+                await newUser.save();
+                targetCustomerId = newUser._id;
+                console.log(
+                  `✅ Created User from CleanCareUser: ${targetCustomerId}`,
+                );
+              } catch (createError) {
+                console.error(
+                  "Failed to create User from CleanCareUser:",
+                  createError,
+                );
+              }
+            }
+          }
+        } catch (cleanCareError) {
+          console.error("CleanCareUser ObjectId lookup error:", cleanCareError);
         }
       }
     }
 
-    // Remove duplicates
-    customerIds = [...new Set(customerIds.map((id) => id.toString()))];
-
-    console.log("Looking for bookings with customer IDs:", customerIds);
-
-    if (customerIds.length === 0) {
+    // If we couldn't find a target customer ID, return empty results
+    if (!targetCustomerId) {
+      console.log(`❌ No valid customer found for ID: ${customerId}`);
       return res.json({ bookings: [] });
     }
 
-    let query = { customer_id: { $in: customerIds } };
+    console.log(
+      `🎯 Using target customer ID for booking lookup: ${targetCustomerId}`,
+    );
+
+    // Query bookings using the single, definitive customer ID
+    let query = { customer_id: targetCustomerId };
     if (status) {
       query.status = status;
     }
@@ -642,7 +738,9 @@ router.get("/customer/:customerId", async (req, res) => {
       .limit(parseInt(limit))
       .skip(parseInt(offset));
 
-    console.log("Found bookings:", bookings.length);
+    console.log(
+      `✅ Found ${bookings.length} bookings for customer: ${targetCustomerId}`,
+    );
     res.json({ bookings });
   } catch (error) {
     console.error("Bookings fetch error:", error);
