@@ -248,6 +248,10 @@ export class BookingService {
   async getUserBookings(userId: string): Promise<BookingResponse> {
     console.log("📋 Loading bookings for user:", userId);
 
+    // Get existing local bookings first to preserve recent additions
+    const localBookings = this.getBookingsFromLocalStorage(userId);
+    console.log("📱 Found local bookings:", localBookings.length);
+
     // Try to fetch from backend first
     try {
       const controller = new AbortController();
@@ -279,14 +283,19 @@ export class BookingService {
             this.transformBackendBooking(booking),
           );
 
-          // Save to localStorage for offline access
-          transformedBookings.forEach((booking) => {
-            this.saveBookingToLocalStorage(booking);
-          });
+          // Merge with local bookings (local bookings take precedence for recent additions)
+          const mergedBookings = this.mergeBookings(
+            localBookings,
+            transformedBookings,
+          );
+          console.log("🔄 Merged bookings count:", mergedBookings.length);
+
+          // Update localStorage with merged data
+          this.updateLocalStorageWithMergedBookings(userId, mergedBookings);
 
           return {
             success: true,
-            bookings: transformedBookings,
+            bookings: mergedBookings,
           };
         }
       } else {
