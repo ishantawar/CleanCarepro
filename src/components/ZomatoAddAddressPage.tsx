@@ -573,6 +573,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           });
 
           updateMapLocation(coordinates);
+          autoFillAddressFields(
+            place.formatted_address || suggestion.description,
+          );
         } else {
           console.error("Failed to get place details:", status);
           // Fallback to geocoding
