@@ -91,6 +91,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
           // Clear any cached data on force refresh
           localStorage.removeItem("booking_history");
           localStorage.removeItem("user_bookings");
+          localStorage.removeItem("cleancare_bookings");
+          localStorage.removeItem(`bookings_${userId}`);
         }
 
         // Import MongoDB helpers
