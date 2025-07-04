@@ -125,6 +125,12 @@ export class BookingService {
       this.saveBookingToLocalStorage(booking);
       console.log("💾 Booking saved to localStorage:", booking.id);
 
+      // Trigger immediate UI update for booking history
+      const bookingCreatedEvent = new CustomEvent("bookingCreated", {
+        detail: { booking },
+      });
+      window.dispatchEvent(bookingCreatedEvent);
+
       // Save to MongoDB and backend (with improved error handling)
       let backendSaveSuccess = false;
       try {
