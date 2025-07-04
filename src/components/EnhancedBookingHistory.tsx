@@ -226,8 +226,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
       if (!currentUser) return;
 
       const interval = setInterval(() => {
-        console.log("🔄 Auto-refreshing bookings...");
-        loadBookings(true);
+        console.log(
+          "🔄 Auto-refreshing bookings while preserving local data...",
+        );
+        refreshBookings();
       }, 30000); // Refresh every 30 seconds
 
       return () => clearInterval(interval);
