@@ -964,6 +964,13 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
           </div>
         </div>
 
+        {/* Customer Info */}
+        {currentUser && (
+          <div className="mb-8">
+            <CustomerSummary currentUser={currentUser} variant="expanded" />
+          </div>
+        )}
+
         {/* Search and Categories */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row gap-4 mb-6">
