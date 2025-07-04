@@ -22,7 +22,7 @@ const config = {
   // CORS
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",")
-    : ["https://cleancarepro.onrender.com"],
+    : ["https://cleancarepro-1-p2oc.onrender.com"],
 
   // SMS Service
   DVHOSTING_API_KEY: process.env.DVHOSTING_API_KEY,

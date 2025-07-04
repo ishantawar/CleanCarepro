@@ -21,7 +21,7 @@ CleanCare Pro has been converted to a production-ready application with the foll
 VITE_NODE_ENV=production
 
 # API Configuration
-VITE_API_BASE_URL=https://cleancarepro.onrender.com/api
+VITE_API_BASE_URL=https://cleancarepro-95it.onrender.com/api
 
 # DVHosting SMS API
 VITE_DVHOSTING_API_KEY=GLX2yKgdb9
@@ -50,7 +50,7 @@ MONGODB_CLUSTER=cluster0.ic8p792.mongodb.net
 JWT_SECRET=29eeed77d3fc53d082a67dcda641f0c91854a3ba41f299e64abbc21608e9a852f520bddbf339b7209500a911685cf9d77928cef42ccfcb3d6d9e3be4aa93d2cf
 
 # CORS Configuration
-ALLOWED_ORIGINS=https://cleancarepro.onrender.com,http://192.168.56.1:8081
+ALLOWED_ORIGINS=https://cleancarepro-1-p2oc.onrender.com,http://192.168.56.1:8081
 
 # DVHosting SMS API
 DVHOSTING_API_KEY=GLX2yKgdb9

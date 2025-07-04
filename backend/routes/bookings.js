@@ -25,12 +25,23 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 router.post("/", async (req, res) => {
   try {
     console.log("🚀 ========== BOOKING CREATION REQUEST START ==========");
-    console.log("📝 Booking creation request received at:", new Date().toISOString());
+
+    console.log(
+      "📝 Booking creation request received at:",
+      new Date().toISOString(),
+    );
     console.log("📦 Full request body:", JSON.stringify(req.body, null, 2));
     console.log("🔍 Request headers:", JSON.stringify(req.headers, null, 2));
-    console.log("📍 Database connection state:", mongoose.connection.readyState);
+    console.log(
+      "📍 Database connection state:",
+      mongoose.connection.readyState,
+    );
     console.log("🔑 Request body keys:", Object.keys(req.body));
-    console.log("📊 Request body data types:", Object.entries(req.body).map(([key, value]) => `${key}: ${typeof value}`));
+    console.log(
+      "📊 Request body data types:",
+      Object.entries(req.body).map(([key, value]) => `${key}: ${typeof value}`),
+    );
+
 
     const {
       customer_id,
@@ -65,7 +76,14 @@ router.post("/", async (req, res) => {
     };
 
     console.log("🔍 VALIDATION STEP 1: Checking required fields...");
-    console.log("📋 Required fields check:", Object.entries(requiredFields).map(([key, value]) => `${key}: ${!!value} (${typeof value})`));
+
+    console.log(
+      "📋 Required fields check:",
+      Object.entries(requiredFields).map(
+        ([key, value]) => `${key}: ${!!value} (${typeof value})`,
+      ),
+    );
+
 
     const missingFields = Object.entries(requiredFields)
       .filter(([key, value]) => !value)
@@ -75,7 +93,15 @@ router.post("/", async (req, res) => {
       console.log("❌ ERROR: Missing required fields detected!");
       console.log("❌ Missing fields:", missingFields);
       console.log("📦 All received fields:", Object.keys(req.body));
-      console.log("📊 Field values:", Object.entries(req.body).map(([key, value]) => `${key}: ${JSON.stringify(value)} (${typeof value})`));
+
+      console.log(
+        "📊 Field values:",
+        Object.entries(req.body).map(
+          ([key, value]) =>
+            `${key}: ${JSON.stringify(value)} (${typeof value})`,
+        ),
+      );
+
       return res.status(400).json({
         error: "Missing required fields",
         missing: missingFields,
@@ -93,11 +119,21 @@ router.post("/", async (req, res) => {
     console.log("📋 Services received:", JSON.stringify(services, null, 2));
     console.log("📊 Services type:", typeof services);
     console.log("📊 Services isArray:", Array.isArray(services));
-    console.log("📊 Services length:", Array.isArray(services) ? services.length : 'N/A');
+
+    console.log(
+      "📊 Services length:",
+      Array.isArray(services) ? services.length : "N/A",
+    );
 
     if (!Array.isArray(services) || services.length === 0) {
       console.log("❌ ERROR: Services validation failed!");
-      console.log("❌ Reason:", !Array.isArray(services) ? "Services is not an array" : "Services array is empty");
+      console.log(
+        "❌ Reason:",
+        !Array.isArray(services)
+          ? "Services is not an array"
+          : "Services array is empty",
+      );
+
       return res.status(400).json({
         error: "At least one service must be selected",
         servicesReceived: services,
@@ -118,7 +154,12 @@ router.post("/", async (req, res) => {
 
     if (isNaN(total_price) || total_price <= 0) {
       console.log("❌ ERROR: Total price validation failed!");
-      console.log("❌ Reason:", isNaN(total_price) ? "Total price is NaN" : "Total price <= 0");
+
+      console.log(
+        "❌ Reason:",
+        isNaN(total_price) ? "Total price is NaN" : "Total price <= 0",
+      );
+
       return res.status(400).json({
         error: "Total price must be greater than 0",
         totalPriceReceived: total_price,
@@ -139,7 +180,14 @@ router.post("/", async (req, res) => {
     console.log("📊 Final amount < 0:", final_amount < 0);
     console.log("📊 Final amount parsed as Number:", Number(final_amount));
 
-    if (final_amount === undefined || final_amount === null || isNaN(final_amount) || final_amount < 0) {
+
+    if (
+      final_amount === undefined ||
+      final_amount === null ||
+      isNaN(final_amount) ||
+      final_amount < 0
+    ) {
+
       console.log("❌ ERROR: Final amount validation failed!");
       const reasons = [];
       if (final_amount === undefined) reasons.push("Final amount is undefined");
@@ -350,7 +398,12 @@ router.post("/", async (req, res) => {
 
     if (!customer) {
       console.log("❌ ERROR: Customer validation failed!");
-      console.log("❌ Could not find or create customer for ID:", actualCustomerId);
+
+      console.log(
+        "❌ Could not find or create customer for ID:",
+        actualCustomerId,
+      );
+
       console.log("📊 Customer_id original:", customer_id);
       console.log("📊 Customer_id actual:", actualCustomerId);
       console.log("📊 Customer_id type:", typeof actualCustomerId);
@@ -418,10 +471,18 @@ router.post("/", async (req, res) => {
     });
 
     console.log("🔍 SAVING BOOKING: About to save booking to database...");
-    console.log("📦 Final booking object:", JSON.stringify(booking.toObject(), null, 2));
+
+    console.log(
+      "📦 Final booking object:",
+      JSON.stringify(booking.toObject(), null, 2),
+    );
 
     await booking.save();
-    console.log("✅ ✅ ✅ BOOKING SAVED SUCCESSFULLY to database:", booking._id);
+    console.log(
+      "✅ ✅ ✅ BOOKING SAVED SUCCESSFULLY to database:",
+      booking._id,
+    );
+
     console.log("🚀 ========== BOOKING CREATION SUCCESS ==========");
 
     // Populate customer data
@@ -440,7 +501,9 @@ router.post("/", async (req, res) => {
     console.error("❌ Error name:", error.name);
 
     // Handle specific MongoDB validation errors
-    if (error.name === 'ValidationError') {
+
+    if (error.name === "ValidationError") {
+
       console.log("❌ MongoDB Validation Error Details:");
       console.log("❌ Validation errors:", Object.keys(error.errors));
       Object.entries(error.errors).forEach(([field, err]) => {
@@ -455,7 +518,9 @@ router.post("/", async (req, res) => {
           field,
           message: err.message,
           value: err.value,
-          kind: err.kind
+
+          kind: err.kind,
+
         })),
         timestamp: new Date().toISOString(),
       });
