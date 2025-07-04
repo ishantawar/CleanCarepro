@@ -65,46 +65,21 @@ export class BookingService {
       throw new Error("No authenticated user found");
     }
 
-    // If we already have a MongoDB ID, use it
+    // Always prefer phone number for consistent customer ID
+    // This ensures bookings are grouped by phone number
+    if (currentUser.phone) {
+      console.log("📞 Using phone number as customer ID:", currentUser.phone);
+      return currentUser.phone;
+    }
+
+    // If we have a MongoDB ID but no phone, use that as fallback
     if (currentUser._id) {
+      console.log("🆔 Using MongoDB ID as customer ID:", currentUser._id);
       return currentUser._id;
     }
 
-    // If we only have phone number, try to resolve MongoDB ID
-    if (currentUser.phone) {
-      try {
-        // Check if we're in a hosted environment without backend
-        const isHostedEnv =
-          window.location.hostname.includes("fly.dev") ||
-          window.location.hostname.includes("builder.codes");
-
-        if (isHostedEnv) {
-          console.log("🌐 Hosted environment - skipping user ID resolution");
-          // Use phone as fallback ID in hosted environment
-          currentUser._id = `user_${currentUser.phone}`;
-        } else {
-          const response = await fetch(`/api/auth/get-user-by-phone`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ phone: currentUser.phone }),
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            if (result.user && result.user._id) {
-              // Update local user data with MongoDB ID
-              authService.setCurrentUser(result.user);
-              return result.user._id;
-            }
-          }
-        }
-      } catch (error) {
-        console.warn("Failed to resolve user MongoDB ID:", error);
-      }
-    }
-
-    // Fallback to phone number as user ID
-    return currentUser.phone || currentUser.id || "anonymous";
+    // Final fallback
+    return currentUser.id || "anonymous";
   }
 
   /**
