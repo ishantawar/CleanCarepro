@@ -860,7 +860,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                   htmlFor="flatNo"
                   className="text-sm font-medium text-gray-700"
                 >
-                  House/Flat Number *
+                  House/Flat Number
                 </Label>
                 <Input
                   id="flatNo"
