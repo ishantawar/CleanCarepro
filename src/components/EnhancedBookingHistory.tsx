@@ -262,7 +262,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
           "🔄 Auto-refreshing bookings while preserving local data...",
         );
         refreshBookings();
-      }, 30000); // Refresh every 30 seconds
+      }, 120000); // Refresh every 2 minutes to prevent overwriting local changes
 
       return () => clearInterval(interval);
     }, [currentUser]);
