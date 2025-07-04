@@ -837,8 +837,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                               <span className="text-gray-600">Order ID</span>
                               <span className="font-mono font-medium text-blue-600">
                                 #CC
-                                {booking._id
-                                  ? booking._id.slice(-6).toUpperCase()
+                                {booking.id || booking._id
+                                  ? (booking.id || booking._id)
+                                      .slice(-6)
+                                      .toUpperCase()
                                   : new Date(
                                       booking.created_at ||
                                         booking.createdAt ||
