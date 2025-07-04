@@ -88,8 +88,42 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-// Update the updated_at field before saving
-userSchema.pre("save", function (next) {
+// Generate unique customer ID before saving
+userSchema.pre("save", async function (next) {
+  // Generate customer_id if this is a new user
+  if (this.isNew && !this.customer_id) {
+    const phoneDigits = this.phone.slice(-4); // Last 4 digits of phone
+    const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+    const randomNum = Math.floor(Math.random() * 99)
+      .toString()
+      .padStart(2, "0");
+
+    let isUnique = false;
+    let customerIdCandidate;
+    let attempt = 0;
+
+    while (!isUnique && attempt < 10) {
+      customerIdCandidate = `CC${phoneDigits}${timestamp}${randomNum}${attempt}`;
+
+      const existingUser = await this.constructor.findOne({
+        customer_id: customerIdCandidate,
+      });
+
+      if (!existingUser) {
+        isUnique = true;
+      } else {
+        attempt++;
+      }
+    }
+
+    if (isUnique) {
+      this.customer_id = customerIdCandidate;
+    } else {
+      // Fallback: use ObjectId if uniqueness generation fails
+      this.customer_id = `CC${this._id}`;
+    }
+  }
+
   this.updated_at = new Date();
   next();
 });
