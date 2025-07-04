@@ -642,78 +642,7 @@ const LaundryIndex = () => {
         } else {
           console.error("❌ Local booking also failed:", localResult.error);
 
-          // Still try to save to Google Sheets as last resort
-          try {
-            const GoogleSheetsService = (
-              await import("../services/googleSheetsService")
-            ).default;
-            const sheetsService = GoogleSheetsService.getInstance();
-
-            const orderData = {
-              orderId: `backup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              customerName:
-                currentUser.full_name || currentUser.name || "Customer",
-              customerPhone: currentUser.phone || "N/A",
-              customerAddress:
-                typeof cartData.address === "string"
-                  ? cartData.address
-                  : cartData.address?.fullAddress || "N/A",
-              services: servicesArray,
-              totalAmount: cartData.totalAmount,
-              pickupDate: cartData.pickupDate,
-              pickupTime: cartData.pickupTime,
-              status: "pending",
-              createdAt: new Date().toISOString(),
-            };
-
-            const sheetsResult =
-              await sheetsService.saveOrderToSheet(orderData);
-
-            // Always create confirmation regardless of sheets result
-            console.log("📊 Backup order processed:", sheetsResult);
-
-            // Store booking data for confirmation screen
-            const confirmationData = {
-              bookingId: `backup_${Date.now()}`,
-              services: detailedServices, // Use detailed services with quantities
-              totalAmount: cartData.totalAmount,
-              pickupDate: cartData.pickupDate,
-              pickupTime: cartData.pickupTime,
-              address: cartData.address,
-              customerName:
-                currentUser.full_name || currentUser.name || "Customer",
-              customerPhone: currentUser.phone,
-            };
-
-            setLastBookingData(confirmationData);
-
-            addNotification(
-              createSuccessNotification(
-                "Order Saved!",
-                "Your order has been saved and will be processed.",
-              ),
-            );
-            localStorage.removeItem("laundry_cart");
-            localStorage.removeItem("laundry_booking_form");
-            localStorage.removeItem("user_bookings"); // Clear cached bookings
-
-            // Clear any cached cart state
-            const clearCartEvent = new CustomEvent("clearCart");
-            window.dispatchEvent(clearCartEvent);
-
-            // Trigger booking history refresh
-            const refreshBookingsEvent = new CustomEvent("refreshBookings");
-            window.dispatchEvent(refreshBookingsEvent);
-
-            setCurrentView("booking-confirmed");
-            return; // Exit early
-          } catch (sheetsError) {
-            console.warn(
-              "⚠️ Google Sheets backup failed (non-critical):",
-              sheetsError.message,
-            );
-            // Continue with local-only booking
-          }
+          // Google Sheets backup removed - continue with local-only booking
 
           throw new Error(
             localResult.error ||
