@@ -165,34 +165,7 @@ export const bookingHelpers = {
       body: JSON.stringify(transformedBookingData),
     });
 
-    // Also send to Google Sheets
-    if (result.data) {
-      try {
-        await apiCall("/sheets/order", {
-          method: "POST",
-          body: JSON.stringify({
-            orderId: result.data._id,
-            customerName:
-              bookingData.customer_name ||
-              authHelpers.getCurrentUser()?.full_name,
-            customerPhone:
-              bookingData.customer_phone || authHelpers.getCurrentUser()?.phone,
-            customerAddress: transformedBookingData.address,
-            services: transformedBookingData.services,
-            totalAmount: transformedBookingData.total_price,
-            pickupDate: transformedBookingData.scheduled_date,
-            pickupTime: transformedBookingData.scheduled_time,
-            status: result.data.status,
-            paymentStatus: result.data.payment_status,
-            coordinates: transformedBookingData.coordinates,
-            city: bookingData.address?.city || "",
-            pincode: bookingData.address?.pincode || "",
-          }),
-        });
-      } catch (sheetError) {
-        console.warn("Failed to send to Google Sheets:", sheetError);
-      }
-    }
+    // Google Sheets integration removed
 
     return result;
   },
