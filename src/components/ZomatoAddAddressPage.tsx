@@ -286,48 +286,6 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     }
   };
 
-  const fetchNearbyPlaces = async (coordinates: Coordinates) => {
-    if (!placesService) return;
-
-    setIsLoadingNearby(true);
-    try {
-      const request: google.maps.places.PlaceSearchRequest = {
-        location: coordinates,
-        radius: 500, // 500 meters radius
-        type: "establishment", // Search for businesses/establishments
-      };
-
-      placesService.nearbySearch(request, (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          // Filter and format nearby places
-          const formattedPlaces = results
-            .filter((place) => place.name && place.vicinity)
-            .slice(0, 8) // Limit to 8 places
-            .map((place) => ({
-              name: place.name,
-              vicinity: place.vicinity,
-              types: place.types,
-              rating: place.rating,
-              place_id: place.place_id,
-              geometry: place.geometry,
-              icon: place.icon,
-              photos: place.photos,
-            }));
-
-          setNearbyPlaces(formattedPlaces);
-          setShowNearbyPlaces(formattedPlaces.length > 0);
-        } else {
-          setNearbyPlaces([]);
-          setShowNearbyPlaces(false);
-        }
-        setIsLoadingNearby(false);
-      });
-    } catch (error) {
-      console.error("Failed to fetch nearby places:", error);
-      setIsLoadingNearby(false);
-    }
-  };
-
   const handleCurrentLocation = async () => {
     setIsDetectingLocation(true);
     try {
