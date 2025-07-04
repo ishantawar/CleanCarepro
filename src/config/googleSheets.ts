@@ -33,8 +33,11 @@ export const GOOGLE_SHEETS_CONFIG = {
     "Pincode",
   ],
 
-  // Enable Google Sheets integration in production
+  // Enable Google Sheets integration in all environments
   ENABLED: true,
+
+  // Status message
+  STATUS: "✅ Google Sheets integration enabled - ready to save bookings",
 };
 
 // Helper function to validate configuration
