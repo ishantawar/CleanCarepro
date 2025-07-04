@@ -901,6 +901,13 @@ export class BookingService {
         localStorage.getItem("user_bookings") || "[]",
       );
 
+      console.log("💾 Saving booking to localStorage:", {
+        bookingId: booking.id,
+        userId: booking.userId,
+        services: booking.services,
+        totalAmount: booking.totalAmount,
+      });
+
       // Check if booking already exists (avoid duplicates)
       const bookingId = booking.id || (booking as any)._id;
       const existingIndex = existingBookings.findIndex(
@@ -921,6 +928,10 @@ export class BookingService {
       }
 
       localStorage.setItem("user_bookings", JSON.stringify(existingBookings));
+      console.log(
+        "📊 Total bookings in localStorage:",
+        existingBookings.length,
+      );
     } catch (error) {
       console.error("Failed to save booking to localStorage:", error);
     }
