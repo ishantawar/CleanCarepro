@@ -54,6 +54,14 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     coordinates: Coordinates;
   } | null>(null);
   const [additionalDetails, setAdditionalDetails] = useState("");
+  const [flatNo, setFlatNo] = useState("");
+  const [floor, setFloor] = useState("");
+  const [building, setBuilding] = useState("");
+  const [street, setStreet] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [area, setArea] = useState("");
+  const [city, setCity] = useState("");
+  const [pincode, setPincode] = useState("");
   const [addressType, setAddressType] = useState<"home" | "office" | "other">(
     "home",
   );
