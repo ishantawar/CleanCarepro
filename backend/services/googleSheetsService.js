@@ -12,9 +12,13 @@ class GoogleSheetsService {
 
   async initialize() {
     if (!this.isEnabled) {
-      console.log("📊 Google Sheets integration disabled");
+      console.log(
+        "📊 Google Sheets integration disabled (set GOOGLE_SHEETS_ENABLED=true to enable)",
+      );
       return;
     }
+
+    console.log("✅ Google Sheets integration enabled");
 
     try {
       // Initialize Google Auth

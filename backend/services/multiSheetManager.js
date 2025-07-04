@@ -23,9 +23,13 @@ class MultiSheetManager {
 
   async initialize() {
     if (!this.isEnabled) {
-      console.log("📊 Multi-sheet Google Sheets integration disabled");
+      console.log(
+        "📊 Multi-sheet Google Sheets integration disabled (set GOOGLE_SHEETS_ENABLED=true to enable)",
+      );
       return;
     }
+
+    console.log("✅ Multi-sheet Google Sheets integration enabled");
 
     try {
       // Initialize Google Auth

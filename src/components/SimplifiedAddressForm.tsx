@@ -368,15 +368,14 @@ const SimplifiedAddressForm: React.FC<SimplifiedAddressFormProps> = ({
           {/* Flat/House Number */}
           <div>
             <Label htmlFor="flatNo" className="text-sm font-medium">
-              🏠 Flat/House No. <span className="text-red-500">*</span>
+              🏠 Flat/House No. (Optional)
             </Label>
             <Input
               id="flatNo"
-              placeholder="e.g., A-101, House No. 45"
+              placeholder="e.g., A-101, House No. 45 (optional)"
               value={address.flatNo}
               onChange={(e) => handleFieldChange("flatNo", e.target.value)}
-              className={`mt-1 ${!address.flatNo ? "border-red-300 focus:border-red-500" : ""}`}
-              required
+              className="mt-1"
             />
           </div>
 
@@ -515,12 +514,7 @@ const SimplifiedAddressForm: React.FC<SimplifiedAddressFormProps> = ({
           <Button
             onClick={() => onAddressUpdate(address)}
             className="w-full bg-green-600 hover:bg-green-700"
-            disabled={
-              !address.flatNo ||
-              !address.street ||
-              !address.city ||
-              !address.pincode
-            }
+            disabled={!address.street || !address.city || !address.pincode}
           >
             Save Address
           </Button>

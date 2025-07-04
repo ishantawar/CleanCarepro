@@ -818,21 +818,15 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
           {/* Row 1: House/Flat Number */}
           <div>
             <Label htmlFor="flatNo" className="text-sm font-medium">
-              🏠 Flat/House No. <span className="text-red-500">*</span>
+              🏠 Flat/House No. (Optional)
             </Label>
             <Input
               id="flatNo"
-              placeholder="e.g., A-101, House No. 45"
+              placeholder="e.g., A-101, House No. 45 (optional)"
               value={address.flatNo}
               onChange={(e) => handleFieldChange("flatNo", e.target.value)}
-              className={`mt-1 ${!address.flatNo ? "border-red-300 focus:border-red-500" : ""}`}
-              required
+              className="mt-1"
             />
-            {!address.flatNo && (
-              <p className="text-xs text-red-500 mt-1">
-                Flat/House number is required
-              </p>
-            )}
           </div>
 
           {/* Row 2: Combined Area/Street + City + Pincode */}
@@ -935,12 +929,7 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
             <Button
               onClick={() => onAddressUpdate(address)}
               className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={
-                !address.flatNo ||
-                !address.village ||
-                !address.city ||
-                !address.pincode
-              }
+              disabled={!address.village || !address.city || !address.pincode}
             >
               Save Address
             </Button>
