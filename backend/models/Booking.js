@@ -193,6 +193,7 @@ bookingSchema.pre("save", function (next) {
 
 // Create indexes
 bookingSchema.index({ customer_id: 1 });
+bookingSchema.index({ customer_code: 1 });
 bookingSchema.index({ rider_id: 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ payment_status: 1 });
