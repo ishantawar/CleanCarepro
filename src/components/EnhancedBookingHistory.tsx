@@ -186,6 +186,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
               "⚠️ No valid MongoDB data, trying BookingService fallback",
             );
           }
+        } else if (!isBackendAvailable) {
+          console.log(
+            "🌐 Skipping MongoDB fetch - backend disabled for demo mode",
+          );
         }
 
         // Fallback to BookingService
