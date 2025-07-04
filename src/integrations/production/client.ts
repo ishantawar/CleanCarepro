@@ -101,12 +101,68 @@ export const bookingHelpers = {
   createBooking: async (bookingData: any) => {
     const userId = authHelpers.getCurrentUser()?.id;
 
+    // Transform booking data to match backend schema
+    const transformedBookingData = {
+      customer_id: bookingData.userId || bookingData.customer_id || userId,
+      service: Array.isArray(bookingData.services)
+        ? bookingData.services.join(", ")
+        : bookingData.service || "Home Service",
+      service_type: bookingData.service_type || "home-service",
+      services: Array.isArray(bookingData.services)
+        ? bookingData.services
+        : [bookingData.service || "Home Service"],
+      scheduled_date:
+        bookingData.pickupDate ||
+        bookingData.scheduled_date ||
+        new Date().toISOString().split("T")[0],
+      scheduled_time:
+        bookingData.pickupTime || bookingData.scheduled_time || "10:00",
+      provider_name: bookingData.provider_name || "CleanCare Pro",
+      address:
+        typeof bookingData.address === "string"
+          ? bookingData.address
+          : bookingData.address?.fullAddress || "Address not provided",
+      coordinates: bookingData.address?.coordinates ||
+        bookingData.coordinates || { lat: 0, lng: 0 },
+      additional_details:
+        bookingData.contactDetails?.instructions ||
+        bookingData.additional_details ||
+        "",
+      total_price: Number(
+        bookingData.totalAmount || bookingData.total_price || 0,
+      ),
+      discount_amount: Number(bookingData.discount_amount || 0),
+      final_amount: Number(
+        bookingData.totalAmount ||
+          bookingData.final_amount ||
+          bookingData.total_price ||
+          0,
+      ),
+      special_instructions:
+        bookingData.contactDetails?.instructions ||
+        bookingData.special_instructions ||
+        "",
+      charges_breakdown: {
+        base_price: Number(
+          bookingData.totalAmount || bookingData.total_price || 0,
+        ),
+        tax_amount: Number(bookingData.tax_amount || 0),
+        service_fee: Number(bookingData.service_fee || 0),
+        discount: Number(bookingData.discount_amount || 0),
+      },
+    };
+
+    console.log(
+      "🔄 Production client: Transformed booking data:",
+      transformedBookingData,
+    );
+
     const result = await apiCall("/bookings", {
       method: "POST",
       headers: {
         "user-id": userId,
       },
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify(transformedBookingData),
     });
 
     // Also send to Google Sheets
