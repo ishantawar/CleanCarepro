@@ -253,6 +253,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 90,
         unit: "per piece",
         description: "Blouse dry cleaning",
+        image:
+          "https://images.pexels.com/photos/23363993/pexels-photo-23363993.jpeg",
       },
       {
         id: "wdc-dress",
@@ -261,6 +263,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 330,
         unit: "per piece",
         description: "Western dress dry cleaning",
+        image:
+          "https://images.pexels.com/photos/1200643/pexels-photo-1200643.jpeg",
       },
       {
         id: "wdc-top",
@@ -269,6 +273,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 100,
         unit: "per piece",
         description: "Top/shirt dry cleaning",
+        image:
+          "https://images.pexels.com/photos/23363993/pexels-photo-23363993.jpeg",
       },
       {
         id: "wdc-skirt",
@@ -277,6 +283,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 200,
         unit: "per piece",
         description: "Heavy skirt dry cleaning",
+        image:
+          "https://images.pexels.com/photos/297367/pexels-photo-297367.jpeg",
       },
       {
         id: "wdc-lehenga-1pc",
