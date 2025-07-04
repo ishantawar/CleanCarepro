@@ -213,6 +213,8 @@ router.post(
     }
     await user.save();
 
+    log("User saved with customer_id:", user.customer_id);
+
     const token = generateToken(user._id);
     res.setHeader("Content-Type", "application/json");
     res.status(200).json({
