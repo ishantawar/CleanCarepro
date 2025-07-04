@@ -324,6 +324,33 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     }
   };
 
+  // Auto-fill address fields from full address string
+  const autoFillAddressFields = (fullAddress: string) => {
+    const parts = fullAddress.split(",").map((part) => part.trim());
+
+    // Extract pincode
+    const pincodeMatch = fullAddress.match(/\b\d{6}\b/);
+    if (pincodeMatch) {
+      setPincode(pincodeMatch[0]);
+    }
+
+    // Try to extract city (usually second-to-last or third-to-last part)
+    if (parts.length >= 2) {
+      const cityPart = parts[parts.length - 3] || parts[parts.length - 2] || "";
+      setCity(cityPart.replace(/\d{6}/, "").trim());
+    }
+
+    // Extract area/village (usually in middle parts)
+    if (parts.length >= 3) {
+      setArea(parts[1] || "");
+    }
+
+    // Extract street (usually first part)
+    if (parts.length >= 1) {
+      setStreet(parts[0] || "");
+    }
+  };
+
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
 
