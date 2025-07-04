@@ -7,6 +7,11 @@ const addressSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "User ID is required"],
     },
+    customer_id: {
+      type: String,
+      required: [true, "Customer ID is required"],
+      index: true,
+    },
     title: {
       type: String,
       required: [true, "Address title is required"],
