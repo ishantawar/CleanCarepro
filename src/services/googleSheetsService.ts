@@ -261,7 +261,41 @@ class GoogleSheetsService {
   }
 
   /**
-   * Check if we're in a hosted environment where backend calls should be avoided
+   * Save directly to Google Sheets via Web App URL (fallback method)
+   */
+  private async saveDirectToGoogleSheets(sheetData: any): Promise<boolean> {
+    if (
+      !this.config.webAppUrl ||
+      this.config.webAppUrl.includes("YOUR_SCRIPT_ID")
+    ) {
+      console.warn("⚠️ Google Apps Script Web App URL not configured");
+      return false;
+    }
+
+    try {
+      const response = await fetch(this.config.webAppUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(sheetData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.success || false;
+      } else {
+        console.error("Direct Google Sheets call failed:", response.status);
+        return false;
+      }
+    } catch (error) {
+      console.error("Direct Google Sheets call error:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if we're in a hosted environment (kept for reference but no longer used to disable functionality)
    */
   private isHostedEnvironment(): boolean {
     return (
