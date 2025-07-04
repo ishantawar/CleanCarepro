@@ -38,6 +38,8 @@ export const laundryServices: ServiceCategory[] = [
         description: "Regular wash and fold service",
         minQuantity: 1,
         popular: true,
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F36d1236ed04c4ae0aa24948824cf6f42?format=webp&width=800",
       },
       {
         id: "wf-bulk",
@@ -66,6 +68,8 @@ export const laundryServices: ServiceCategory[] = [
         description: "Professional wash and iron service",
         minQuantity: 1,
         popular: true,
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F61aef7e516b742c1b6fa99edcdcc8c97?format=webp&width=800",
       },
       {
         id: "wi-bulk",
