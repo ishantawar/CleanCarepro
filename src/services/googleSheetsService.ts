@@ -77,14 +77,10 @@ class GoogleSheetsService {
       return false;
     }
 
-    // Check if we're in a hosted environment where backend calls should be skipped
-    if (this.isHostedEnvironment()) {
-      console.log(
-        "🌐 Hosted environment detected - saving to localStorage only",
-      );
-      this.saveToLocalStorage(orderData);
-      return true; // Return true to indicate successful handling
-    }
+    // Note: Google Sheets integration is now enabled in all environments
+    console.log(
+      "📊 Google Sheets integration active - attempting to save to sheets",
+    );
 
     try {
       // Generate unique order ID
@@ -145,13 +141,27 @@ class GoogleSheetsService {
         }
       } catch (backendError) {
         console.warn(
-          "⚠️ Backend API failed, saving to localStorage:",
+          "⚠️ Backend API failed, attempting direct Google Sheets call:",
           backendError.message,
         );
 
-        // Don't try direct calls in hosted environment - just save locally
+        // Try direct Google Sheets call as fallback
+        try {
+          const directResult = await this.saveDirectToGoogleSheets(sheetData);
+          if (directResult) {
+            console.log("✅ Direct Google Sheets save successful");
+            return true;
+          }
+        } catch (directError) {
+          console.warn(
+            "⚠️ Direct Google Sheets call also failed:",
+            directError.message,
+          );
+        }
+
+        // Final fallback: save to localStorage
         this.saveToLocalStorage(orderData);
-        return true; // Return true to indicate successful fallback handling
+        return false; // Return false to indicate fallback to localStorage
       }
     } catch (error) {
       console.error("❌ Failed to save to Google Sheets:", error);
