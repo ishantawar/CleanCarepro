@@ -510,50 +510,106 @@ export class BookingService {
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
+      // Get the current user to ensure proper customer_id
+      const authService = DVHostingSmsService.getInstance();
+      const currentUser = authService.getCurrentUser();
+
+      // Determine the correct customer_id format for the backend
+      let customerId = booking.userId || "anonymous";
+
+      if (currentUser) {
+        // Use phone number as customer_id as that's what the backend expects
+        if (currentUser.phone) {
+          customerId = currentUser.phone;
+        } else if (currentUser._id) {
+          customerId = currentUser._id;
+        } else if (currentUser.id) {
+          customerId = currentUser.id;
+        }
+      }
+
+      // Ensure services is a proper array with at least one service
+      let servicesArray = [];
+      if (Array.isArray(booking.services)) {
+        servicesArray = booking.services.filter(
+          (service) => service && service.trim(),
+        );
+      } else if (booking.services) {
+        servicesArray = [booking.services];
+      }
+
+      if (servicesArray.length === 0) {
+        servicesArray = ["Home Service"]; // Default service
+      }
+
+      // Ensure total_price is a valid number greater than 0
+      const totalPrice = Number(
+        booking.totalAmount || booking.total_price || 50,
+      );
+      if (isNaN(totalPrice) || totalPrice <= 0) {
+        throw new Error("Invalid total price - must be greater than 0");
+      }
+
+      // Prepare address properly
+      let addressString = "";
+      let coordinates = { lat: 0, lng: 0 };
+
+      if (typeof booking.address === "string") {
+        addressString = booking.address;
+      } else if (typeof booking.address === "object" && booking.address) {
+        if (booking.address.fullAddress) {
+          addressString = booking.address.fullAddress;
+        } else {
+          // Build address from components
+          const parts = [
+            booking.address.flatNo,
+            booking.address.street,
+            booking.address.landmark,
+            booking.address.village,
+            booking.address.city,
+            booking.address.pincode,
+          ].filter(Boolean);
+          addressString = parts.join(", ");
+        }
+
+        if (booking.address.coordinates) {
+          coordinates = booking.address.coordinates;
+        }
+      }
+
+      if (!addressString || addressString.trim() === "") {
+        addressString = "Address not provided";
+      }
+
       const backendBooking = {
-        customer_id: booking.userId || "anonymous",
-        service: Array.isArray(booking.services)
-          ? booking.services.join(", ")
-          : booking.services || "Home Service",
+        customer_id: customerId,
+        service: servicesArray.join(", "),
         service_type: "home-service",
-        services: Array.isArray(booking.services)
-          ? booking.services
-          : [booking.services || "Home Service"],
+        services: servicesArray,
         scheduled_date:
           booking.pickupDate ||
           booking.scheduled_date ||
           new Date().toISOString().split("T")[0],
         scheduled_time: booking.pickupTime || booking.scheduled_time || "10:00",
-        provider_name: "HomeServices Pro",
-        address:
-          typeof booking.address === "string"
-            ? booking.address
-            : booking.address?.fullAddress || booking.address || "",
-        coordinates: (typeof booking.address === "object" &&
-          booking.address?.coordinates) || { lat: 0, lng: 0 },
+        provider_name: "CleanCare Pro",
+        address: addressString,
+        coordinates: coordinates,
         additional_details:
           booking.contactDetails?.instructions ||
           booking.additional_details ||
           "",
-        total_price: Math.max(
-          booking.totalAmount || booking.total_price || 50,
-          1,
-        ),
+        total_price: totalPrice,
         discount_amount: booking.discount_amount || 0,
-        final_amount:
-          booking.totalAmount ||
-          booking.final_amount ||
-          booking.total_price ||
-          Math.max(booking.totalAmount || booking.total_price || 50, 1),
+        final_amount: totalPrice - (booking.discount_amount || 0),
         special_instructions:
           booking.contactDetails?.instructions ||
           booking.additional_details ||
           "",
         charges_breakdown: {
-          base_price: booking.totalAmount || booking.total_price || 0,
+          base_price: totalPrice,
           tax_amount: 0,
           service_fee: 0,
-          discount: 0,
+          discount: booking.discount_amount || 0,
         },
       };
 
@@ -564,20 +620,45 @@ export class BookingService {
 
       // Validate payload before sending
       const validation = {
-        customer_id: !!backendBooking.customer_id,
-        service: !!backendBooking.service,
+        customer_id:
+          !!backendBooking.customer_id &&
+          backendBooking.customer_id !== "anonymous",
+        service:
+          !!backendBooking.service && backendBooking.service.trim() !== "",
         service_type: !!backendBooking.service_type,
         services:
           Array.isArray(backendBooking.services) &&
-          backendBooking.services.length > 0,
+          backendBooking.services.length > 0 &&
+          backendBooking.services.every((s) => s && s.trim() !== ""),
         scheduled_date: !!backendBooking.scheduled_date,
         scheduled_time: !!backendBooking.scheduled_time,
         provider_name: !!backendBooking.provider_name,
-        address: !!backendBooking.address,
+        address:
+          !!backendBooking.address && backendBooking.address.trim() !== "",
         total_price:
           !isNaN(backendBooking.total_price) && backendBooking.total_price > 0,
+        coordinates:
+          !!backendBooking.coordinates &&
+          typeof backendBooking.coordinates === "object",
       };
+
       console.log("🔍 Payload validation:", validation);
+      console.log("📊 Validation details:", {
+        customer_id: {
+          value: backendBooking.customer_id,
+          valid: validation.customer_id,
+        },
+        services: {
+          value: backendBooking.services,
+          valid: validation.services,
+        },
+        total_price: {
+          value: backendBooking.total_price,
+          type: typeof backendBooking.total_price,
+          valid: validation.total_price,
+        },
+        address: { value: backendBooking.address, valid: validation.address },
+      });
 
       const missingFields = Object.entries(validation)
         .filter(([key, valid]) => !valid)
@@ -585,6 +666,15 @@ export class BookingService {
 
       if (missingFields.length > 0) {
         console.error("❌ Missing or invalid fields:", missingFields);
+        console.error(
+          "📦 Full payload for debugging:",
+          JSON.stringify(backendBooking, null, 2),
+        );
+
+        // Still try to send the request but with a warning
+        console.warn(
+          "⚠️ Sending request despite validation warnings. Backend may reject it.",
+        );
       }
 
       const response = await fetch(`${this.apiBaseUrl}/bookings`, {
@@ -603,17 +693,45 @@ export class BookingService {
         const result = await response.json();
         console.log("✅ Booking synced to backend:", booking.id, result);
       } else {
-        const errorText = await response.text();
+        let errorDetails;
+        const contentType = response.headers.get("content-type");
+
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            errorDetails = await response.json();
+          } catch (parseError) {
+            errorDetails = { error: "Failed to parse error response" };
+          }
+        } else {
+          const errorText = await response.text();
+          errorDetails = { error: errorText };
+        }
+
         console.error("❌ Backend API Error:", {
           status: response.status,
           statusText: response.statusText,
-          errorText,
+          errorDetails,
           url: `${this.apiBaseUrl}/bookings`,
           payload: backendBooking,
         });
-        throw new Error(
-          `Backend sync failed with status: ${response.status} - ${errorText}`,
-        );
+
+        // Provide more specific error messages based on status code
+        let errorMessage = `Backend sync failed with status: ${response.status}`;
+
+        if (response.status === 400) {
+          errorMessage += ` - Validation Error: ${errorDetails.error || "Invalid data format"}`;
+          if (errorDetails.missing) {
+            errorMessage += ` Missing fields: ${errorDetails.missing.join(", ")}`;
+          }
+        } else if (response.status === 404) {
+          errorMessage += ` - Customer not found or invalid customer ID: ${backendBooking.customer_id}`;
+        } else if (response.status === 500) {
+          errorMessage += ` - Server error: ${errorDetails.error || "Internal server error"}`;
+        } else {
+          errorMessage += ` - ${errorDetails.error || response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
       }
     } catch (error) {
       if (error instanceof Error) {
