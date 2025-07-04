@@ -257,34 +257,7 @@ app.post("/api/sheets/order", async (req, res) => {
         },
       };
 
-      const webAppUrl =
-        process.env.GOOGLE_APPS_SCRIPT_URL ||
-        "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec";
-
       // Google Sheets integration removed
-          const response = await fetch(webAppUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(sheetData),
-          });
-
-          if (response.ok) {
-            fallbackSuccess = true;
-            console.log(
-              "📊 Order data sent via fallback Google Apps Script:",
-              orderData.orderId,
-            );
-          }
-        } catch (fallbackError) {
-          console.error(
-            "❌ Fallback Google Sheets also failed:",
-            fallbackError.message,
-          );
-        }
-      }
-    }
 
     res.json({
       data: {
@@ -476,7 +449,7 @@ const server = app.listen(PORT, () => {
 
 // Graceful shutdown handling
 const gracefulShutdown = async (signal) => {
-  console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+  console.log(`\n�� Received ${signal}. Starting graceful shutdown...`);
 
   server.close(async (err) => {
     if (err) {
