@@ -253,6 +253,17 @@ router.post("/", async (req, res) => {
     }
     console.log("👤 Actual customer_id to use:", actualCustomerId);
 
+    // Primary strategy: Always look up by phone number first to ensure consistency
+    if (
+      typeof actualCustomerId === "string" &&
+      actualCustomerId.match(/^\d{10,}$/)
+    ) {
+      customer = await User.findOne({ phone: actualCustomerId });
+      console.log(
+        `🔍 Looking for customer by phone: ${actualCustomerId}, found: ${!!customer}`,
+      );
+    }
+
     // Secondary strategy: Try ObjectId lookup only if phone lookup failed
     if (!customer && mongoose.Types.ObjectId.isValid(actualCustomerId)) {
       customer = await User.findById(actualCustomerId);
