@@ -65,11 +65,23 @@ export class BookingService {
       throw new Error("No authenticated user found");
     }
 
+    // Debug current user structure
+    console.log("🔍 Current user structure:", {
+      id: currentUser.id,
+      _id: currentUser._id,
+      phone: currentUser.phone,
+      userId: currentUser.userId,
+      customer_id: currentUser.customer_id,
+    });
+
     // Always prefer phone number for consistent customer ID
-    // This ensures bookings are grouped by phone number
+    // This ensures bookings are grouped by phone number across all storage systems
     if (currentUser.phone) {
-      console.log("📞 Using phone number as customer ID:", currentUser.phone);
-      return currentUser.phone;
+      const customerId = currentUser.phone.startsWith("user_")
+        ? currentUser.phone
+        : `user_${currentUser.phone}`;
+      console.log("📞 Using phone-based customer ID:", customerId);
+      return customerId;
     }
 
     // If we have a MongoDB ID but no phone, use that as fallback
@@ -79,7 +91,9 @@ export class BookingService {
     }
 
     // Final fallback
-    return currentUser.id || "anonymous";
+    const fallbackId = currentUser.id || "anonymous";
+    console.log("⚠️ Using fallback customer ID:", fallbackId);
+    return fallbackId;
   }
 
   /**
