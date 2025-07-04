@@ -19,6 +19,12 @@ export interface User extends Document {
 }
 
 const userSchema = new Schema<User>({
+  customer_id: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
   email: {
     type: String,
     required: true,
