@@ -442,12 +442,25 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
     const handleSaveEditedBooking = async (updatedBooking: any) => {
       try {
+        console.log(
+          "📋 EnhancedBookingHistory: Starting booking update process",
+          {
+            bookingId: updatedBooking.id || updatedBooking._id,
+            updatedFields: Object.keys(updatedBooking),
+          },
+        );
+
         const bookingService = BookingService.getInstance();
         const bookingId = updatedBooking.id || updatedBooking._id;
 
         const result = await bookingService.updateBooking(
           bookingId,
           updatedBooking,
+        );
+
+        console.log(
+          "📋 EnhancedBookingHistory: BookingService update result:",
+          result,
         );
 
         if (result.success) {
