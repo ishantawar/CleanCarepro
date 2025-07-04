@@ -481,42 +481,7 @@ const LaundryIndex = () => {
           mongoResult.data._id || "unknown_id",
         );
 
-        // Also save to Google Sheets (with graceful error handling)
-        try {
-          const GoogleSheetsService = (
-            await import("../services/googleSheetsService")
-          ).default;
-          const sheetsService = GoogleSheetsService.getInstance();
-
-          const orderData = {
-            orderId: mongoResult.data._id || `local_${Date.now()}`,
-            customerName:
-              currentUser.full_name || currentUser.name || "Customer",
-            customerPhone: currentUser.phone || "N/A",
-            customerAddress:
-              typeof cartData.address === "string"
-                ? cartData.address
-                : cartData.address?.fullAddress || "N/A",
-            services: servicesArray,
-            totalAmount: cartData.totalAmount,
-            pickupDate: cartData.pickupDate,
-            pickupTime: cartData.pickupTime,
-            status: "pending",
-            createdAt: new Date().toISOString(),
-          };
-
-          const sheetsResult = await sheetsService.saveOrderToSheet(orderData);
-
-          if (sheetsResult) {
-            console.log(
-              "📊 Order data successfully processed for Google Sheets",
-            );
-          }
-        } catch (sheetsError) {
-          console.warn(
-            "⚠️ Google Sheets save failed (non-critical):",
-            sheetsError.message,
-          );
+        // Google Sheets integration removed
           // Don't fail the entire booking process for sheets issues
         }
 
