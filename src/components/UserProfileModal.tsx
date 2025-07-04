@@ -144,6 +144,19 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
           </div>
 
+          {currentUser?.customer_id && (
+            <div className="space-y-2">
+              <Label htmlFor="customer-id">Customer ID</Label>
+              <div className="flex items-center p-3 bg-blue-50 rounded-md">
+                <User className="h-4 w-4 text-blue-500 mr-2" />
+                <span className="font-mono text-blue-700">
+                  {currentUser.customer_id}
+                </span>
+                <span className="ml-auto text-xs text-blue-600">Unique ID</span>
+              </div>
+            </div>
+          )}
+
           {isEditing && (
             <div className="flex gap-2 pt-4">
               <Button
