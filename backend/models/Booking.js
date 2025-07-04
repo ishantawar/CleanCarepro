@@ -217,4 +217,16 @@ bookingSchema.statics.findNearby = function (lat, lng, radiusKm = 5) {
   });
 };
 
+// Static method to find bookings by customer code
+bookingSchema.statics.findByCustomerCode = function (customerCode) {
+  return this.find({ customer_code: customerCode }).sort({ created_at: -1 });
+};
+
+// Static method to get customer booking history
+bookingSchema.statics.getCustomerHistory = function (customerCode) {
+  return this.find({ customer_code: customerCode })
+    .populate("customer_id", "name phone customer_id")
+    .sort({ created_at: -1 });
+};
+
 module.exports = mongoose.model("Booking", bookingSchema);
