@@ -239,8 +239,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
     useEffect(() => {
       const handleVisibilityChange = () => {
         if (!document.hidden && currentUser) {
-          console.log("👁️ Page visible, refreshing bookings...");
-          loadBookings(true);
+          console.log(
+            "👁️ Page visible, refreshing bookings while preserving local data...",
+          );
+          refreshBookings();
         }
       };
 
