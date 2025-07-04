@@ -806,21 +806,147 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
             </div>
           )}
 
-          {/* Additional Address Details */}
-          <div>
-            <Label
-              htmlFor="additional-details"
-              className="text-sm font-medium text-gray-700"
-            >
-              Additional address details (Optional)
-            </Label>
-            <Textarea
-              id="additional-details"
-              placeholder="E.g. Floor, House no. (optional)"
-              value={additionalDetails}
-              onChange={(e) => setAdditionalDetails(e.target.value)}
-              className="mt-2 min-h-[80px] resize-none"
-            />
+          {/* House/Flat Details Section */}
+          <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+            <h3 className="text-base font-medium text-gray-900 flex items-center gap-2">
+              <Home className="h-5 w-5 text-blue-600" />
+              House/Flat Details
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label
+                  htmlFor="flatNo"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  House/Flat Number *
+                </Label>
+                <Input
+                  id="flatNo"
+                  placeholder="e.g., 123, A-45"
+                  value={flatNo}
+                  onChange={(e) => setFlatNo(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="floor"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Floor (Optional)
+                </Label>
+                <Input
+                  id="floor"
+                  placeholder="e.g., 2nd Floor"
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <div>
+              <Label
+                htmlFor="building"
+                className="text-sm font-medium text-gray-700"
+              >
+                Building/Society (Optional)
+              </Label>
+              <Input
+                id="building"
+                placeholder="e.g., Sunrise Apartments"
+                value={building}
+                onChange={(e) => setBuilding(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+          </div>
+
+          {/* Location Details Section */}
+          <div className="bg-green-50 p-4 rounded-lg space-y-4">
+            <h3 className="text-base font-medium text-gray-900 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-green-600" />
+              Location Details (Auto-filled & Editable)
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label
+                  htmlFor="street"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Street/Road
+                </Label>
+                <Input
+                  id="street"
+                  placeholder="Street name"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="landmark"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Landmark (Optional)
+                </Label>
+                <Input
+                  id="landmark"
+                  placeholder="e.g., Near Metro"
+                  value={landmark}
+                  onChange={(e) => setLandmark(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label
+                  htmlFor="area"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Area/Village
+                </Label>
+                <Input
+                  id="area"
+                  placeholder="Area name"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="city"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  City *
+                </Label>
+                <Input
+                  id="city"
+                  placeholder="City name"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="pincode"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Pincode *
+                </Label>
+                <Input
+                  id="pincode"
+                  placeholder="6-digit code"
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value)}
+                  maxLength={6}
+                  className="mt-2"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Receiver Details */}
