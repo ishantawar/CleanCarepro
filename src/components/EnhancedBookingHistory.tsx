@@ -104,6 +104,50 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
         // Try MongoDB first (but it will gracefully fallback if no backend)
         let mongoBookings = [];
         const userId = currentUser._id || currentUser.id || currentUser.phone;
+        const customerCode = currentUser.customer_id;
+
+        // Prefer customer_code if available, fallback to user ID
+        if (customerCode) {
+          console.log("Loading bookings by customer code:", customerCode);
+          const mongoResponse =
+            await bookingHelpers.getUserBookingsByCustomerCode(customerCode);
+          if (
+            mongoResponse.data &&
+            Array.isArray(mongoResponse.data) &&
+            mongoResponse.data.length > 0
+          ) {
+            mongoBookings = filterProductionBookings(mongoResponse.data).map(
+              (booking: any) => ({
+                id: booking._id,
+                userId: booking.customer_id,
+                customerCode: booking.customer_code,
+                services: booking.services || [booking.service],
+                totalAmount: booking.final_amount || booking.total_price,
+                status: booking.status,
+                pickupDate: booking.scheduled_date,
+                deliveryDate: booking.scheduled_date, // Could calculate +1 day
+                pickupTime: booking.scheduled_time,
+                deliveryTime: "18:00",
+                address: booking.address,
+                contactDetails: {
+                  phone: currentUser.phone,
+                  name: currentUser.full_name || currentUser.name,
+                  instructions:
+                    booking.additional_details || booking.special_instructions,
+                },
+                paymentStatus: booking.payment_status,
+                createdAt: booking.created_at || booking.createdAt,
+                updatedAt: booking.updated_at || booking.updatedAt,
+              }),
+            );
+            console.log(
+              "✅ Loaded bookings from MongoDB by customer code (filtered):",
+              mongoBookings.length,
+            );
+            setBookings(mongoBookings);
+            return;
+          }
+        }
 
         if (userId) {
           const mongoResponse = await bookingHelpers.getUserBookings(userId);
@@ -306,7 +350,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
               if (shouldUpdate) {
                 console.log(
-                  "✅ Updated booking status in local state:",
+                  "��� Updated booking status in local state:",
                   currentBookingId,
                 );
                 return {
