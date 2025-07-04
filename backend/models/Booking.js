@@ -7,6 +7,11 @@ const bookingSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Customer ID is required"],
     },
+    customer_code: {
+      type: String,
+      required: [true, "Customer code is required"],
+      index: true,
+    },
     rider_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
