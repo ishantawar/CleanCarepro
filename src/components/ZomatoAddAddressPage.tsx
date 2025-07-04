@@ -812,8 +812,14 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
               placeholder="E.g. Floor, House no."
               value={additionalDetails}
               onChange={(e) => setAdditionalDetails(e.target.value)}
-              className="mt-2 min-h-[80px] resize-none"
+              className={`mt-2 min-h-[80px] resize-none ${!additionalDetails.trim() ? "border-red-300 focus:border-red-500" : ""}`}
+              required
             />
+            {!additionalDetails.trim() && (
+              <p className="text-xs text-red-500 mt-1">
+                Flat/House number is required
+              </p>
+            )}
           </div>
 
           {/* Receiver Details */}
