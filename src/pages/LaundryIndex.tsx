@@ -482,8 +482,6 @@ const LaundryIndex = () => {
         );
 
         // Google Sheets integration removed
-          // Don't fail the entire booking process for sheets issues
-        }
 
         // Also save using booking service for local storage backup
         const localBookingData = {
