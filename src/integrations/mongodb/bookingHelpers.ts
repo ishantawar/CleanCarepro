@@ -445,6 +445,58 @@ export const bookingHelpers = {
     }
   },
 
+  // Get bookings by customer code
+  async getUserBookingsByCustomerCode(customerCode: string) {
+    // Check if backend is available
+    if (!API_BASE_URL) {
+      console.log("🌐 No backend URL configured - returning empty bookings");
+      return {
+        data: [],
+        error: null,
+      };
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(
+        `${API_BASE_URL}/bookings/customer-code/${customerCode}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+          signal: controller.signal,
+        },
+      );
+
+      clearTimeout(timeoutId);
+
+      const data = await safeParseJSON(response);
+
+      if (!response.ok) {
+        return {
+          data: null,
+          error: {
+            message: data.error || "Failed to fetch bookings by customer code",
+          },
+        };
+      }
+
+      return {
+        data: data.bookings,
+        error: null,
+        customer_code: data.customer_code,
+        total_count: data.total_count,
+      };
+    } catch (error: any) {
+      console.error("Bookings fetch by customer code error:", error);
+      return {
+        data: null,
+        error: { message: "Network error. Please check your connection." },
+      };
+    }
+  },
+
   // Get pending bookings near a rider's location
   async getPendingBookingsForRiders(lat?: number, lng?: number) {
     try {
