@@ -64,9 +64,6 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
-  const [nearbyPlaces, setNearbyPlaces] = useState<any[]>([]);
-  const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
-  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
 
   const autocompleteRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -341,11 +338,6 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     if (onAddressChange) {
       onAddressChange(newAddress);
     }
-
-    // Fetch nearby places if coordinates are available
-    if (newAddress.coordinates) {
-      fetchNearbyPlaces(newAddress.coordinates);
-    }
   };
 
   const detectCurrentLocation = async () => {
@@ -381,15 +373,11 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
 
       // Get address details and fill the form
       await parseLocationData(coordinates);
-
-      // Fetch nearby places for detected location
-      await fetchNearbyPlaces(coordinates);
     } catch (error) {
       console.error("Error detecting location:", error);
       // Final fallback with default coordinates
       const fallbackCoords = { lat: 28.56, lng: 76.9989 };
       await parseLocationData(fallbackCoords);
-      await fetchNearbyPlaces(fallbackCoords);
     } finally {
       setIsDetectingLocation(false);
     }
