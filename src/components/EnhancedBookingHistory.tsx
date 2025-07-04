@@ -687,6 +687,18 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                   />
                   Refresh
                 </Button>
+                <Button
+                  onClick={() => loadBookings(true)}
+                  variant="outline"
+                  size="sm"
+                  disabled={loading || refreshing}
+                  className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                  />
+                  Force Refresh
+                </Button>
               </div>
             </div>
           </div>
