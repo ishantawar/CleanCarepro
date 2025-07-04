@@ -579,6 +579,17 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                   <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
                     Booking History
                   </h1>
+                  {currentUser?.customer_id && (
+                    <div className="flex items-center gap-2 mt-2 mb-1">
+                      <User className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm text-gray-600">
+                        Customer ID:
+                      </span>
+                      <span className="text-sm font-mono bg-blue-50 px-2 py-1 rounded text-blue-700">
+                        {currentUser.customer_id}
+                      </span>
+                    </div>
+                  )}
                   <p className="text-gray-600 mt-1 text-sm sm:text-base">
                     {bookings.length}{" "}
                     {bookings.length === 1 ? "booking" : "bookings"} found
