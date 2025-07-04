@@ -149,4 +149,28 @@ router.patch("/:addressId/set-default", verifyUser, async (req, res) => {
   }
 });
 
+// Get addresses by customer ID
+router.get("/customer/:customerId", async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const addresses = await Address.getUserAddressesByCustomerId(customerId);
+    res.json({ data: addresses, error: null });
+  } catch (error) {
+    console.error("Get addresses by customer ID error:", error);
+    res.status(500).json({ error: "Failed to fetch addresses" });
+  }
+});
+
+// Get default address by customer ID
+router.get("/customer/:customerId/default", async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const address = await Address.getDefaultAddressByCustomerId(customerId);
+    res.json({ data: address, error: null });
+  } catch (error) {
+    console.error("Get default address by customer ID error:", error);
+    res.status(500).json({ error: "Failed to fetch default address" });
+  }
+});
+
 module.exports = router;
