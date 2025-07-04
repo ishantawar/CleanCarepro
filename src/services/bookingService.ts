@@ -620,20 +620,45 @@ export class BookingService {
 
       // Validate payload before sending
       const validation = {
-        customer_id: !!backendBooking.customer_id,
-        service: !!backendBooking.service,
+        customer_id:
+          !!backendBooking.customer_id &&
+          backendBooking.customer_id !== "anonymous",
+        service:
+          !!backendBooking.service && backendBooking.service.trim() !== "",
         service_type: !!backendBooking.service_type,
         services:
           Array.isArray(backendBooking.services) &&
-          backendBooking.services.length > 0,
+          backendBooking.services.length > 0 &&
+          backendBooking.services.every((s) => s && s.trim() !== ""),
         scheduled_date: !!backendBooking.scheduled_date,
         scheduled_time: !!backendBooking.scheduled_time,
         provider_name: !!backendBooking.provider_name,
-        address: !!backendBooking.address,
+        address:
+          !!backendBooking.address && backendBooking.address.trim() !== "",
         total_price:
           !isNaN(backendBooking.total_price) && backendBooking.total_price > 0,
+        coordinates:
+          !!backendBooking.coordinates &&
+          typeof backendBooking.coordinates === "object",
       };
+
       console.log("🔍 Payload validation:", validation);
+      console.log("📊 Validation details:", {
+        customer_id: {
+          value: backendBooking.customer_id,
+          valid: validation.customer_id,
+        },
+        services: {
+          value: backendBooking.services,
+          valid: validation.services,
+        },
+        total_price: {
+          value: backendBooking.total_price,
+          type: typeof backendBooking.total_price,
+          valid: validation.total_price,
+        },
+        address: { value: backendBooking.address, valid: validation.address },
+      });
 
       const missingFields = Object.entries(validation)
         .filter(([key, valid]) => !valid)
@@ -641,6 +666,15 @@ export class BookingService {
 
       if (missingFields.length > 0) {
         console.error("❌ Missing or invalid fields:", missingFields);
+        console.error(
+          "📦 Full payload for debugging:",
+          JSON.stringify(backendBooking, null, 2),
+        );
+
+        // Still try to send the request but with a warning
+        console.warn(
+          "⚠️ Sending request despite validation warnings. Backend may reject it.",
+        );
       }
 
       const response = await fetch(`${this.apiBaseUrl}/bookings`, {
