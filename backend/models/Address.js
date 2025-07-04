@@ -127,9 +127,22 @@ addressSchema.statics.getDefaultAddress = function (userId) {
   return this.findOne({ user_id: userId, is_default: true });
 };
 
+// Static method to get user's default address by customer ID
+addressSchema.statics.getDefaultAddressByCustomerId = function (customerId) {
+  return this.findOne({ customer_id: customerId, is_default: true });
+};
+
 // Static method to get all user addresses
 addressSchema.statics.getUserAddresses = function (userId) {
   return this.find({ user_id: userId }).sort({
+    is_default: -1,
+    created_at: -1,
+  });
+};
+
+// Static method to get all user addresses by customer ID
+addressSchema.statics.getUserAddressesByCustomerId = function (customerId) {
+  return this.find({ customer_id: customerId }).sort({
     is_default: -1,
     created_at: -1,
   });
