@@ -449,6 +449,39 @@ router.get("/customer/:customerId", async (req, res) => {
   }
 });
 
+// Get bookings by customer code
+router.get("/customer-code/:customerCode", async (req, res) => {
+  try {
+    const { customerCode } = req.params;
+    const { status, limit = 50, offset = 0 } = req.query;
+
+    let query = { customer_code: customerCode };
+    if (status) {
+      query.status = status;
+    }
+
+    const bookings = await Booking.find(query)
+      .populate("customer_id", "full_name phone email customer_id")
+      .populate("rider_id", "full_name phone")
+      .sort({ created_at: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(offset));
+
+    console.log(
+      `📋 Found ${bookings.length} bookings for customer code: ${customerCode}`,
+    );
+
+    res.json({
+      bookings,
+      customer_code: customerCode,
+      total_count: bookings.length,
+    });
+  } catch (error) {
+    console.error("Customer code bookings fetch error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Get pending bookings for riders (within 10km range)
 router.get("/pending/:riderLat/:riderLng", async (req, res) => {
   try {
