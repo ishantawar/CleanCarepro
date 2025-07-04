@@ -115,6 +115,8 @@ addressSchema.pre("save", async function (next) {
 
 // Create indexes
 addressSchema.index({ user_id: 1 });
+addressSchema.index({ customer_id: 1 });
+addressSchema.index({ customer_id: 1, is_default: 1 });
 addressSchema.index({ user_id: 1, is_default: 1 });
 addressSchema.index({ pincode: 1 });
 addressSchema.index({ created_at: -1 });
