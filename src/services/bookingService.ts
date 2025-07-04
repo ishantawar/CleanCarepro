@@ -65,11 +65,23 @@ export class BookingService {
       throw new Error("No authenticated user found");
     }
 
+    // Debug current user structure
+    console.log("🔍 Current user structure:", {
+      id: currentUser.id,
+      _id: currentUser._id,
+      phone: currentUser.phone,
+      userId: currentUser.userId,
+      customer_id: currentUser.customer_id,
+    });
+
     // Always prefer phone number for consistent customer ID
-    // This ensures bookings are grouped by phone number
+    // This ensures bookings are grouped by phone number across all storage systems
     if (currentUser.phone) {
-      console.log("📞 Using phone number as customer ID:", currentUser.phone);
-      return currentUser.phone;
+      const customerId = currentUser.phone.startsWith("user_")
+        ? currentUser.phone
+        : `user_${currentUser.phone}`;
+      console.log("📞 Using phone-based customer ID:", customerId);
+      return customerId;
     }
 
     // If we have a MongoDB ID but no phone, use that as fallback
@@ -79,7 +91,9 @@ export class BookingService {
     }
 
     // Final fallback
-    return currentUser.id || "anonymous";
+    const fallbackId = currentUser.id || "anonymous";
+    console.log("⚠️ Using fallback customer ID:", fallbackId);
+    return fallbackId;
   }
 
   /**
@@ -273,34 +287,59 @@ export class BookingService {
    */
   async getUserBookings(userId: string): Promise<BookingResponse> {
     console.log("📋 Loading bookings for user:", userId);
+    console.log("🌐 API Base URL:", this.apiBaseUrl);
 
     // Get existing local bookings first to preserve recent additions
     const localBookings = this.getBookingsFromLocalStorage(userId);
     console.log("📱 Found local bookings:", localBookings.length);
+    console.log(
+      "📊 Local bookings sample:",
+      localBookings.slice(0, 2).map((b) => ({
+        id: b.id,
+        userId: b.userId,
+        status: b.status,
+        createdAt: b.createdAt,
+      })),
+    );
 
     // Try to fetch from backend first
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const endpoint = `${this.apiBaseUrl}/bookings/customer/${userId}`;
 
-      const response = await fetch(
-        `${this.apiBaseUrl}/bookings/customer/${userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("cleancare_auth_token")}`,
-          },
-          signal: controller.signal,
+      console.log("🔗 Fetching from endpoint:", endpoint);
+
+      const response = await fetch(endpoint, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("cleancare_auth_token")}`,
         },
-      );
+        signal: controller.signal,
+      });
 
       clearTimeout(timeoutId);
+
+      console.log(
+        "📡 Backend response status:",
+        response.status,
+        response.statusText,
+      );
 
       if (response.ok) {
         const result = await response.json();
         console.log(
           "✅ Bookings loaded from backend:",
           result.bookings?.length || 0,
+        );
+        console.log(
+          "📊 Backend bookings sample:",
+          result.bookings?.slice(0, 2)?.map((b) => ({
+            id: b._id || b.id,
+            customer_id: b.customer_id,
+            status: b.status,
+            created_at: b.created_at,
+          })),
         );
 
         if (result.bookings && result.bookings.length > 0) {
@@ -528,9 +567,16 @@ export class BookingService {
       let customerId = booking.userId || "anonymous";
 
       if (currentUser) {
-        // Use phone number as customer_id as that's what the backend expects
+        // Use consistent phone-based customer_id format that matches the frontend
         if (currentUser.phone) {
-          customerId = currentUser.phone;
+          // Ensure we use the same format as getCurrentUserIdForBooking
+          customerId = currentUser.phone.startsWith("user_")
+            ? currentUser.phone
+            : `user_${currentUser.phone}`;
+          console.log(
+            "📞 Using consistent customer ID format for backend:",
+            customerId,
+          );
         } else if (currentUser._id) {
           customerId = currentUser._id;
         } else if (currentUser.id) {
@@ -653,7 +699,7 @@ export class BookingService {
       };
 
       console.log("🔍 Payload validation:", validation);
-      console.log("📊 Validation details:", {
+      console.log("���� Validation details:", {
         customer_id: {
           value: backendBooking.customer_id,
           valid: validation.customer_id,
@@ -807,7 +853,7 @@ export class BookingService {
           }
         } catch (backendError) {
           console.warn(
-            "⚠️ Backend update failed, falling back to localStorage:",
+            "��️ Backend update failed, falling back to localStorage:",
             backendError,
           );
         }
@@ -855,6 +901,13 @@ export class BookingService {
         localStorage.getItem("user_bookings") || "[]",
       );
 
+      console.log("💾 Saving booking to localStorage:", {
+        bookingId: booking.id,
+        userId: booking.userId,
+        services: booking.services,
+        totalAmount: booking.totalAmount,
+      });
+
       // Check if booking already exists (avoid duplicates)
       const bookingId = booking.id || (booking as any)._id;
       const existingIndex = existingBookings.findIndex(
@@ -875,6 +928,10 @@ export class BookingService {
       }
 
       localStorage.setItem("user_bookings", JSON.stringify(existingBookings));
+      console.log(
+        "📊 Total bookings in localStorage:",
+        existingBookings.length,
+      );
     } catch (error) {
       console.error("Failed to save booking to localStorage:", error);
     }
@@ -888,9 +945,55 @@ export class BookingService {
       const allBookings = JSON.parse(
         localStorage.getItem("user_bookings") || "[]",
       );
-      return allBookings.filter(
-        (booking: BookingDetails) => booking.userId === userId,
+
+      console.log("🔍 Searching localStorage for user ID:", userId);
+      console.log("📊 Total localStorage bookings:", allBookings.length);
+      console.log(
+        "📋 Available booking user IDs:",
+        allBookings.map((b) => b.userId).slice(0, 5),
       );
+
+      // Flexible filtering to handle different user ID formats
+      const matchingBookings = allBookings.filter((booking: BookingDetails) => {
+        const bookingUserId = booking.userId;
+
+        // Direct match
+        if (bookingUserId === userId) {
+          return true;
+        }
+
+        // Handle user_ prefix variations
+        if (
+          userId.startsWith("user_") &&
+          bookingUserId === userId.replace("user_", "")
+        ) {
+          return true;
+        }
+
+        if (
+          bookingUserId?.startsWith("user_") &&
+          bookingUserId.replace("user_", "") === userId
+        ) {
+          return true;
+        }
+
+        // Handle phone number variations
+        if (userId.startsWith("user_")) {
+          const phone = userId.replace("user_", "");
+          if (bookingUserId === phone) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+
+      console.log(
+        "✅ Found matching bookings in localStorage:",
+        matchingBookings.length,
+      );
+
+      return matchingBookings;
     } catch (error) {
       console.error("Failed to load bookings from localStorage:", error);
       return [];
