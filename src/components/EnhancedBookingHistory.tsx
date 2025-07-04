@@ -661,6 +661,15 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
         {/* Content */}
         <div className="max-w-4xl mx-auto px-3 py-3 sm:px-6 sm:py-8">
+          {/* Customer Info Card */}
+          {currentUser && (
+            <CustomerInfoCard
+              currentUser={currentUser}
+              bookingCount={bookings.length}
+              className="mb-6"
+            />
+          )}
+
           {bookings.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
