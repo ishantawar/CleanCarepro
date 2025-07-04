@@ -1016,6 +1016,41 @@ export class BookingService {
   }
 
   /**
+   * Update localStorage with merged bookings for a specific user
+   */
+  private updateLocalStorageWithMergedBookings(
+    userId: string,
+    userBookings: BookingDetails[],
+  ): void {
+    try {
+      // Get all bookings from localStorage
+      const allBookings = JSON.parse(
+        localStorage.getItem("user_bookings") || "[]",
+      );
+
+      // Remove existing bookings for this user
+      const otherUsersBookings = allBookings.filter(
+        (booking: BookingDetails) => booking.userId !== userId,
+      );
+
+      // Add the merged bookings for this user
+      const updatedBookings = [...otherUsersBookings, ...userBookings];
+
+      // Save back to localStorage
+      localStorage.setItem("user_bookings", JSON.stringify(updatedBookings));
+      console.log(
+        "💾 Updated localStorage with merged bookings for user:",
+        userId,
+      );
+    } catch (error) {
+      console.error(
+        "Failed to update localStorage with merged bookings:",
+        error,
+      );
+    }
+  }
+
+  /**
    * Clear all bookings (for testing)
    */
   clearAllBookings(): void {
