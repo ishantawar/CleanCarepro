@@ -454,17 +454,26 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
         );
 
         if (result.success) {
-          // Update local state
+          // Update local state with more comprehensive ID matching
           setBookings((prev) =>
-            prev.map((booking: any) =>
-              booking.id === bookingId || booking._id === bookingId
-                ? {
-                    ...booking,
-                    ...updatedBooking,
-                    updatedAt: new Date().toISOString(),
-                  }
-                : booking,
-            ),
+            prev.map((booking: any) => {
+              const currentBookingId = booking.id || booking._id;
+              const matches =
+                currentBookingId === bookingId ||
+                currentBookingId === updatedBooking.id ||
+                currentBookingId === updatedBooking._id ||
+                String(currentBookingId) === String(bookingId);
+
+              if (matches) {
+                console.log("✏️ Updating booking in local state:", bookingId);
+                return {
+                  ...booking,
+                  ...updatedBooking,
+                  updatedAt: new Date().toISOString(),
+                };
+              }
+              return booking;
+            }),
           );
 
           setShowEditModal(false);
