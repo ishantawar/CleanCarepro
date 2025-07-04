@@ -21,7 +21,7 @@ CleanCare Pro has been converted to a production-ready application with the foll
 VITE_NODE_ENV=production
 
 # API Configuration
-VITE_API_BASE_URL=https://cleancarepro-1-p2oc.onrender.com/api
+VITE_API_BASE_URL=https://cleancarepro-95it.onrender.com/api
 
 # DVHosting SMS API
 VITE_DVHOSTING_API_KEY=GLX2yKgdb9
