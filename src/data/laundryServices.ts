@@ -213,6 +213,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per piece",
         description: "Professional kurta dry cleaning",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
       {
         id: "wdc-salwar",
@@ -221,6 +223,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 120,
         unit: "per piece",
         description: "Bottom wear and dupatta cleaning",
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
       {
         id: "wdc-saree-simple",
@@ -229,6 +233,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 210,
         unit: "per piece",
         description: "Regular and silk saree cleaning",
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F36d1236ed04c4ae0aa24948824cf6f42?format=webp&width=800",
       },
       {
         id: "wdc-saree-heavy",
@@ -237,6 +243,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 350,
         unit: "per piece",
         description: "Heavy work saree with embellishments",
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F36d1236ed04c4ae0aa24948824cf6f42?format=webp&width=800",
       },
       {
         id: "wdc-blouse",
