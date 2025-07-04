@@ -365,15 +365,15 @@ export class BookingService {
     }
 
     // Fallback to localStorage
-    const localBookings = this.getBookingsFromLocalStorage(userId);
-    console.log("📱 Using localStorage fallback:", localBookings.length);
+    const fallbackBookings = this.getBookingsFromLocalStorage(userId);
+    console.log("📱 Using localStorage fallback:", fallbackBookings.length);
     return {
       success: true,
-      bookings: localBookings,
+      bookings: fallbackBookings,
     };
 
     // Try to sync with backend in background (non-blocking)
-    this.syncWithBackendInBackground(userId, localBookings);
+    this.syncWithBackendInBackground(userId, fallbackBookings);
   }
 
   /**
