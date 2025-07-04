@@ -216,9 +216,42 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
         refreshBookings();
       };
 
+      const handleBookingCreated = (event: CustomEvent) => {
+        console.log("🆕 New booking created - immediately updating history");
+        const newBooking = event.detail.booking;
+        setBookings((prevBookings) => {
+          // Check if booking already exists
+          const existingIndex = prevBookings.findIndex(
+            (b) => b.id === newBooking.id || (b as any)._id === newBooking.id,
+          );
+
+          if (existingIndex >= 0) {
+            // Update existing booking
+            const updated = [...prevBookings];
+            updated[existingIndex] = newBooking;
+            return updated.sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
+          } else {
+            // Add new booking and sort by creation date
+            return [newBooking, ...prevBookings].sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
+          }
+        });
+      };
+
       window.addEventListener("refreshBookings", handleRefreshBookings);
-      return () =>
+      window.addEventListener("bookingCreated", handleBookingCreated);
+
+      return () => {
         window.removeEventListener("refreshBookings", handleRefreshBookings);
+        window.removeEventListener("bookingCreated", handleBookingCreated);
+      };
     }, [currentUser]);
 
     // Auto-refresh bookings every 30 seconds to catch new bookings
