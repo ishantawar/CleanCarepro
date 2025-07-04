@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema(
   {
+    custom_order_id: {
+      type: String,
+      unique: true,
+      required: true,
+    },
     customer_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -164,9 +169,55 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
-// Calculate final amount before saving
-bookingSchema.pre("save", function (next) {
+// Generate custom order ID
+async function generateCustomOrderId() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const yearMonth = `${year}${month}`;
+
+  // Find the latest booking for this month
+  const latestBooking = await mongoose
+    .model("Booking")
+    .findOne({
+      custom_order_id: { $regex: `^[A-Z]${yearMonth}` },
+    })
+    .sort({ custom_order_id: -1 });
+
+  let letter = "A";
+  let sequence = 1;
+
+  if (latestBooking) {
+    const lastOrderId = latestBooking.custom_order_id;
+    const lastLetter = lastOrderId.charAt(0);
+    const lastSequence = parseInt(lastOrderId.slice(-5));
+
+    if (lastSequence >= 99999) {
+      // Roll over to next letter
+      letter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+      sequence = 1;
+    } else {
+      letter = lastLetter;
+      sequence = lastSequence + 1;
+    }
+  }
+
+  const sequenceStr = String(sequence).padStart(5, "0");
+  return `${letter}${yearMonth}${sequenceStr}`;
+}
+
+// Calculate final amount and generate custom order ID before saving
+bookingSchema.pre("save", async function (next) {
   this.updated_at = new Date();
+
+  // Generate custom order ID if it's a new document
+  if (this.isNew && !this.custom_order_id) {
+    try {
+      this.custom_order_id = await generateCustomOrderId();
+    } catch (error) {
+      return next(error);
+    }
+  }
 
   // Calculate final amount if not already set
   if (!this.final_amount) {
@@ -187,6 +238,7 @@ bookingSchema.pre("save", function (next) {
 });
 
 // Create indexes
+bookingSchema.index({ custom_order_id: 1 });
 bookingSchema.index({ customer_id: 1 });
 bookingSchema.index({ rider_id: 1 });
 bookingSchema.index({ status: 1 });
