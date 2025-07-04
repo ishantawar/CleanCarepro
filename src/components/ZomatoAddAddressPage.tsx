@@ -804,11 +804,11 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
               htmlFor="additional-details"
               className="text-sm font-medium text-gray-700"
             >
-              Additional address details*
+              Additional address details (Optional)
             </Label>
             <Textarea
               id="additional-details"
-              placeholder="E.g. Floor, House no."
+              placeholder="E.g. Floor, House no. (optional)"
               value={additionalDetails}
               onChange={(e) => setAdditionalDetails(e.target.value)}
               className="mt-2 min-h-[80px] resize-none"
