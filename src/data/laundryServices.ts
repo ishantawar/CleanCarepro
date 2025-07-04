@@ -133,6 +133,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per piece",
         description: "Professional dry cleaning for shirts",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/834863/pexels-photo-834863.jpeg",
       },
       {
         id: "mdc-trouser",
@@ -141,6 +143,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 120,
         unit: "per piece",
         description: "Dry cleaning for trousers and jeans",
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
       {
         id: "mdc-coat",
@@ -149,6 +153,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 220,
         unit: "per piece",
         description: "Professional coat dry cleaning",
+        image:
+          "https://images.pexels.com/photos/32836867/pexels-photo-32836867.jpeg",
       },
       {
         id: "mdc-suit-2pc",
@@ -157,6 +163,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 330,
         unit: "per set",
         description: "Complete 2-piece suit cleaning",
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
       {
         id: "mdc-suit-3pc",
@@ -165,6 +173,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 380,
         unit: "per set",
         description: "Complete 3-piece suit cleaning",
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
       {
         id: "mdc-kurta-pajama",
@@ -173,6 +183,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 220,
         unit: "per set",
         description: "Traditional kurta pyjama set",
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
       {
         id: "mdc-achkan",
@@ -181,6 +193,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 380,
         unit: "per piece",
         description: "Traditional achkan dry cleaning",
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
     ],
   },
