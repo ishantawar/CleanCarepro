@@ -313,9 +313,10 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Create booking with proper customer_id as ObjectId
+    // Create booking with proper customer_id as ObjectId and customer_code
     const booking = new Booking({
       customer_id: customer._id, // Use the actual customer ObjectId from database
+      customer_code: customer.customer_id, // Use the customer_id field from User model
       service,
       service_type,
       services,
