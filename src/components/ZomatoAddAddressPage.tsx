@@ -596,7 +596,10 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
   const isFormValid = () => {
     return (
-      selectedLocation && receiverName && receiverPhone && additionalDetails
+      selectedLocation &&
+      receiverName.trim() &&
+      receiverPhone.trim() &&
+      receiverPhone.length >= 10
     );
   };
 
