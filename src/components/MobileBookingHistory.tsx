@@ -110,6 +110,44 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
     loadBookings();
   }, [currentUser]);
 
+  // Listen for immediate booking updates
+  useEffect(() => {
+    const handleBookingCreated = (event: CustomEvent) => {
+      console.log(
+        "🆕 New booking created - immediately updating mobile history",
+      );
+      const newBooking = event.detail.booking;
+      setBookings((prevBookings) => {
+        // Check if booking already exists
+        const existingIndex = prevBookings.findIndex(
+          (b) => b.id === newBooking.id || (b as any)._id === newBooking.id,
+        );
+
+        if (existingIndex >= 0) {
+          // Update existing booking
+          const updated = [...prevBookings];
+          updated[existingIndex] = newBooking;
+          return updated.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
+        } else {
+          // Add new booking and sort by creation date
+          return [newBooking, ...prevBookings].sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
+        }
+      });
+    };
+
+    window.addEventListener("bookingCreated", handleBookingCreated);
+
+    return () => {
+      window.removeEventListener("bookingCreated", handleBookingCreated);
+    };
+  }, []);
+
   // Debug function to check booking structure
   useEffect(() => {
     if (bookings.length > 0) {

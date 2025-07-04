@@ -180,8 +180,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
     const refreshBookings = async () => {
       setRefreshing(true);
       try {
-        // Clear local cache first
-        localStorage.removeItem("user_bookings");
+        // Don't clear cache immediately - preserve local bookings during refresh
+        console.log("🔄 Refreshing bookings while preserving local data...");
 
         await loadBookings(true);
         addNotification(
@@ -210,13 +210,48 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
     // Listen for booking refresh events
     useEffect(() => {
       const handleRefreshBookings = () => {
-        console.log("🔄 Received booking refresh event");
-        loadBookings(true);
+        console.log(
+          "🔄 Received booking refresh event - using force refresh to preserve new bookings",
+        );
+        refreshBookings();
+      };
+
+      const handleBookingCreated = (event: CustomEvent) => {
+        console.log("🆕 New booking created - immediately updating history");
+        const newBooking = event.detail.booking;
+        setBookings((prevBookings) => {
+          // Check if booking already exists
+          const existingIndex = prevBookings.findIndex(
+            (b) => b.id === newBooking.id || (b as any)._id === newBooking.id,
+          );
+
+          if (existingIndex >= 0) {
+            // Update existing booking
+            const updated = [...prevBookings];
+            updated[existingIndex] = newBooking;
+            return updated.sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
+          } else {
+            // Add new booking and sort by creation date
+            return [newBooking, ...prevBookings].sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
+          }
+        });
       };
 
       window.addEventListener("refreshBookings", handleRefreshBookings);
-      return () =>
+      window.addEventListener("bookingCreated", handleBookingCreated);
+
+      return () => {
         window.removeEventListener("refreshBookings", handleRefreshBookings);
+        window.removeEventListener("bookingCreated", handleBookingCreated);
+      };
     }, [currentUser]);
 
     // Auto-refresh bookings every 30 seconds to catch new bookings
@@ -224,8 +259,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
       if (!currentUser) return;
 
       const interval = setInterval(() => {
-        console.log("🔄 Auto-refreshing bookings...");
-        loadBookings(true);
+        console.log(
+          "🔄 Auto-refreshing bookings while preserving local data...",
+        );
+        refreshBookings();
       }, 30000); // Refresh every 30 seconds
 
       return () => clearInterval(interval);
@@ -235,8 +272,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
     useEffect(() => {
       const handleVisibilityChange = () => {
         if (!document.hidden && currentUser) {
-          console.log("👁️ Page visible, refreshing bookings...");
-          loadBookings(true);
+          console.log(
+            "👁️ Page visible, refreshing bookings while preserving local data...",
+          );
+          refreshBookings();
         }
       };
 

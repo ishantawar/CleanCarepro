@@ -125,6 +125,12 @@ export class BookingService {
       this.saveBookingToLocalStorage(booking);
       console.log("💾 Booking saved to localStorage:", booking.id);
 
+      // Trigger immediate UI update for booking history
+      const bookingCreatedEvent = new CustomEvent("bookingCreated", {
+        detail: { booking },
+      });
+      window.dispatchEvent(bookingCreatedEvent);
+
       // Save to MongoDB and backend (with improved error handling)
       let backendSaveSuccess = false;
       try {
@@ -243,10 +249,34 @@ export class BookingService {
   }
 
   /**
+   * Force refresh bookings without clearing cache - preserves local additions
+   */
+  async forceRefreshCurrentUserBookings(): Promise<BookingResponse> {
+    try {
+      const userId = await this.getCurrentUserIdForBooking();
+      console.log("🔄 Force refreshing bookings for user:", userId);
+
+      // Get the latest bookings and merge them properly
+      return this.getUserBookings(userId);
+    } catch (error) {
+      console.error("Failed to force refresh bookings:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to refresh bookings",
+      };
+    }
+  }
+
+  /**
    * Get user bookings
    */
   async getUserBookings(userId: string): Promise<BookingResponse> {
     console.log("📋 Loading bookings for user:", userId);
+
+    // Get existing local bookings first to preserve recent additions
+    const localBookings = this.getBookingsFromLocalStorage(userId);
+    console.log("📱 Found local bookings:", localBookings.length);
 
     // Try to fetch from backend first
     try {
@@ -279,14 +309,19 @@ export class BookingService {
             this.transformBackendBooking(booking),
           );
 
-          // Save to localStorage for offline access
-          transformedBookings.forEach((booking) => {
-            this.saveBookingToLocalStorage(booking);
-          });
+          // Merge with local bookings (local bookings take precedence for recent additions)
+          const mergedBookings = this.mergeBookings(
+            localBookings,
+            transformedBookings,
+          );
+          console.log("🔄 Merged bookings count:", mergedBookings.length);
+
+          // Update localStorage with merged data
+          this.updateLocalStorageWithMergedBookings(userId, mergedBookings);
 
           return {
             success: true,
-            bookings: transformedBookings,
+            bookings: mergedBookings,
           };
         }
       } else {
@@ -330,15 +365,15 @@ export class BookingService {
     }
 
     // Fallback to localStorage
-    const localBookings = this.getBookingsFromLocalStorage(userId);
-    console.log("📱 Using localStorage fallback:", localBookings.length);
+    const fallbackBookings = this.getBookingsFromLocalStorage(userId);
+    console.log("📱 Using localStorage fallback:", fallbackBookings.length);
     return {
       success: true,
-      bookings: localBookings,
+      bookings: fallbackBookings,
     };
 
     // Try to sync with backend in background (non-blocking)
-    this.syncWithBackendInBackground(userId, localBookings);
+    this.syncWithBackendInBackground(userId, fallbackBookings);
   }
 
   /**
@@ -1003,6 +1038,41 @@ export class BookingService {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       };
+    }
+  }
+
+  /**
+   * Update localStorage with merged bookings for a specific user
+   */
+  private updateLocalStorageWithMergedBookings(
+    userId: string,
+    userBookings: BookingDetails[],
+  ): void {
+    try {
+      // Get all bookings from localStorage
+      const allBookings = JSON.parse(
+        localStorage.getItem("user_bookings") || "[]",
+      );
+
+      // Remove existing bookings for this user
+      const otherUsersBookings = allBookings.filter(
+        (booking: BookingDetails) => booking.userId !== userId,
+      );
+
+      // Add the merged bookings for this user
+      const updatedBookings = [...otherUsersBookings, ...userBookings];
+
+      // Save back to localStorage
+      localStorage.setItem("user_bookings", JSON.stringify(updatedBookings));
+      console.log(
+        "💾 Updated localStorage with merged bookings for user:",
+        userId,
+      );
+    } catch (error) {
+      console.error(
+        "Failed to update localStorage with merged bookings:",
+        error,
+      );
     }
   }
 
