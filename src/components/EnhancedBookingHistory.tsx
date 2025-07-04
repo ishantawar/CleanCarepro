@@ -180,8 +180,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
     const refreshBookings = async () => {
       setRefreshing(true);
       try {
-        // Clear local cache first
-        localStorage.removeItem("user_bookings");
+        // Don't clear cache immediately - preserve local bookings during refresh
+        console.log("🔄 Refreshing bookings while preserving local data...");
 
         await loadBookings(true);
         addNotification(
