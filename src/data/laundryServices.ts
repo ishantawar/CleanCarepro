@@ -49,6 +49,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per kg",
         description: "Bulk pricing for 3kg and above",
         minQuantity: 3,
+        image:
+          "https://images.pexels.com/photos/7245094/pexels-photo-7245094.jpeg",
       },
     ],
   },
@@ -79,6 +81,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per kg",
         description: "Bulk pricing for 3kg and above",
         minQuantity: 3,
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
     ],
   },
@@ -98,6 +102,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per piece",
         description: "Coat, Lehenga, Sweatshirt, Sweater, Achkan",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/10558187/pexels-photo-10558187.jpeg",
       },
       {
         id: "si-regular",
@@ -107,6 +113,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 30,
         unit: "per piece",
         description: "All other garments",
+        image:
+          "https://images.pexels.com/photos/10558187/pexels-photo-10558187.jpeg",
       },
     ],
   },
