@@ -577,39 +577,7 @@ const LaundryIndex = () => {
         console.log("📝 Fallback local booking result:", localResult);
 
         if (localResult.success) {
-          // Also save to Google Sheets even when MongoDB fails
-          try {
-            const GoogleSheetsService = (
-              await import("../services/googleSheetsService")
-            ).default;
-            const sheetsService = GoogleSheetsService.getInstance();
-
-            const orderData = {
-              orderId: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              customerName:
-                currentUser.full_name || currentUser.name || "Customer",
-              customerPhone: currentUser.phone || "N/A",
-              customerAddress:
-                typeof cartData.address === "string"
-                  ? cartData.address
-                  : cartData.address?.fullAddress || "N/A",
-              services: servicesArray,
-              totalAmount: cartData.totalAmount,
-              pickupDate: cartData.pickupDate,
-              pickupTime: cartData.pickupTime,
-              status: "pending",
-              createdAt: new Date().toISOString(),
-            };
-
-            const sheetsResult =
-              await sheetsService.saveOrderToSheet(orderData);
-            console.log("📊 Fallback Google Sheets processed:", sheetsResult);
-          } catch (sheetsError) {
-            console.warn(
-              "⚠️ Google Sheets fallback failed (non-critical):",
-              sheetsError.message,
-            );
-          }
+          // Google Sheets fallback removed
 
           // Store booking data for confirmation screen
           const confirmationData = {
