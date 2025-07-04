@@ -507,6 +507,13 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
 
         {/* Mobile Content */}
         <div className="p-4 space-y-4">
+          {/* Customer Info */}
+          {currentUser && (
+            <div className="bg-white rounded-xl">
+              <CustomerSummary currentUser={currentUser} variant="compact" />
+            </div>
+          )}
+
           {/* Delivery Time & Location */}
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
             <div className="flex items-center justify-between mb-2">
