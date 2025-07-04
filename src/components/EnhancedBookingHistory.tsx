@@ -477,10 +477,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
             ),
           );
 
-          // Force reload bookings from backend to ensure consistency
-          setTimeout(() => {
-            loadBookings(true);
-          }, 1000);
+          // Don't force reload - trust the local update since it worked
+          // This prevents overwriting successful local changes
         } else {
           addNotification(
             createErrorNotification(
