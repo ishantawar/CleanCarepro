@@ -50,6 +50,7 @@ import {
 import { BookingService } from "@/services/bookingService";
 import EditBookingModal from "./EditBookingModal";
 import GoogleSheetsInfo from "./GoogleSheetsInfo";
+import CustomerInfoCard from "./CustomerInfoCard";
 import { filterProductionBookings } from "@/utils/bookingFilters";
 
 interface EnhancedBookingHistoryProps {
@@ -350,7 +351,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
               if (shouldUpdate) {
                 console.log(
-                  "��� Updated booking status in local state:",
+                  "✅ Updated booking status in local state:",
                   currentBookingId,
                 );
                 return {
