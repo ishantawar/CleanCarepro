@@ -1,7 +1,6 @@
 import MongoDBService from "./mongodbService";
 import { DVHostingSmsService } from "./dvhostingSmsService";
 import { config } from "../config/env";
-import GoogleSheetsService from "./googleSheetsService";
 
 export interface BookingDetails {
   id: string;
@@ -37,11 +36,9 @@ export class BookingService {
   private static instance: BookingService;
   private apiBaseUrl: string;
   private mongoService: MongoDBService;
-  private googleSheetsService: GoogleSheetsService;
 
   constructor() {
     this.mongoService = MongoDBService.getInstance();
-    this.googleSheetsService = GoogleSheetsService.getInstance();
     this.apiBaseUrl = config.apiBaseUrl;
 
     console.log("📡 BookingService API URL:", this.apiBaseUrl);
@@ -179,48 +176,7 @@ export class BookingService {
         }
       }
 
-      // Save to Google Sheets
-      try {
-        const authService = DVHostingSmsService.getInstance();
-        const currentUser = authService.getCurrentUser();
-
-        const googleSheetsData = {
-          orderId: `${currentUser?.phone || "User"}${new Date().toLocaleDateString("en-IN").replace(/\//g, "")}${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(":", "")}`,
-          customerName:
-            currentUser?.name || currentUser?.full_name || "Customer",
-          customerPhone: currentUser?.phone || "",
-          customerAddress:
-            typeof booking.address === "object"
-              ? JSON.stringify(booking.address)
-              : booking.address,
-          services: Array.isArray(booking.services)
-            ? booking.services
-            : [booking.services],
-          totalAmount: booking.totalAmount,
-          pickupDate: booking.pickupDate,
-          pickupTime: booking.pickupTime,
-          status: booking.status,
-          createdAt: booking.createdAt,
-        };
-
-        this.googleSheetsService
-          .saveOrderToSheet(googleSheetsData)
-          .then((result) => {
-            if (result) {
-              console.log("✅ Booking saved to Google Sheets");
-            } else {
-              console.log("ℹ️ Google Sheets save skipped or failed silently");
-            }
-          })
-          .catch((error) => {
-            console.warn(
-              "⚠️ Google Sheets save failed, but booking is saved locally:",
-              error,
-            );
-          });
-      } catch (error) {
-        console.warn("Google Sheets integration error:", error);
-      }
+      // Google Sheets integration removed
 
       // Background sync is no longer needed as we already synced above
       // This prevents duplicate API calls that were causing the 400 errors
@@ -1013,12 +969,18 @@ export class BookingService {
       const bookingIndex = allBookings.findIndex((booking: BookingDetails) => {
         const bid = booking.id || (booking as any)._id;
         const targetId = bookingId.toString();
+
+        // More comprehensive ID matching
         return (
+          bid === bookingId ||
           bid === targetId ||
           bid?.toString() === targetId ||
+          bid?.toString() === bookingId ||
           // Handle cases where one might have ObjectId format
           (typeof bid === "object" && bid.toString() === targetId) ||
-          (typeof bookingId === "object" && bookingId.toString() === bid)
+          (typeof bookingId === "object" && bookingId.toString() === bid) ||
+          // Also try without toString() conversion
+          String(bid) === String(bookingId)
         );
       });
 

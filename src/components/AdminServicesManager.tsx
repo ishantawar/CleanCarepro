@@ -80,7 +80,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
       addNotification(
         createSuccessNotification(
           "Services Refreshed",
-          "Services have been updated from Google Sheets.",
+          "Services have been updated.",
         ),
       );
     } catch (error) {
@@ -88,7 +88,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
       addNotification(
         createErrorNotification(
           "Refresh Failed",
-          "Could not refresh services from Google Sheets.",
+          "Could not refresh services.",
         ),
       );
     } finally {
@@ -122,7 +122,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
         addNotification(
           createWarningNotification(
             "Update Pending",
-            "Service update request sent. Please update manually in Google Sheets.",
+            "Service update request sent.",
           ),
         );
       }
@@ -141,12 +141,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
     setEditingService(null);
   };
 
-  const openGoogleSheets = () => {
-    // This would open the Google Sheets document
-    // You would need to configure the actual URL
-    const sheetsUrl = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_SERVICES_SHEET_ID}/edit`;
-    window.open(sheetsUrl, "_blank");
-  };
+  // Google Sheets integration removed
 
   const setupInitialSheet = async () => {
     try {
@@ -167,7 +162,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
         addNotification(
           createErrorNotification(
             "Setup Failed",
-            result.error || "Failed to setup Google Sheets.",
+            result.error || "Failed to setup services.",
           ),
         );
       }
@@ -176,7 +171,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
       addNotification(
         createErrorNotification(
           "Setup Error",
-          "Could not initialize Google Sheets.",
+          "Could not initialize services.",
         ),
       );
     }
@@ -211,15 +206,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={openGoogleSheets}
-              className="flex items-center gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open Sheets
-            </Button>
+            {/* Google Sheets integration removed */}
             <Button
               variant="outline"
               size="sm"
@@ -252,18 +239,8 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
                   How to manage services:
                 </p>
                 <ul className="text-blue-700 space-y-1">
-                  <li>
-                    • Click "Open Sheets" to edit services directly in Google
-                    Sheets
-                  </li>
-                  <li>
-                    • Use "Refresh" to pull latest changes from Google Sheets
-                  </li>
-                  <li>• Changes in Google Sheets are cached for 5 minutes</li>
-                  <li>
-                    • Use "Setup Sheet" to initialize default services in Google
-                    Sheets
-                  </li>
+                  <li>• Use "Refresh" to reload services</li>
+                  <li>• Services are managed in static configuration</li>
                 </ul>
               </div>
             </div>
@@ -363,9 +340,8 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
                   No services were loaded. This could be due to:
                 </p>
                 <ul className="text-sm text-gray-500 text-left max-w-md mx-auto space-y-1">
-                  <li>• Google Sheets integration not configured</li>
-                  <li>• Service account permissions not set</li>
-                  <li>• Google Sheets document not accessible</li>
+                  <li>• Services integration not configured</li>
+                  <li>• Service permissions not set</li>
                   <li>• Network connectivity issues</li>
                 </ul>
                 <div className="mt-6 space-x-4">
@@ -483,7 +459,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
               </div>
 
               <div className="text-xs text-gray-500 text-center">
-                Note: Changes may require manual update in Google Sheets
+                Note: Changes may require system restart
               </div>
             </CardContent>
           </Card>

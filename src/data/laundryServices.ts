@@ -38,6 +38,8 @@ export const laundryServices: ServiceCategory[] = [
         description: "Regular wash and fold service",
         minQuantity: 1,
         popular: true,
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F36d1236ed04c4ae0aa24948824cf6f42?format=webp&width=800",
       },
       {
         id: "wf-bulk",
@@ -47,6 +49,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per kg",
         description: "Bulk pricing for 3kg and above",
         minQuantity: 3,
+        image:
+          "https://images.pexels.com/photos/7245094/pexels-photo-7245094.jpeg",
       },
     ],
   },
@@ -66,6 +70,8 @@ export const laundryServices: ServiceCategory[] = [
         description: "Professional wash and iron service",
         minQuantity: 1,
         popular: true,
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F61aef7e516b742c1b6fa99edcdcc8c97?format=webp&width=800",
       },
       {
         id: "wi-bulk",
@@ -75,6 +81,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per kg",
         description: "Bulk pricing for 3kg and above",
         minQuantity: 3,
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
     ],
   },
@@ -94,6 +102,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per piece",
         description: "Coat, Lehenga, Sweatshirt, Sweater, Achkan",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/10558187/pexels-photo-10558187.jpeg",
       },
       {
         id: "si-regular",
@@ -103,6 +113,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 30,
         unit: "per piece",
         description: "All other garments",
+        image:
+          "https://images.pexels.com/photos/10558187/pexels-photo-10558187.jpeg",
       },
     ],
   },
@@ -121,6 +133,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per piece",
         description: "Professional dry cleaning for shirts",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/834863/pexels-photo-834863.jpeg",
       },
       {
         id: "mdc-trouser",
@@ -129,6 +143,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 120,
         unit: "per piece",
         description: "Dry cleaning for trousers and jeans",
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
       {
         id: "mdc-coat",
@@ -137,6 +153,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 220,
         unit: "per piece",
         description: "Professional coat dry cleaning",
+        image:
+          "https://images.pexels.com/photos/32836867/pexels-photo-32836867.jpeg",
       },
       {
         id: "mdc-suit-2pc",
@@ -145,6 +163,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 330,
         unit: "per set",
         description: "Complete 2-piece suit cleaning",
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
       {
         id: "mdc-suit-3pc",
@@ -153,6 +173,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 380,
         unit: "per set",
         description: "Complete 3-piece suit cleaning",
+        image:
+          "https://images.pexels.com/photos/1682699/pexels-photo-1682699.jpeg",
       },
       {
         id: "mdc-kurta-pajama",
@@ -161,6 +183,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 220,
         unit: "per set",
         description: "Traditional kurta pyjama set",
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
       {
         id: "mdc-achkan",
@@ -169,6 +193,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 380,
         unit: "per piece",
         description: "Traditional achkan dry cleaning",
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
     ],
   },
@@ -187,6 +213,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per piece",
         description: "Professional kurta dry cleaning",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
       {
         id: "wdc-salwar",
@@ -195,6 +223,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 120,
         unit: "per piece",
         description: "Bottom wear and dupatta cleaning",
+        image:
+          "https://images.pexels.com/photos/8818660/pexels-photo-8818660.jpeg",
       },
       {
         id: "wdc-saree-simple",
@@ -203,6 +233,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 210,
         unit: "per piece",
         description: "Regular and silk saree cleaning",
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F36d1236ed04c4ae0aa24948824cf6f42?format=webp&width=800",
       },
       {
         id: "wdc-saree-heavy",
@@ -211,6 +243,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 350,
         unit: "per piece",
         description: "Heavy work saree with embellishments",
+        image:
+          "https://cdn.builder.io/api/v1/image/assets%2F3ed634e80c4f4cd793d62c1354de966f%2F36d1236ed04c4ae0aa24948824cf6f42?format=webp&width=800",
       },
       {
         id: "wdc-blouse",
@@ -219,6 +253,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 90,
         unit: "per piece",
         description: "Blouse dry cleaning",
+        image:
+          "https://images.pexels.com/photos/23363993/pexels-photo-23363993.jpeg",
       },
       {
         id: "wdc-dress",
@@ -227,6 +263,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 330,
         unit: "per piece",
         description: "Western dress dry cleaning",
+        image:
+          "https://images.pexels.com/photos/1200643/pexels-photo-1200643.jpeg",
       },
       {
         id: "wdc-top",
@@ -235,6 +273,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 100,
         unit: "per piece",
         description: "Top/shirt dry cleaning",
+        image:
+          "https://images.pexels.com/photos/23363993/pexels-photo-23363993.jpeg",
       },
       {
         id: "wdc-skirt",
@@ -243,6 +283,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 200,
         unit: "per piece",
         description: "Heavy skirt dry cleaning",
+        image:
+          "https://images.pexels.com/photos/297367/pexels-photo-297367.jpeg",
       },
       {
         id: "wdc-lehenga-1pc",
@@ -251,6 +293,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 330,
         unit: "per piece",
         description: "Single piece lehenga",
+        image:
+          "https://images.pexels.com/photos/27155546/pexels-photo-27155546.jpeg",
       },
       {
         id: "wdc-lehenga-2pc",
@@ -260,6 +304,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per set",
         description: "Multi-piece lehenga set",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/27155546/pexels-photo-27155546.jpeg",
       },
       {
         id: "wdc-lehenga-heavy",
@@ -268,6 +314,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 700,
         unit: "per set",
         description: "Heavy work lehenga with intricate details",
+        image:
+          "https://images.pexels.com/photos/27155546/pexels-photo-27155546.jpeg",
       },
     ],
   },
@@ -296,6 +344,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 200,
         unit: "per piece",
         description: "Sweater and sweatshirt care",
+        image:
+          "https://images.pexels.com/photos/6996083/pexels-photo-6996083.jpeg",
       },
       {
         id: "wol-long-coat",
@@ -304,6 +354,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 400,
         unit: "per piece",
         description: "Long winter coat cleaning",
+        image:
+          "https://images.pexels.com/photos/32836867/pexels-photo-32836867.jpeg",
       },
       {
         id: "wol-shawl",
@@ -312,6 +364,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 250,
         unit: "per piece",
         description: "Delicate shawl cleaning",
+        image:
+          "https://images.pexels.com/photos/31617140/pexels-photo-31617140.jpeg",
       },
       {
         id: "wol-pashmina",
@@ -320,6 +374,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 550,
         unit: "per piece",
         description: "Premium pashmina care",
+        image:
+          "https://images.pexels.com/photos/31617140/pexels-photo-31617140.jpeg",
       },
       {
         id: "wol-leather",
@@ -328,6 +384,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 600,
         unit: "per piece",
         description: "Specialized leather jacket cleaning",
+        image:
+          "https://images.pexels.com/photos/1035685/pexels-photo-1035685.jpeg",
       },
     ],
   },

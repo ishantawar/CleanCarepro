@@ -54,6 +54,14 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     coordinates: Coordinates;
   } | null>(null);
   const [additionalDetails, setAdditionalDetails] = useState("");
+  const [flatNo, setFlatNo] = useState("");
+  const [floor, setFloor] = useState("");
+  const [building, setBuilding] = useState("");
+  const [street, setStreet] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [area, setArea] = useState("");
+  const [city, setCity] = useState("");
+  const [pincode, setPincode] = useState("");
   const [addressType, setAddressType] = useState<"home" | "office" | "other">(
     "home",
   );
@@ -281,6 +289,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       setSelectedLocation({ address, coordinates });
       setSearchQuery(address);
       updateMapLocation(coordinates);
+      autoFillAddressFields(address);
     } catch (error) {
       console.error("Reverse geocoding failed:", error);
     }
@@ -300,6 +309,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       setSelectedLocation({ address, coordinates });
       setSearchQuery(address);
       updateMapLocation(coordinates);
+      autoFillAddressFields(address);
     } catch (error) {
       console.error("Location detection failed:", error);
       // Use fallback location
@@ -313,6 +323,33 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       updateMapLocation(fallbackCoords);
     } finally {
       setIsDetectingLocation(false);
+    }
+  };
+
+  // Auto-fill address fields from full address string
+  const autoFillAddressFields = (fullAddress: string) => {
+    const parts = fullAddress.split(",").map((part) => part.trim());
+
+    // Extract pincode
+    const pincodeMatch = fullAddress.match(/\b\d{6}\b/);
+    if (pincodeMatch) {
+      setPincode(pincodeMatch[0]);
+    }
+
+    // Try to extract city (usually second-to-last or third-to-last part)
+    if (parts.length >= 2) {
+      const cityPart = parts[parts.length - 3] || parts[parts.length - 2] || "";
+      setCity(cityPart.replace(/\d{6}/, "").trim());
+    }
+
+    // Extract area/village (usually in middle parts)
+    if (parts.length >= 3) {
+      setArea(parts[1] || "");
+    }
+
+    // Extract street (usually first part)
+    if (parts.length >= 1) {
+      setStreet(parts[0] || "");
     }
   };
 
@@ -390,10 +427,10 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       if (suggestions.length === 0) {
         try {
           const nominatimResponse = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, India&limit=8&addressdetails=1&countrycodes=in`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, India&limit=10&addressdetails=1&countrycodes=in&extratags=1`,
             {
               headers: {
-                "User-Agent": "LaundryFlash-App/1.0",
+                "User-Agent": "CleanCare-App/1.0",
               },
             },
           );
@@ -506,6 +543,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         coordinates,
       });
       updateMapLocation(coordinates);
+      autoFillAddressFields(suggestion.description);
 
       return;
     }
@@ -536,6 +574,9 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           });
 
           updateMapLocation(coordinates);
+          autoFillAddressFields(
+            place.formatted_address || suggestion.description,
+          );
         } else {
           console.error("Failed to get place details:", status);
           // Fallback to geocoding
@@ -547,6 +588,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                 coordinates: geocodeResult.coordinates,
               });
               updateMapLocation(geocodeResult.coordinates);
+              autoFillAddressFields(geocodeResult.formatted_address);
             })
             .catch((geocodeError) => {
               console.error("Geocoding fallback failed:", geocodeError);
@@ -561,14 +603,28 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const handleSave = () => {
     if (!selectedLocation) return;
 
+    // Build complete address from split fields
+    const fullAddressParts = [
+      flatNo && (floor || building)
+        ? `${flatNo}, ${floor || ""} ${building || ""}`.trim()
+        : flatNo,
+      street,
+      landmark,
+      area,
+      city,
+      pincode,
+    ].filter(Boolean);
+
+    const completeAddress = fullAddressParts.join(", ");
+
     const addressData: AddressData = {
-      flatNo: additionalDetails,
-      street: "",
-      landmark: "",
-      village: "",
-      city: "",
-      pincode: "",
-      fullAddress: selectedLocation.address,
+      flatNo: flatNo,
+      street: street,
+      landmark: landmark,
+      village: area,
+      city: city,
+      pincode: pincode,
+      fullAddress: completeAddress || selectedLocation.address,
       coordinates: selectedLocation.coordinates,
       type: addressType,
       label:
@@ -581,22 +637,15 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       name: receiverName,
     };
 
-    // Parse address components from the full address
-    const addressParts = selectedLocation.address
-      .split(",")
-      .map((part) => part.trim());
-    if (addressParts.length >= 2) {
-      addressData.city = addressParts[addressParts.length - 2] || "";
-      addressData.village = addressParts[1] || "";
-      addressData.street = addressParts[0] || "";
-    }
-
     onSave(addressData);
   };
 
   const isFormValid = () => {
     return (
       selectedLocation &&
+      city.trim() &&
+      pincode.trim() &&
+      pincode.length === 6 &&
       receiverName.trim() &&
       receiverPhone.trim() &&
       receiverPhone.length >= 10
@@ -798,21 +847,147 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
             </div>
           )}
 
-          {/* Additional Address Details */}
-          <div>
-            <Label
-              htmlFor="additional-details"
-              className="text-sm font-medium text-gray-700"
-            >
-              Additional address details (Optional)
-            </Label>
-            <Textarea
-              id="additional-details"
-              placeholder="E.g. Floor, House no. (optional)"
-              value={additionalDetails}
-              onChange={(e) => setAdditionalDetails(e.target.value)}
-              className="mt-2 min-h-[80px] resize-none"
-            />
+          {/* House/Flat Details Section */}
+          <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+            <h3 className="text-base font-medium text-gray-900 flex items-center gap-2">
+              <Home className="h-5 w-5 text-blue-600" />
+              House/Flat Details
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label
+                  htmlFor="flatNo"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  House/Flat Number
+                </Label>
+                <Input
+                  id="flatNo"
+                  placeholder="e.g., 123, A-45"
+                  value={flatNo}
+                  onChange={(e) => setFlatNo(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="floor"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Floor (Optional)
+                </Label>
+                <Input
+                  id="floor"
+                  placeholder="e.g., 2nd Floor"
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <div>
+              <Label
+                htmlFor="building"
+                className="text-sm font-medium text-gray-700"
+              >
+                Building/Society (Optional)
+              </Label>
+              <Input
+                id="building"
+                placeholder="e.g., Sunrise Apartments"
+                value={building}
+                onChange={(e) => setBuilding(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+          </div>
+
+          {/* Location Details Section */}
+          <div className="bg-green-50 p-4 rounded-lg space-y-4">
+            <h3 className="text-base font-medium text-gray-900 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-green-600" />
+              Location Details
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label
+                  htmlFor="street"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Street/Road
+                </Label>
+                <Input
+                  id="street"
+                  placeholder="Street name"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="landmark"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Landmark (Optional)
+                </Label>
+                <Input
+                  id="landmark"
+                  placeholder="e.g., Near Metro"
+                  value={landmark}
+                  onChange={(e) => setLandmark(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label
+                  htmlFor="area"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Area/Village
+                </Label>
+                <Input
+                  id="area"
+                  placeholder="Area name"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="city"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  City *
+                </Label>
+                <Input
+                  id="city"
+                  placeholder="City name"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="pincode"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Pincode *
+                </Label>
+                <Input
+                  id="pincode"
+                  placeholder="6-digit code"
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value)}
+                  maxLength={6}
+                  className="mt-2"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Receiver Details */}

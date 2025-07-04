@@ -67,16 +67,8 @@ class DynamicServicesService {
       return this.cache;
     }
 
-    try {
-      await this.fetchFromGoogleSheets();
-    } catch (error) {
-      console.warn(
-        "Failed to fetch from Google Sheets, falling back to static data:",
-        error,
-      );
-      // Fallback to local static data
-      await this.loadStaticFallback();
-    }
+    // Google Sheets integration removed - using static data only
+    await this.loadStaticFallback();
 
     return this.cache;
   }
@@ -90,33 +82,7 @@ class DynamicServicesService {
     );
   }
 
-  private async fetchFromGoogleSheets(): Promise<void> {
-    try {
-      const response = await fetch(`${this.BACKEND_URL}/api/services/dynamic`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.data && Array.isArray(data.data)) {
-        this.cache = data.data;
-        this.lastFetch = Date.now();
-        console.log("✅ Services loaded from Google Sheets");
-      } else {
-        throw new Error("Invalid response format from backend");
-      }
-    } catch (error) {
-      console.error("❌ Error fetching services from Google Sheets:", error);
-      throw error;
-    }
-  }
+  // Google Sheets integration removed
 
   private async loadStaticFallback(): Promise<void> {
     // Import static services as fallback

@@ -49,7 +49,6 @@ import {
 } from "lucide-react";
 import { BookingService } from "@/services/bookingService";
 import EditBookingModal from "./EditBookingModal";
-import GoogleSheetsInfo from "./GoogleSheetsInfo";
 import { filterProductionBookings } from "@/utils/bookingFilters";
 
 interface EnhancedBookingHistoryProps {
@@ -263,7 +262,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
           "🔄 Auto-refreshing bookings while preserving local data...",
         );
         refreshBookings();
-      }, 30000); // Refresh every 30 seconds
+      }, 120000); // Refresh every 2 minutes to prevent overwriting local changes
 
       return () => clearInterval(interval);
     }, [currentUser]);
@@ -377,10 +376,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
             ),
           );
 
-          // Force reload bookings from backend to ensure consistency
-          setTimeout(() => {
-            loadBookings(true);
-          }, 1000);
+          // Don't force reload - trust the local cancellation since it worked
         } else {
           // Show a more user-friendly error message
           const errorMessage =
@@ -446,6 +442,14 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
 
     const handleSaveEditedBooking = async (updatedBooking: any) => {
       try {
+        console.log(
+          "📋 EnhancedBookingHistory: Starting booking update process",
+          {
+            bookingId: updatedBooking.id || updatedBooking._id,
+            updatedFields: Object.keys(updatedBooking),
+          },
+        );
+
         const bookingService = BookingService.getInstance();
         const bookingId = updatedBooking.id || updatedBooking._id;
 
@@ -454,18 +458,32 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
           updatedBooking,
         );
 
+        console.log(
+          "📋 EnhancedBookingHistory: BookingService update result:",
+          result,
+        );
+
         if (result.success) {
-          // Update local state
+          // Update local state with more comprehensive ID matching
           setBookings((prev) =>
-            prev.map((booking: any) =>
-              booking.id === bookingId || booking._id === bookingId
-                ? {
-                    ...booking,
-                    ...updatedBooking,
-                    updatedAt: new Date().toISOString(),
-                  }
-                : booking,
-            ),
+            prev.map((booking: any) => {
+              const currentBookingId = booking.id || booking._id;
+              const matches =
+                currentBookingId === bookingId ||
+                currentBookingId === updatedBooking.id ||
+                currentBookingId === updatedBooking._id ||
+                String(currentBookingId) === String(bookingId);
+
+              if (matches) {
+                console.log("✏️ Updating booking in local state:", bookingId);
+                return {
+                  ...booking,
+                  ...updatedBooking,
+                  updatedAt: new Date().toISOString(),
+                };
+              }
+              return booking;
+            }),
           );
 
           setShowEditModal(false);
@@ -478,10 +496,8 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
             ),
           );
 
-          // Force reload bookings from backend to ensure consistency
-          setTimeout(() => {
-            loadBookings(true);
-          }, 1000);
+          // Don't force reload - trust the local update since it worked
+          // This prevents overwriting successful local changes
         } else {
           addNotification(
             createErrorNotification(

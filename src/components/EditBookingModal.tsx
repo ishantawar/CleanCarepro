@@ -146,8 +146,18 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
         updatedAt: new Date().toISOString(),
       };
 
-      console.log("Saving updated booking:", updatedBooking);
+      console.log("📝 EditBookingModal: Saving updated booking:", {
+        bookingId: updatedBooking.id || updatedBooking._id,
+        changes: {
+          scheduled_date: updatedBooking.scheduled_date,
+          scheduled_time: updatedBooking.scheduled_time,
+          totalAmount: updatedBooking.totalAmount,
+          servicesCount: updatedBooking.services.length,
+        },
+      });
+
       await onSave(updatedBooking);
+      console.log("✅ EditBookingModal: Save completed successfully");
       onClose(); // Close modal after successful save
     } catch (error) {
       console.error("Error updating booking:", error);

@@ -28,10 +28,7 @@ const config = {
   DVHOSTING_API_KEY: process.env.DVHOSTING_API_KEY,
   DVHOSTING_BASE_URL: "https://api.dvhostingg.com/api/v1",
 
-  // Google Sheets
-  GOOGLE_SHEETS_URL: process.env.GOOGLE_SHEETS_URL,
-  GOOGLE_APPS_SCRIPT_URL: process.env.GOOGLE_APPS_SCRIPT_URL,
-  GOOGLE_SHEETS_ENABLED: process.env.GOOGLE_SHEETS_ENABLED !== "false",
+  // Google Sheets integration removed
 
   // Security
   BCRYPT_ROUNDS: 12,
