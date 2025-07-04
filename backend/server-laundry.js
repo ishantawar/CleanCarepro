@@ -123,18 +123,7 @@ const connectDB = async () => {
 // Connect to database
 connectDB();
 
-// Initialize Google Sheets services
-const GoogleSheetsService = require("./services/googleSheetsService");
-const MultiSheetManager = require("./services/multiSheetManager");
-
-const sheetsService = new GoogleSheetsService();
-const multiSheetManager = new MultiSheetManager();
-
-// Initialize Google Sheets after MongoDB connection
-mongoose.connection.once("connected", async () => {
-  await sheetsService.initialize();
-  await multiSheetManager.initialize();
-});
+// Google Sheets services removed
 
 // Import routes with error handling
 let otpAuthRoutes, bookingRoutes, locationRoutes;
@@ -201,14 +190,7 @@ try {
   console.error("❌ Failed to load Address routes:", error.message);
 }
 
-// Google Sheets routes
-try {
-  const googleSheetsRoutes = require("./routes/google-sheets");
-  app.use("/api/sheets", googleSheetsRoutes);
-  console.log("🔗 Google Sheets routes registered at /api/sheets");
-} catch (error) {
-  console.error("❌ Failed to load Google Sheets routes:", error.message);
-}
+// Google Sheets routes removed
 
 // Dynamic Services routes
 try {
