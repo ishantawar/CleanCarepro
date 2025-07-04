@@ -293,6 +293,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 330,
         unit: "per piece",
         description: "Single piece lehenga",
+        image:
+          "https://images.pexels.com/photos/27155546/pexels-photo-27155546.jpeg",
       },
       {
         id: "wdc-lehenga-2pc",
@@ -302,6 +304,8 @@ export const laundryServices: ServiceCategory[] = [
         unit: "per set",
         description: "Multi-piece lehenga set",
         popular: true,
+        image:
+          "https://images.pexels.com/photos/27155546/pexels-photo-27155546.jpeg",
       },
       {
         id: "wdc-lehenga-heavy",
@@ -310,6 +314,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 700,
         unit: "per set",
         description: "Heavy work lehenga with intricate details",
+        image:
+          "https://images.pexels.com/photos/27155546/pexels-photo-27155546.jpeg",
       },
     ],
   },
