@@ -287,34 +287,59 @@ export class BookingService {
    */
   async getUserBookings(userId: string): Promise<BookingResponse> {
     console.log("📋 Loading bookings for user:", userId);
+    console.log("🌐 API Base URL:", this.apiBaseUrl);
 
     // Get existing local bookings first to preserve recent additions
     const localBookings = this.getBookingsFromLocalStorage(userId);
     console.log("📱 Found local bookings:", localBookings.length);
+    console.log(
+      "📊 Local bookings sample:",
+      localBookings.slice(0, 2).map((b) => ({
+        id: b.id,
+        userId: b.userId,
+        status: b.status,
+        createdAt: b.createdAt,
+      })),
+    );
 
     // Try to fetch from backend first
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const endpoint = `${this.apiBaseUrl}/bookings/customer/${userId}`;
 
-      const response = await fetch(
-        `${this.apiBaseUrl}/bookings/customer/${userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("cleancare_auth_token")}`,
-          },
-          signal: controller.signal,
+      console.log("🔗 Fetching from endpoint:", endpoint);
+
+      const response = await fetch(endpoint, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("cleancare_auth_token")}`,
         },
-      );
+        signal: controller.signal,
+      });
 
       clearTimeout(timeoutId);
+
+      console.log(
+        "📡 Backend response status:",
+        response.status,
+        response.statusText,
+      );
 
       if (response.ok) {
         const result = await response.json();
         console.log(
           "✅ Bookings loaded from backend:",
           result.bookings?.length || 0,
+        );
+        console.log(
+          "📊 Backend bookings sample:",
+          result.bookings?.slice(0, 2)?.map((b) => ({
+            id: b._id || b.id,
+            customer_id: b.customer_id,
+            status: b.status,
+            created_at: b.created_at,
+          })),
         );
 
         if (result.bookings && result.bookings.length > 0) {
