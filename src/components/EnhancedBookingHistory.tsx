@@ -210,8 +210,10 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
     // Listen for booking refresh events
     useEffect(() => {
       const handleRefreshBookings = () => {
-        console.log("🔄 Received booking refresh event");
-        loadBookings(true);
+        console.log(
+          "🔄 Received booking refresh event - using force refresh to preserve new bookings",
+        );
+        refreshBookings();
       };
 
       window.addEventListener("refreshBookings", handleRefreshBookings);
