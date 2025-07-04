@@ -569,14 +569,28 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const handleSave = () => {
     if (!selectedLocation) return;
 
+    // Build complete address from split fields
+    const fullAddressParts = [
+      flatNo && (floor || building)
+        ? `${flatNo}, ${floor || ""} ${building || ""}`.trim()
+        : flatNo,
+      street,
+      landmark,
+      area,
+      city,
+      pincode,
+    ].filter(Boolean);
+
+    const completeAddress = fullAddressParts.join(", ");
+
     const addressData: AddressData = {
-      flatNo: additionalDetails,
-      street: "",
-      landmark: "",
-      village: "",
-      city: "",
-      pincode: "",
-      fullAddress: selectedLocation.address,
+      flatNo: flatNo,
+      street: street,
+      landmark: landmark,
+      village: area,
+      city: city,
+      pincode: pincode,
+      fullAddress: completeAddress || selectedLocation.address,
       coordinates: selectedLocation.coordinates,
       type: addressType,
       label:
@@ -588,16 +602,6 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       phone: receiverPhone,
       name: receiverName,
     };
-
-    // Parse address components from the full address
-    const addressParts = selectedLocation.address
-      .split(",")
-      .map((part) => part.trim());
-    if (addressParts.length >= 2) {
-      addressData.city = addressParts[addressParts.length - 2] || "";
-      addressData.village = addressParts[1] || "";
-      addressData.street = addressParts[0] || "";
-    }
 
     onSave(addressData);
   };
