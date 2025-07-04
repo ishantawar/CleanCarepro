@@ -4,7 +4,8 @@
  */
 
 // Define the correct production API URL
-export const PRODUCTION_API_URL = "https://cleancarepro-95it.onrender.com/api";
+export const PRODUCTION_API_URL =
+  "https://cleancarepro-1-p2oc.onrender.com/api";
 
 export const getProductionApiUrl = (): string => {
   // Check if we're in production based on hostname
