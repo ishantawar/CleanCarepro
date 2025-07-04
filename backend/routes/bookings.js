@@ -24,12 +24,21 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 // Create a new booking
 router.post("/", async (req, res) => {
   try {
-    console.log("📝 Booking creation request received:");
+    console.log("🚀 ========== BOOKING CREATION REQUEST START ==========");
+    console.log(
+      "📝 Booking creation request received at:",
+      new Date().toISOString(),
+    );
     console.log("📦 Full request body:", JSON.stringify(req.body, null, 2));
     console.log("🔍 Request headers:", JSON.stringify(req.headers, null, 2));
     console.log(
       "📍 Database connection state:",
       mongoose.connection.readyState,
+    );
+    console.log("🔑 Request body keys:", Object.keys(req.body));
+    console.log(
+      "📊 Request body data types:",
+      Object.entries(req.body).map(([key, value]) => `${key}: ${typeof value}`),
     );
 
     const {
@@ -64,42 +73,102 @@ router.post("/", async (req, res) => {
       final_amount,
     };
 
+    console.log("🔍 VALIDATION STEP 1: Checking required fields...");
+    console.log(
+      "📋 Required fields check:",
+      Object.entries(requiredFields).map(
+        ([key, value]) => `${key}: ${!!value} (${typeof value})`,
+      ),
+    );
+
     const missingFields = Object.entries(requiredFields)
       .filter(([key, value]) => !value)
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      console.log("❌ Missing required fields:", missingFields);
+      console.log("❌ ERROR: Missing required fields detected!");
+      console.log("❌ Missing fields:", missingFields);
+      console.log("📦 All received fields:", Object.keys(req.body));
+      console.log(
+        "📊 Field values:",
+        Object.entries(req.body).map(
+          ([key, value]) =>
+            `${key}: ${JSON.stringify(value)} (${typeof value})`,
+        ),
+      );
       return res.status(400).json({
         error: "Missing required fields",
         missing: missingFields,
         received: Object.keys(req.body),
+        fieldDetails: Object.entries(req.body).reduce((acc, [key, value]) => {
+          acc[key] = { value, type: typeof value, isPresent: !!value };
+          return acc;
+        }, {}),
+        timestamp: new Date().toISOString(),
       });
     }
+    console.log("✅ VALIDATION STEP 1: All required fields present");
+
+    console.log("🔍 VALIDATION STEP 2: Checking services array...");
+    console.log("📋 Services received:", JSON.stringify(services, null, 2));
+    console.log("📊 Services type:", typeof services);
+    console.log("📊 Services isArray:", Array.isArray(services));
+    console.log(
+      "📊 Services length:",
+      Array.isArray(services) ? services.length : "N/A",
+    );
 
     if (!Array.isArray(services) || services.length === 0) {
-      console.log("❌ Services validation failed:", {
-        services,
-        type: typeof services,
-      });
+      console.log("❌ ERROR: Services validation failed!");
+      console.log(
+        "❌ Reason:",
+        !Array.isArray(services)
+          ? "Services is not an array"
+          : "Services array is empty",
+      );
       return res.status(400).json({
         error: "At least one service must be selected",
         servicesReceived: services,
         servicesType: typeof services,
+        isArray: Array.isArray(services),
+        length: Array.isArray(services) ? services.length : null,
+        timestamp: new Date().toISOString(),
       });
     }
+    console.log("✅ VALIDATION STEP 2: Services array is valid");
+
+    console.log("🔍 VALIDATION STEP 3: Checking total_price...");
+    console.log("💰 Total price received:", total_price);
+    console.log("📊 Total price type:", typeof total_price);
+    console.log("📊 Total price isNaN:", isNaN(total_price));
+    console.log("📊 Total price <= 0:", total_price <= 0);
+    console.log("📊 Total price parsed as Number:", Number(total_price));
 
     if (isNaN(total_price) || total_price <= 0) {
-      console.log("❌ Total price validation failed:", {
-        total_price,
-        type: typeof total_price,
-      });
+      console.log("❌ ERROR: Total price validation failed!");
+      console.log(
+        "❌ Reason:",
+        isNaN(total_price) ? "Total price is NaN" : "Total price <= 0",
+      );
       return res.status(400).json({
         error: "Total price must be greater than 0",
         totalPriceReceived: total_price,
         totalPriceType: typeof total_price,
+        totalPriceIsNaN: isNaN(total_price),
+        totalPriceParsed: Number(total_price),
+        timestamp: new Date().toISOString(),
       });
     }
+    console.log("✅ VALIDATION STEP 3: Total price is valid");
+
+    console.log("🔍 VALIDATION STEP 4: Checking final_amount...");
+    console.log("💰 Final amount received:", final_amount);
+    console.log("📊 Final amount type:", typeof final_amount);
+    console.log("📊 Final amount === undefined:", final_amount === undefined);
+    console.log("📊 Final amount === null:", final_amount === null);
+    console.log("📊 Final amount isNaN:", isNaN(final_amount));
+    console.log("📊 Final amount < 0:", final_amount < 0);
+    console.log("📊 Final amount parsed as Number:", Number(final_amount));
 
     if (
       final_amount === undefined ||
@@ -107,16 +176,27 @@ router.post("/", async (req, res) => {
       isNaN(final_amount) ||
       final_amount < 0
     ) {
-      console.log("❌ Final amount validation failed:", {
-        final_amount,
-        type: typeof final_amount,
-      });
+      console.log("❌ ERROR: Final amount validation failed!");
+      const reasons = [];
+      if (final_amount === undefined) reasons.push("Final amount is undefined");
+      if (final_amount === null) reasons.push("Final amount is null");
+      if (isNaN(final_amount)) reasons.push("Final amount is NaN");
+      if (final_amount < 0) reasons.push("Final amount < 0");
+      console.log("❌ Reasons:", reasons);
+
       return res.status(400).json({
         error: "Final amount must be a valid number >= 0",
         finalAmountReceived: final_amount,
         finalAmountType: typeof final_amount,
+        finalAmountIsUndefined: final_amount === undefined,
+        finalAmountIsNull: final_amount === null,
+        finalAmountIsNaN: isNaN(final_amount),
+        finalAmountParsed: Number(final_amount),
+        reasons,
+        timestamp: new Date().toISOString(),
       });
     }
+    console.log("✅ VALIDATION STEP 4: Final amount is valid");
 
     // Validate and sanitize address
     let sanitizedAddress = address;
@@ -144,6 +224,10 @@ router.post("/", async (req, res) => {
       console.log("📍 Using string address:", sanitizedAddress);
     }
 
+    console.log("🔍 VALIDATION STEP 5: Customer lookup process...");
+    console.log("👤 Original customer_id:", customer_id);
+    console.log("📊 Customer_id type:", typeof customer_id);
+
     // Verify customer exists - handle both ObjectId and phone-based lookup
     let customer;
     let actualCustomerId = customer_id;
@@ -151,11 +235,15 @@ router.post("/", async (req, res) => {
     // Handle user_ prefix format (e.g., user_9717619183)
     if (typeof customer_id === "string" && customer_id.startsWith("user_")) {
       const phone = customer_id.replace("user_", "");
+      console.log("🔍 Detected user_ prefix format, extracted phone:", phone);
       if (phone.match(/^\d{10,}$/)) {
         actualCustomerId = phone;
-        console.log(`📞 Extracted phone from user ID: ${phone}`);
+        console.log(`📞 ✅ Extracted valid phone from user ID: ${phone}`);
+      } else {
+        console.log(`📞 ❌ Extracted phone is invalid: ${phone}`);
       }
     }
+    console.log("👤 Actual customer_id to use:", actualCustomerId);
 
     // Try to find by ObjectId first
     if (mongoose.Types.ObjectId.isValid(actualCustomerId)) {
@@ -297,10 +385,23 @@ router.post("/", async (req, res) => {
     }
 
     if (!customer) {
-      return res
-        .status(404)
-        .json({ error: "Customer not found and could not be created" });
+      console.log("❌ ERROR: Customer validation failed!");
+      console.log(
+        "❌ Could not find or create customer for ID:",
+        actualCustomerId,
+      );
+      console.log("📊 Customer_id original:", customer_id);
+      console.log("📊 Customer_id actual:", actualCustomerId);
+      console.log("📊 Customer_id type:", typeof actualCustomerId);
+      return res.status(404).json({
+        error: "Customer not found and could not be created",
+        originalCustomerId: customer_id,
+        actualCustomerId: actualCustomerId,
+        customerIdType: typeof actualCustomerId,
+        timestamp: new Date().toISOString(),
+      });
     }
+    console.log("✅ VALIDATION STEP 5: Customer found/created:", customer._id);
 
     // Prepare item prices for storage
     let item_prices = [];
@@ -355,8 +456,18 @@ router.post("/", async (req, res) => {
       item_prices, // Store individual service prices
     });
 
+    console.log("🔍 SAVING BOOKING: About to save booking to database...");
+    console.log(
+      "📦 Final booking object:",
+      JSON.stringify(booking.toObject(), null, 2),
+    );
+
     await booking.save();
-    console.log("✅ Booking saved to database:", booking._id);
+    console.log(
+      "✅ ✅ ✅ BOOKING SAVED SUCCESSFULLY to database:",
+      booking._id,
+    );
+    console.log("🚀 ========== BOOKING CREATION SUCCESS ==========");
 
     // Populate customer data
     await booking.populate("customer_id", "full_name phone email");
@@ -367,8 +478,51 @@ router.post("/", async (req, res) => {
       booking,
     });
   } catch (error) {
-    console.error("Booking creation error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.log("🚨 ========== BOOKING CREATION ERROR ==========");
+    console.error("❌ Booking creation error:", error);
+    console.error("❌ Error message:", error.message);
+    console.error("❌ Error stack:", error.stack);
+    console.error("❌ Error name:", error.name);
+
+    // Handle specific MongoDB validation errors
+    if (error.name === "ValidationError") {
+      console.log("❌ MongoDB Validation Error Details:");
+      console.log("❌ Validation errors:", Object.keys(error.errors));
+      Object.entries(error.errors).forEach(([field, err]) => {
+        console.log(`❌ Field ${field}: ${err.message}`);
+      });
+
+      return res.status(400).json({
+        error: "Validation error",
+        details: error.errors,
+        message: error.message,
+        validationErrors: Object.entries(error.errors).map(([field, err]) => ({
+          field,
+          message: err.message,
+          value: err.value,
+          kind: err.kind,
+        })),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      console.log("❌ Duplicate Key Error:", error.keyValue);
+      return res.status(400).json({
+        error: "Duplicate entry",
+        duplicateFields: error.keyValue,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log("🚨 ========== UNKNOWN ERROR ==========");
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message,
+      errorType: error.name,
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
