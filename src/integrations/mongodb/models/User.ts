@@ -4,6 +4,7 @@ export interface User extends Document {
   _id: string;
   id: string;
   uid: string;
+  customer_id: string;
   email: string;
   password: string;
   full_name: string;
