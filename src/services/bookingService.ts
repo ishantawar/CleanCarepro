@@ -145,33 +145,37 @@ export class BookingService {
       });
       window.dispatchEvent(bookingCreatedEvent);
 
-      // Save to MongoDB and backend (with improved error handling)
+      // Save to backend (with improved error handling)
       let backendSaveSuccess = false;
-      try {
-        const mongoBooking = await this.mongoService.saveBooking(booking);
-        if (mongoBooking) {
-          console.log("✅ Booking saved to MongoDB:", booking.id);
-          backendSaveSuccess = true;
-        } else {
-          console.log(
-            "⚠️ MongoDB save failed, but localStorage backup available",
-          );
-        }
-      } catch (error) {
-        console.warn(
-          "⚠️ MongoDB save error, but localStorage backup available:",
-          error,
-        );
-      }
 
-      // Try direct backend sync
-      if (!backendSaveSuccess && this.apiBaseUrl) {
+      // Only try backend sync if API URL is configured
+      if (this.apiBaseUrl) {
         try {
           await this.syncBookingToBackend(booking);
           console.log("✅ Booking synced to backend API:", booking.id);
           backendSaveSuccess = true;
         } catch (syncError) {
           console.warn("⚠️ Backend API sync failed:", syncError);
+        }
+      }
+
+      // Save to MongoDB as fallback (but don't use MongoDB's API call)
+      // This just saves to local MongoDB storage, not the API
+      if (!backendSaveSuccess) {
+        try {
+          // Save to MongoDB local storage without triggering API call
+          const mongoBookingData = {
+            ...booking,
+            _id: booking.id,
+            customer_id: booking.userId,
+          };
+          localStorage.setItem(
+            `mongo_booking_${booking.id}`,
+            JSON.stringify(mongoBookingData),
+          );
+          console.log("💾 Booking saved to MongoDB localStorage:", booking.id);
+        } catch (error) {
+          console.warn("⚠️ MongoDB localStorage save error:", error);
         }
       }
 
@@ -218,13 +222,8 @@ export class BookingService {
         console.warn("Google Sheets integration error:", error);
       }
 
-      // Try to sync with backend (but don't block on it)
-      if (navigator.onLine) {
-        // Attempt backend sync in background (don't await)
-        this.syncBookingToBackend(booking).catch((error) => {
-          console.warn("Background sync failed:", error);
-        });
-      }
+      // Background sync is no longer needed as we already synced above
+      // This prevents duplicate API calls that were causing the 400 errors
 
       const message = backendSaveSuccess
         ? "Booking created and saved to server successfully"
