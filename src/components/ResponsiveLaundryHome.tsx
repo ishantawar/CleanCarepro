@@ -1170,8 +1170,7 @@ const ResponsiveLaundryHome: React.FC<ResponsiveLaundryHomeProps> = ({
         {/* Connection Status */}
         <ConnectionStatus />
 
-        {/* Google Sheets Integration Status */}
-        <GoogleSheetsIntegrationStatus />
+        {/* Google Sheets integration removed */}
       </div>
     </div>
   );
