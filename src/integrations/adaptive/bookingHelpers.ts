@@ -1,10 +1,9 @@
 // Adaptive booking helpers that work across different environments
-// This integrates MongoDB, Google Sheets, and localStorage for bookings
+// This integrates MongoDB and localStorage for bookings
 
 import { bookingHelpers as productionHelpers } from "../production/client";
 import { bookingHelpers as mongoHelpers } from "../mongodb/bookingHelpers";
 import { BookingService } from "../../services/bookingService";
-import GoogleSheetsService from "../../services/googleSheetsService";
 
 // Check environment and choose appropriate booking service
 const getEnvironment = () => {
@@ -23,7 +22,6 @@ const getEnvironment = () => {
 
 const environment = getEnvironment();
 const bookingService = BookingService.getInstance();
-const googleSheetsService = GoogleSheetsService.getInstance();
 
 export const adaptiveBookingHelpers = {
   async createBooking(bookingData: any) {
