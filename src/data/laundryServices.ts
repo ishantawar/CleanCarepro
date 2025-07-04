@@ -344,6 +344,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 200,
         unit: "per piece",
         description: "Sweater and sweatshirt care",
+        image:
+          "https://images.pexels.com/photos/6996083/pexels-photo-6996083.jpeg",
       },
       {
         id: "wol-long-coat",
@@ -352,6 +354,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 400,
         unit: "per piece",
         description: "Long winter coat cleaning",
+        image:
+          "https://images.pexels.com/photos/32836867/pexels-photo-32836867.jpeg",
       },
       {
         id: "wol-shawl",
@@ -360,6 +364,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 250,
         unit: "per piece",
         description: "Delicate shawl cleaning",
+        image:
+          "https://images.pexels.com/photos/31617140/pexels-photo-31617140.jpeg",
       },
       {
         id: "wol-pashmina",
@@ -368,6 +374,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 550,
         unit: "per piece",
         description: "Premium pashmina care",
+        image:
+          "https://images.pexels.com/photos/31617140/pexels-photo-31617140.jpeg",
       },
       {
         id: "wol-leather",
@@ -376,6 +384,8 @@ export const laundryServices: ServiceCategory[] = [
         price: 600,
         unit: "per piece",
         description: "Specialized leather jacket cleaning",
+        image:
+          "https://images.pexels.com/photos/1035685/pexels-photo-1035685.jpeg",
       },
     ],
   },
