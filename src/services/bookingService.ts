@@ -510,50 +510,106 @@ export class BookingService {
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
+      // Get the current user to ensure proper customer_id
+      const authService = DVHostingSmsService.getInstance();
+      const currentUser = authService.getCurrentUser();
+
+      // Determine the correct customer_id format for the backend
+      let customerId = booking.userId || "anonymous";
+
+      if (currentUser) {
+        // Use phone number as customer_id as that's what the backend expects
+        if (currentUser.phone) {
+          customerId = currentUser.phone;
+        } else if (currentUser._id) {
+          customerId = currentUser._id;
+        } else if (currentUser.id) {
+          customerId = currentUser.id;
+        }
+      }
+
+      // Ensure services is a proper array with at least one service
+      let servicesArray = [];
+      if (Array.isArray(booking.services)) {
+        servicesArray = booking.services.filter(
+          (service) => service && service.trim(),
+        );
+      } else if (booking.services) {
+        servicesArray = [booking.services];
+      }
+
+      if (servicesArray.length === 0) {
+        servicesArray = ["Home Service"]; // Default service
+      }
+
+      // Ensure total_price is a valid number greater than 0
+      const totalPrice = Number(
+        booking.totalAmount || booking.total_price || 50,
+      );
+      if (isNaN(totalPrice) || totalPrice <= 0) {
+        throw new Error("Invalid total price - must be greater than 0");
+      }
+
+      // Prepare address properly
+      let addressString = "";
+      let coordinates = { lat: 0, lng: 0 };
+
+      if (typeof booking.address === "string") {
+        addressString = booking.address;
+      } else if (typeof booking.address === "object" && booking.address) {
+        if (booking.address.fullAddress) {
+          addressString = booking.address.fullAddress;
+        } else {
+          // Build address from components
+          const parts = [
+            booking.address.flatNo,
+            booking.address.street,
+            booking.address.landmark,
+            booking.address.village,
+            booking.address.city,
+            booking.address.pincode,
+          ].filter(Boolean);
+          addressString = parts.join(", ");
+        }
+
+        if (booking.address.coordinates) {
+          coordinates = booking.address.coordinates;
+        }
+      }
+
+      if (!addressString || addressString.trim() === "") {
+        addressString = "Address not provided";
+      }
+
       const backendBooking = {
-        customer_id: booking.userId || "anonymous",
-        service: Array.isArray(booking.services)
-          ? booking.services.join(", ")
-          : booking.services || "Home Service",
+        customer_id: customerId,
+        service: servicesArray.join(", "),
         service_type: "home-service",
-        services: Array.isArray(booking.services)
-          ? booking.services
-          : [booking.services || "Home Service"],
+        services: servicesArray,
         scheduled_date:
           booking.pickupDate ||
           booking.scheduled_date ||
           new Date().toISOString().split("T")[0],
         scheduled_time: booking.pickupTime || booking.scheduled_time || "10:00",
-        provider_name: "HomeServices Pro",
-        address:
-          typeof booking.address === "string"
-            ? booking.address
-            : booking.address?.fullAddress || booking.address || "",
-        coordinates: (typeof booking.address === "object" &&
-          booking.address?.coordinates) || { lat: 0, lng: 0 },
+        provider_name: "CleanCare Pro",
+        address: addressString,
+        coordinates: coordinates,
         additional_details:
           booking.contactDetails?.instructions ||
           booking.additional_details ||
           "",
-        total_price: Math.max(
-          booking.totalAmount || booking.total_price || 50,
-          1,
-        ),
+        total_price: totalPrice,
         discount_amount: booking.discount_amount || 0,
-        final_amount:
-          booking.totalAmount ||
-          booking.final_amount ||
-          booking.total_price ||
-          Math.max(booking.totalAmount || booking.total_price || 50, 1),
+        final_amount: totalPrice - (booking.discount_amount || 0),
         special_instructions:
           booking.contactDetails?.instructions ||
           booking.additional_details ||
           "",
         charges_breakdown: {
-          base_price: booking.totalAmount || booking.total_price || 0,
+          base_price: totalPrice,
           tax_amount: 0,
           service_fee: 0,
-          discount: 0,
+          discount: booking.discount_amount || 0,
         },
       };
 
