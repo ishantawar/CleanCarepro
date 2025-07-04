@@ -106,10 +106,26 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
           forceRefresh,
         });
 
+        // Check if backend is available first
+        const isBackendAvailable =
+          !!import.meta.env.VITE_API_BASE_URL ||
+          window.location.hostname === "localhost";
+
+        if (!isBackendAvailable) {
+          console.log("🌐 Running in demo mode - using local storage only");
+          addNotification({
+            id: `demo-mode-${Date.now()}`,
+            type: "info",
+            title: "Demo Mode",
+            message: "Running in demo mode - bookings are stored locally only.",
+            duration: 5000,
+          });
+        }
+
         // Try MongoDB first (but it will gracefully fallback if no backend)
         let mongoBookings = [];
 
-        if (userId) {
+        if (userId && isBackendAvailable) {
           console.log("📡 Attempting MongoDB fetch...");
           const mongoResponse = await bookingHelpers.getUserBookings(userId);
 
