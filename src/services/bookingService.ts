@@ -542,9 +542,16 @@ export class BookingService {
       let customerId = booking.userId || "anonymous";
 
       if (currentUser) {
-        // Use phone number as customer_id as that's what the backend expects
+        // Use consistent phone-based customer_id format that matches the frontend
         if (currentUser.phone) {
-          customerId = currentUser.phone;
+          // Ensure we use the same format as getCurrentUserIdForBooking
+          customerId = currentUser.phone.startsWith("user_")
+            ? currentUser.phone
+            : `user_${currentUser.phone}`;
+          console.log(
+            "📞 Using consistent customer ID format for backend:",
+            customerId,
+          );
         } else if (currentUser._id) {
           customerId = currentUser._id;
         } else if (currentUser.id) {
@@ -667,7 +674,7 @@ export class BookingService {
       };
 
       console.log("🔍 Payload validation:", validation);
-      console.log("📊 Validation details:", {
+      console.log("���� Validation details:", {
         customer_id: {
           value: backendBooking.customer_id,
           valid: validation.customer_id,
@@ -821,7 +828,7 @@ export class BookingService {
           }
         } catch (backendError) {
           console.warn(
-            "⚠️ Backend update failed, falling back to localStorage:",
+            "��️ Backend update failed, falling back to localStorage:",
             backendError,
           );
         }
