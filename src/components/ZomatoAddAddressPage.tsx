@@ -907,7 +907,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
           <div className="bg-green-50 p-4 rounded-lg space-y-4">
             <h3 className="text-base font-medium text-gray-900 flex items-center gap-2">
               <MapPin className="h-5 w-5 text-green-600" />
-              Location Details (Auto-filled & Editable)
+              Location Details
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
