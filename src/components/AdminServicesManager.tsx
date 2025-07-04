@@ -162,7 +162,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
         addNotification(
           createErrorNotification(
             "Setup Failed",
-            result.error || "Failed to setup Google Sheets.",
+            result.error || "Failed to setup services.",
           ),
         );
       }
@@ -171,7 +171,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
       addNotification(
         createErrorNotification(
           "Setup Error",
-          "Could not initialize Google Sheets.",
+          "Could not initialize services.",
         ),
       );
     }
@@ -206,15 +206,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={openGoogleSheets}
-              className="flex items-center gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open Sheets
-            </Button>
+            {/* Google Sheets integration removed */}
             <Button
               variant="outline"
               size="sm"
@@ -247,18 +239,8 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
                   How to manage services:
                 </p>
                 <ul className="text-blue-700 space-y-1">
-                  <li>
-                    • Click "Open Sheets" to edit services directly in Google
-                    Sheets
-                  </li>
-                  <li>
-                    • Use "Refresh" to pull latest changes from Google Sheets
-                  </li>
-                  <li>• Changes in Google Sheets are cached for 5 minutes</li>
-                  <li>
-                    • Use "Setup Sheet" to initialize default services in Google
-                    Sheets
-                  </li>
+                  <li>• Use "Refresh" to reload services</li>
+                  <li>• Services are managed in static configuration</li>
                 </ul>
               </div>
             </div>
