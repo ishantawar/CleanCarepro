@@ -69,6 +69,10 @@ const MobileBookingHistory: React.FC<MobileBookingHistoryProps> = ({
 
     try {
       setLoading(true);
+
+      // Debug storage state before loading
+      debugBookingsStorage();
+
       const bookingService = BookingService.getInstance();
 
       console.log("📋 Loading bookings for current user:", {
