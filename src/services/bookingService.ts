@@ -1,7 +1,6 @@
 import MongoDBService from "./mongodbService";
 import { DVHostingSmsService } from "./dvhostingSmsService";
 import { config } from "../config/env";
-import GoogleSheetsService from "./googleSheetsService";
 
 export interface BookingDetails {
   id: string;
@@ -37,11 +36,9 @@ export class BookingService {
   private static instance: BookingService;
   private apiBaseUrl: string;
   private mongoService: MongoDBService;
-  private googleSheetsService: GoogleSheetsService;
 
   constructor() {
     this.mongoService = MongoDBService.getInstance();
-    this.googleSheetsService = GoogleSheetsService.getInstance();
     this.apiBaseUrl = config.apiBaseUrl;
 
     console.log("📡 BookingService API URL:", this.apiBaseUrl);
