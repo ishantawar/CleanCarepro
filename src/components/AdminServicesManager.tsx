@@ -340,9 +340,8 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
                   No services were loaded. This could be due to:
                 </p>
                 <ul className="text-sm text-gray-500 text-left max-w-md mx-auto space-y-1">
-                  <li>• Google Sheets integration not configured</li>
-                  <li>• Service account permissions not set</li>
-                  <li>• Google Sheets document not accessible</li>
+                  <li>• Services integration not configured</li>
+                  <li>• Service permissions not set</li>
                   <li>• Network connectivity issues</li>
                 </ul>
                 <div className="mt-6 space-x-4">
@@ -460,7 +459,7 @@ const AdminServicesManager: React.FC<AdminServicesManagerProps> = ({
               </div>
 
               <div className="text-xs text-gray-500 text-center">
-                Note: Changes may require manual update in Google Sheets
+                Note: Changes may require system restart
               </div>
             </CardContent>
           </Card>
