@@ -93,7 +93,7 @@ router.post("/", async (req, res) => {
       console.log("📦 All received fields:", Object.keys(req.body));
 
       console.log(
-        "📊 Field values:",
+        "��� Field values:",
         Object.entries(req.body).map(
           ([key, value]) =>
             `${key}: ${JSON.stringify(value)} (${typeof value})`,
@@ -232,169 +232,185 @@ router.post("/", async (req, res) => {
       console.log("📍 Using string address:", sanitizedAddress);
     }
 
-    console.log("🔍 VALIDATION STEP 5: Customer lookup process...");
+    console.log("���� VALIDATION STEP 5: Customer lookup process...");
     console.log("👤 Original customer_id:", customer_id);
     console.log("📊 Customer_id type:", typeof customer_id);
 
     // Verify customer exists - handle both ObjectId and phone-based lookup
     let customer;
     let actualCustomerId = customer_id;
+    let extractedPhone = null;
 
     // Handle user_ prefix format (e.g., user_9717619183)
     if (typeof customer_id === "string" && customer_id.startsWith("user_")) {
       const phone = customer_id.replace("user_", "");
       console.log("🔍 Detected user_ prefix format, extracted phone:", phone);
       if (phone.match(/^\d{10,}$/)) {
+        extractedPhone = phone;
         actualCustomerId = phone;
         console.log(`📞 ✅ Extracted valid phone from user ID: ${phone}`);
       } else {
         console.log(`📞 ❌ Extracted phone is invalid: ${phone}`);
       }
+    } else if (
+      typeof customer_id === "string" &&
+      customer_id.match(/^\d{10,}$/)
+    ) {
+      extractedPhone = customer_id;
     }
     console.log("👤 Actual customer_id to use:", actualCustomerId);
+    console.log("📞 Extracted phone:", extractedPhone);
 
-    // Primary strategy: Always look up by phone number first to ensure consistency
-    if (
-      typeof actualCustomerId === "string" &&
-      actualCustomerId.match(/^\d{10,}$/)
-    ) {
-      customer = await User.findOne({ phone: actualCustomerId });
-      console.log(
-        `🔍 Looking for customer by phone: ${actualCustomerId}, found: ${!!customer}`,
-      );
-    }
+    // CONSOLIDATED CUSTOMER LOOKUP STRATEGY
+    // This ensures that we always find or create a single User record per phone number
 
-    // Secondary strategy: Try ObjectId lookup only if phone lookup failed
-    if (!customer && mongoose.Types.ObjectId.isValid(actualCustomerId)) {
-      customer = await User.findById(actualCustomerId);
-      console.log(
-        `🔍 Looking for customer by ObjectId: ${actualCustomerId}, found: ${!!customer}`,
-      );
-    }
+    // Step 1: If we have a phone number, use it for primary lookup
+    if (extractedPhone) {
+      console.log(`🔍 Step 1: Looking for User by phone: ${extractedPhone}`);
+      customer = await User.findOne({ phone: extractedPhone });
 
-    // If still not found, try to find user in CleanCareUser collection
-    if (!customer) {
-      try {
-        const CleanCareUser = mongoose.model("CleanCareUser");
-        const cleanCareUser = await CleanCareUser.findById(customer_id);
-        if (cleanCareUser) {
-          // Check if User record already exists for this CleanCareUser
-          const existingUser = await User.findOne({
-            $or: [
-              { phone: cleanCareUser.phone },
-              {
-                email:
-                  cleanCareUser.email || `${cleanCareUser.phone}@cleancare.com`,
-              },
-            ],
+      if (customer) {
+        console.log(`✅ Found existing User by phone: ${customer._id}`);
+      } else {
+        console.log(`❌ No User found by phone, checking CleanCareUser...`);
+
+        // Step 2: Check if CleanCareUser exists for this phone
+        try {
+          const CleanCareUser = mongoose.model("CleanCareUser");
+          const cleanCareUser = await CleanCareUser.findOne({
+            phone: extractedPhone,
           });
 
-          if (existingUser) {
-            customer = existingUser;
-            console.log(
-              "✅ Found existing User record for CleanCareUser:",
-              customer._id,
-            );
-          } else {
-            // Create corresponding User record for booking
-            customer = new User({
-              phone: cleanCareUser.phone,
-              name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
-              full_name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
-              user_type: "customer",
-              is_verified: cleanCareUser.isVerified || false,
-              phone_verified: cleanCareUser.isVerified || false,
-            });
+          if (cleanCareUser) {
+            console.log(`✅ Found CleanCareUser: ${cleanCareUser._id}`);
 
+            // Step 3: Create corresponding User record with same data
             try {
+              customer = new User({
+                phone: cleanCareUser.phone,
+                name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                full_name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                email: cleanCareUser.email,
+                user_type: "customer",
+                is_verified: cleanCareUser.isVerified || false,
+                phone_verified: cleanCareUser.isVerified || false,
+              });
+
               await customer.save();
               console.log(
-                "✅ Created User record from CleanCareUser:",
-                customer._id,
+                `✅ Created User from CleanCareUser: ${customer._id}`,
               );
             } catch (saveError) {
-              if (saveError.code === 11000) {
-                // Duplicate key - try to find existing user
-                if (saveError.keyValue?.phone) {
-                  customer = await User.findOne({
-                    phone: saveError.keyValue.phone,
-                  });
-                }
-
+              if (saveError.code === 11000 && saveError.keyValue?.phone) {
+                // Race condition - another request created the user
+                customer = await User.findOne({ phone: extractedPhone });
                 if (customer) {
                   console.log(
-                    "✅ Found existing User after duplicate error:",
-                    customer._id,
+                    `✅ Found User after race condition: ${customer._id}`,
                   );
                 } else {
-                  throw saveError;
+                  throw new Error(
+                    "Customer creation failed due to race condition",
+                  );
                 }
               } else {
                 throw saveError;
               }
             }
-          }
-        }
-      } catch (cleanCareError) {
-        console.warn("Failed to lookup CleanCareUser:", cleanCareError);
-      }
-    }
-
-    // If customer not found and we have a phone number, create a customer record
-    if (!customer && actualCustomerId.match(/^\d{10,}$/)) {
-      console.log(`👤 Creating new customer with phone: ${actualCustomerId}`);
-
-      // Double-check to prevent race conditions
-      const existingUserByPhone = await User.findOne({
-        phone: actualCustomerId,
-      });
-
-      if (existingUserByPhone) {
-        customer = existingUserByPhone;
-        console.log(
-          "✅ Found existing customer by phone (race condition avoided):",
-          customer._id,
-        );
-      } else {
-        try {
-          customer = new User({
-            phone: actualCustomerId,
-            name: `User ${actualCustomerId.slice(-4)}`,
-            full_name: `User ${actualCustomerId.slice(-4)}`,
-            user_type: "customer",
-            is_verified: true,
-            phone_verified: true,
-          });
-
-          await customer.save();
-          console.log("✅ Auto-created customer:", customer._id);
-        } catch (createError) {
-          // Handle duplicate key error gracefully
-          if (createError.code === 11000 && createError.keyValue?.phone) {
-            console.log(
-              "📞 Duplicate phone detected, finding existing user...",
-            );
-            customer = await User.findOne({
-              phone: createError.keyValue.phone,
-            });
-
-            if (customer) {
-              console.log(
-                "✅ Found existing customer after duplicate error:",
-                customer._id,
-              );
-            } else {
-              console.error("❌ Could not find customer after duplicate error");
-              return res.status(500).json({
-                error: "Customer creation failed due to database inconsistency",
-                phone: actualCustomerId,
-              });
-            }
           } else {
-            console.error("❌ Customer creation failed:", createError);
-            return res
-              .status(500)
-              .json({ error: "Failed to create customer record" });
+            console.log(`❌ No CleanCareUser found, creating new User...`);
+
+            // Step 4: Create new User record if no CleanCareUser exists
+            try {
+              customer = new User({
+                phone: extractedPhone,
+                name: `User ${extractedPhone.slice(-4)}`,
+                full_name: `User ${extractedPhone.slice(-4)}`,
+                user_type: "customer",
+                is_verified: true,
+                phone_verified: true,
+              });
+
+              await customer.save();
+              console.log(`✅ Created new User: ${customer._id}`);
+            } catch (createError) {
+              if (createError.code === 11000 && createError.keyValue?.phone) {
+                // Race condition
+                customer = await User.findOne({ phone: extractedPhone });
+                if (customer) {
+                  console.log(
+                    `✅ Found User after race condition: ${customer._id}`,
+                  );
+                } else {
+                  throw new Error(
+                    "Customer creation failed due to race condition",
+                  );
+                }
+              } else {
+                throw createError;
+              }
+            }
+          }
+        } catch (cleanCareError) {
+          console.error("CleanCareUser lookup error:", cleanCareError);
+          throw new Error("Failed to lookup or create customer record");
+        }
+      }
+    } else {
+      // Step 5: Fallback to ObjectId lookup (legacy support)
+      if (mongoose.Types.ObjectId.isValid(actualCustomerId)) {
+        console.log(
+          `🔍 Step 5: Looking for User by ObjectId: ${actualCustomerId}`,
+        );
+        customer = await User.findById(actualCustomerId);
+
+        if (customer) {
+          console.log(`✅ Found User by ObjectId: ${customer._id}`);
+        } else {
+          // Try CleanCareUser by ObjectId and create User record
+          try {
+            const CleanCareUser = mongoose.model("CleanCareUser");
+            const cleanCareUser =
+              await CleanCareUser.findById(actualCustomerId);
+
+            if (cleanCareUser) {
+              console.log(
+                `✅ Found CleanCareUser by ObjectId: ${cleanCareUser._id}`,
+              );
+
+              // Check if User already exists for this phone
+              const existingUser = await User.findOne({
+                phone: cleanCareUser.phone,
+              });
+              if (existingUser) {
+                customer = existingUser;
+                console.log(
+                  `✅ Using existing User for phone: ${customer._id}`,
+                );
+              } else {
+                // Create User record
+                customer = new User({
+                  phone: cleanCareUser.phone,
+                  name: cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                  full_name:
+                    cleanCareUser.name || `User ${cleanCareUser.phone}`,
+                  email: cleanCareUser.email,
+                  user_type: "customer",
+                  is_verified: cleanCareUser.isVerified || false,
+                  phone_verified: cleanCareUser.isVerified || false,
+                });
+
+                await customer.save();
+                console.log(
+                  `✅ Created User from CleanCareUser: ${customer._id}`,
+                );
+              }
+            }
+          } catch (cleanCareError) {
+            console.error(
+              "CleanCareUser ObjectId lookup error:",
+              cleanCareError,
+            );
           }
         }
       }
