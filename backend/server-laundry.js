@@ -261,8 +261,7 @@ app.post("/api/sheets/order", async (req, res) => {
         process.env.GOOGLE_APPS_SCRIPT_URL ||
         "https://script.google.com/macros/s/AKfycbxQ7vKLJ8PQnZ9Yr3tXhj2mxbUCc5k1wFz8H3rGt4pJ7nN6VvwT8/exec";
 
-      if (process.env.GOOGLE_SHEETS_ENABLED !== "false") {
-        try {
+      // Google Sheets integration removed
           const response = await fetch(webAppUrl, {
             method: "POST",
             headers: {
@@ -472,9 +471,7 @@ const server = app.listen(PORT, () => {
     console.log(`📱 SMS Service: DVHosting`);
   }
 
-  if (productionConfig.GOOGLE_SHEETS_ENABLED) {
-    console.log(`📊 Google Sheets: Enabled`);
-  }
+  // Google Sheets integration removed
 });
 
 // Graceful shutdown handling
