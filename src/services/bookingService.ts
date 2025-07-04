@@ -200,21 +200,7 @@ export class BookingService {
           createdAt: booking.createdAt,
         };
 
-        this.googleSheetsService
-          .saveOrderToSheet(googleSheetsData)
-          .then((result) => {
-            if (result) {
-              console.log("✅ Booking saved to Google Sheets");
-            } else {
-              console.log("ℹ️ Google Sheets save skipped or failed silently");
-            }
-          })
-          .catch((error) => {
-            console.warn(
-              "⚠️ Google Sheets save failed, but booking is saved locally:",
-              error,
-            );
-          });
+        // Google Sheets integration removed
       } catch (error) {
         console.warn("Google Sheets integration error:", error);
       }
