@@ -543,6 +543,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         coordinates,
       });
       updateMapLocation(coordinates);
+      autoFillAddressFields(suggestion.description);
 
       return;
     }
