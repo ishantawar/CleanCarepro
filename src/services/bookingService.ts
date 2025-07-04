@@ -283,12 +283,15 @@ export class BookingService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+      const authToken =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("cleancare_auth_token");
       const response = await fetch(
         `${this.apiBaseUrl}/bookings/customer/${userId}`,
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("cleancare_auth_token")}`,
+            ...(authToken && { Authorization: `Bearer ${authToken}` }),
           },
           signal: controller.signal,
         },
