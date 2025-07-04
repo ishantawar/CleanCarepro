@@ -44,42 +44,7 @@ export const adaptiveBookingHelpers = {
           totalAmount: result.booking.totalAmount,
         });
 
-        // Also try to send to Google Sheets
-        try {
-          const currentUser = JSON.parse(
-            localStorage.getItem("current_user") || "{}",
-          );
-
-          const googleSheetsData = {
-            orderId: result.booking.id,
-            customerName:
-              currentUser?.name || currentUser?.full_name || "Customer",
-            customerPhone: currentUser?.phone || "",
-            customerAddress:
-              typeof bookingData.address === "string"
-                ? bookingData.address
-                : JSON.stringify(bookingData.address),
-            services: Array.isArray(bookingData.services)
-              ? bookingData.services
-              : [bookingData.service || "Home Service"],
-            totalAmount:
-              bookingData.total_price || bookingData.totalAmount || 0,
-            pickupDate: bookingData.scheduled_date || bookingData.pickupDate,
-            pickupTime: bookingData.scheduled_time || bookingData.pickupTime,
-            status: "pending",
-            createdAt: new Date().toISOString(),
-          };
-
-          const sheetsResult =
-            await googleSheetsService.saveOrderToSheet(googleSheetsData);
-          if (sheetsResult) {
-            console.log("✅ Booking also saved to Google Sheets");
-          } else {
-            console.log("⚠️ Google Sheets save failed or disabled");
-          }
-        } catch (sheetsError) {
-          console.warn("⚠️ Google Sheets save failed:", sheetsError);
-        }
+        // Google Sheets integration removed
 
         return {
           data: result.booking,
