@@ -969,12 +969,18 @@ export class BookingService {
       const bookingIndex = allBookings.findIndex((booking: BookingDetails) => {
         const bid = booking.id || (booking as any)._id;
         const targetId = bookingId.toString();
+
+        // More comprehensive ID matching
         return (
+          bid === bookingId ||
           bid === targetId ||
           bid?.toString() === targetId ||
+          bid?.toString() === bookingId ||
           // Handle cases where one might have ObjectId format
           (typeof bid === "object" && bid.toString() === targetId) ||
-          (typeof bookingId === "object" && bookingId.toString() === bid)
+          (typeof bookingId === "object" && bookingId.toString() === bid) ||
+          // Also try without toString() conversion
+          String(bid) === String(bookingId)
         );
       });
 
