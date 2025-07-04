@@ -27,10 +27,21 @@ export const getProductionApiUrl = (): string => {
 export const shouldUseBackend = (): boolean => {
   const hostname = window.location.hostname;
 
-  // Disable backend for certain hosted environments
-  if (hostname.includes("fly.dev")) {
+  // Disable backend for all hosted/demo environments to prevent connection errors
+  const isHostedEnv =
+    hostname.includes("fly.dev") ||
+    hostname.includes("vercel.app") ||
+    hostname.includes("builder.codes") ||
+    hostname.includes("netlify.app") ||
+    hostname !== "localhost";
+
+  if (isHostedEnv) {
+    console.log(
+      "🌐 Hosted environment detected - backend disabled for demo mode",
+    );
     return false;
   }
 
-  return true;
+  // Only enable backend for local development
+  return hostname === "localhost";
 };
