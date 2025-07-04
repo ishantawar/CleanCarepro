@@ -17,7 +17,6 @@ export const PRODUCTION_CONFIG = {
 
   // Google Services
   GOOGLE_MAPS_API_KEY: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-  GOOGLE_SHEETS_URL: import.meta.env.VITE_GOOGLE_SHEETS_URL,
 
   // SMS Service
   DVHOSTING_API_KEY: import.meta.env.VITE_DVHOSTING_API_KEY,
@@ -28,7 +27,6 @@ export const PRODUCTION_CONFIG = {
 
   // Feature Flags
   FEATURES: {
-    GOOGLE_SHEETS_INTEGRATION: true,
     PUSH_NOTIFICATIONS: true,
     GEOLOCATION: true,
     OFFLINE_MODE: false, // Can be enabled for PWA
