@@ -1039,7 +1039,63 @@ export class BookingService {
         throw new Error("User not authenticated");
       }
 
-      // For status updates, use the specific status update endpoint
+      // For cancellation, use the specific cancel endpoint
+      if (updates.status === "cancelled") {
+        // Get proper user ID for backend
+        const userId =
+          currentUser._id ||
+          currentUser.id ||
+          (currentUser.phone ? `user_${currentUser.phone}` : null);
+
+        console.log("🚫 Syncing booking cancellation to backend:", {
+          bookingId,
+          userId,
+          currentUser,
+        });
+
+        const response = await fetch(
+          `${this.apiBaseUrl}/bookings/${bookingId}/cancel`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "user-id": userId || "",
+            },
+            body: JSON.stringify({
+              user_id: userId,
+              user_type: "customer",
+            }),
+          },
+        );
+
+        console.log("📡 Backend response status:", response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("❌ Backend error response:", errorText);
+
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText };
+          }
+
+          throw new Error(
+            errorData.error || `HTTP ${response.status}: ${errorText}`,
+          );
+        }
+
+        const data = await response.json();
+        console.log("✅ Backend cancellation successful:", data);
+
+        return {
+          success: true,
+          booking: data.booking,
+        };
+      }
+
+      // For other status updates, use the status update endpoint
       if (updates.status) {
         // Get proper user ID for backend
         const userId =
