@@ -364,7 +364,31 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       console.log("📮 Pincode extracted:", pincodeMatch[0]);
     }
 
-    // Clear previous values
+    // Extract house/flat number
+    let extractedFlatNo = "";
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      // Look for parts that start with numbers or contain typical house number patterns
+      if (
+        part.match(/^\d+/) || // Starts with number like "123"
+        part.match(/^[A-Z]-?\d+/) || // Like "A-123" or "A123"
+        part.match(/^\d+[A-Z]?\/\d+/) || // Like "123/45" or "123A/45"
+        part.match(/^(House|Plot|Building|Block)\s*(No\.?)?\s*\d+/i) || // House No 123, Plot 45, etc.
+        part.match(/^\d+[-\s][A-Z]+/) || // Like "123-A" or "123 Main"
+        part.match(/^[A-Z]\d+/) // Like "A123", "B45"
+      ) {
+        extractedFlatNo = part;
+        console.log("🏠 House number extracted:", extractedFlatNo);
+        break;
+      }
+    }
+
+    // Only fill flatNo if it's currently empty (preserve user input)
+    if (!flatNo && extractedFlatNo) {
+      setFlatNo(extractedFlatNo);
+    }
+
+    // Clear previous values for other fields
     setStreet("");
     setArea("");
 
