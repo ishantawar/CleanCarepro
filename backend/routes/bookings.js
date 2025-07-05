@@ -1158,7 +1158,7 @@ router.put("/:bookingId/cancel", async (req, res) => {
       } else {
         return res.status(403).json({
           error: "Access denied",
-          debug: import.meta.env.DEV ? debugInfo : undefined,
+          debug: process.env.NODE_ENV !== "production" ? debugInfo : undefined,
         });
       }
     }
