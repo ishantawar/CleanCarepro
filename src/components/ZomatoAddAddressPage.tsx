@@ -359,88 +359,59 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     const parts = fullAddress.split(",").map((part) => part.trim());
     console.log("📍 Address parts:", parts);
 
-    // Extract pincode
+    // Extract pincode first
     const pincodeMatch = fullAddress.match(/\b\d{6}\b/);
     if (pincodeMatch) {
       setPincode(pincodeMatch[0]);
       console.log("📮 Pincode extracted:", pincodeMatch[0]);
     }
 
-    // Enhanced parsing for Indian addresses
-    // Pattern: [Street], [Area/Neighborhood], [Sublocality], [Village/Locality], [City], [District], [State], [Pincode]
+    // Clear previous values
+    setStreet("");
+    setArea("");
+    setCity("");
 
-    if (parts.length >= 1) {
-      // Street/Road (first part, excluding numbers only)
-      const streetPart = parts[0];
-      if (streetPart && !streetPart.match(/^\d+$/)) {
-        setStreet(streetPart);
-        console.log("🛣️ Street extracted:", streetPart);
-      }
-    }
+    // Filter out empty parts, pincode, state, country
+    const cleanParts = parts.filter((part) => {
+      if (!part || part.length < 2) return false;
+      if (part.match(/\b\d{6}\b/)) return false; // Contains pincode
+      if (part === "India") return false;
+      if (part.includes("Pradesh") || part.includes("State")) return false;
+      return true;
+    });
 
-    if (parts.length >= 2) {
-      // Area/Village/Neighborhood (second part, or find the most specific locality)
-      for (let i = 1; i < Math.min(parts.length - 2, 4); i++) {
-        const areaPart = parts[i];
-        // Skip if it's clearly a state, country, or contains only pincode
-        if (
-          areaPart &&
-          !areaPart.match(/\b\d{6}\b/) &&
-          ![
-            "India",
-            "Delhi",
-            "Mumbai",
-            "Kolkata",
-            "Chennai",
-            "Bangalore",
-            "Hyderabad",
-          ].includes(areaPart) &&
-          !areaPart.includes("Pradesh") &&
-          !areaPart.includes("State")
-        ) {
-          setArea(areaPart);
-          console.log("🏘️ Area/Village extracted:", areaPart);
-          break;
-        }
-      }
-    }
+    console.log("🧹 Clean parts:", cleanParts);
 
-    // Extract city (look for known city patterns or position-based)
-    for (let i = Math.max(1, parts.length - 4); i < parts.length - 1; i++) {
-      const cityPart = parts[i];
-      if (
-        cityPart &&
-        !cityPart.match(/\b\d{6}\b/) &&
-        !cityPart.includes("Pradesh") &&
-        !cityPart.includes("State") &&
-        cityPart !== "India"
-      ) {
-        const cleanCity = cityPart.replace(/\d{6}/, "").trim();
-        if (cleanCity) {
-          setCity(cleanCity);
-          console.log("🏙️ City extracted:", cleanCity);
-          break;
-        }
-      }
-    }
+    if (cleanParts.length === 0) return;
 
-    // Enhanced area extraction - also look at landmarks and sub-localities
-    const enhancedArea = parts.find(
-      (part) =>
-        part.toLowerCase().includes("extension") ||
-        part.toLowerCase().includes("colony") ||
-        part.toLowerCase().includes("sector") ||
-        part.toLowerCase().includes("block") ||
-        part.toLowerCase().includes("phase") ||
-        part.toLowerCase().includes("nagar") ||
-        part.toLowerCase().includes("ganj") ||
-        part.toLowerCase().includes("marg") ||
-        part.toLowerCase().includes("vihar"),
-    );
+    // Strategy: Use the first part as street, combine middle parts as area, last part as city
+    if (cleanParts.length === 1) {
+      // Only one part - put it in both area and city for better coverage
+      const singlePart = cleanParts[0];
+      setArea(singlePart);
+      setCity(singlePart);
+      console.log("🏘️ Single part used for both area and city:", singlePart);
+    } else if (cleanParts.length === 2) {
+      // Two parts - first as area, second as city
+      setArea(cleanParts[0]);
+      setCity(cleanParts[1]);
+      console.log("🏘️ Area:", cleanParts[0]);
+      console.log("🏙️ City:", cleanParts[1]);
+    } else if (cleanParts.length >= 3) {
+      // Multiple parts - first as street, combine middle parts as area, last as city
+      setStreet(cleanParts[0]);
 
-    if (enhancedArea && !getArea()) {
-      setArea(enhancedArea);
-      console.log("🎯 Enhanced area pattern extracted:", enhancedArea);
+      // Combine middle parts for area (everything except first and last)
+      const middleParts = cleanParts.slice(1, -1);
+      const combinedArea = middleParts.join(", ");
+      setArea(combinedArea);
+
+      // Last part as city
+      setCity(cleanParts[cleanParts.length - 1]);
+
+      console.log("🛣️ Street:", cleanParts[0]);
+      console.log("🏘️ Combined Area:", combinedArea);
+      console.log("🏙️ City:", cleanParts[cleanParts.length - 1]);
     }
   };
 
