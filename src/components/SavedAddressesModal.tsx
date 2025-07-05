@@ -271,8 +271,8 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                           </div>
                         </div>
 
-                        {/* Actions - 3 Dot Menu */}
-                        <div className="flex items-center ml-4">
+                        {/* Actions - 3 Dot Menu and Select Button */}
+                        <div className="flex items-center gap-2 ml-4">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -308,13 +308,12 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </div>
 
                           {onSelectAddress && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-green-600 ml-2"
+                              className="h-8 w-8 p-0 text-green-600"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onSelectAddress(address);
@@ -325,30 +324,31 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                             </Button>
                           )}
                         </div>
+                      </div>
 
-                        {/* Delete Confirmation Dialog */}
-                        <AlertDialog open={deletingId === address.id} onOpenChange={(open) => !open && setDeletingId(null)}>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete Address?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete this address?
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteAddress(address.id!)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                      {/* Delete Confirmation Dialog */}
+                      <AlertDialog open={deletingId === address.id} onOpenChange={(open) => !open && setDeletingId(null)}>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Delete Address?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this address?
+                              This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteAddress(address.id!)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       </div>
                     </CardContent>
                   </Card>
