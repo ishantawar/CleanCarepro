@@ -821,6 +821,25 @@ export class DVHostingSmsService {
       if (response.ok) {
         const result = await response.json();
         this.log("✅ User saved to backend successfully");
+
+        // If backend returns user data with proper MongoDB ID, update local storage
+        if (result.user && result.user._id) {
+          const currentUser = this.getCurrentUser();
+          if (currentUser && currentUser.phone === result.user.phone) {
+            // Update the local user with the backend MongoDB ID
+            const updatedUser = {
+              ...currentUser,
+              _id: result.user._id,
+              id: result.user._id, // Also set id for compatibility
+            };
+            this.setCurrentUser(updatedUser);
+            this.log(
+              "✅ Updated local user with backend MongoDB ID:",
+              result.user._id,
+            );
+          }
+        }
+
         return true;
       } else {
         this.log("⚠️ Backend user save failed:", response.status);
