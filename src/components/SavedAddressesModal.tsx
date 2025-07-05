@@ -380,7 +380,9 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleDeleteAddress(address.id!)}
+                              onClick={async () => {
+                                await handleDeleteAddress(address.id!);
+                              }}
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Delete
