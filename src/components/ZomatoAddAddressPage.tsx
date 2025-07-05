@@ -373,10 +373,13 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       if (!part || part.length < 2) return false;
       if (part.match(/^\d{6}$/)) return false; // Pure pincode
       if (part.toLowerCase() === "india") return false;
-      if (part.toLowerCase().includes("pradesh") ||
-          part.toLowerCase().includes("state") ||
-          part.toLowerCase().includes("bharath") ||
-          part.toLowerCase().includes("bharat")) return false;
+      if (
+        part.toLowerCase().includes("pradesh") ||
+        part.toLowerCase().includes("state") ||
+        part.toLowerCase().includes("bharath") ||
+        part.toLowerCase().includes("bharat")
+      )
+        return false;
       return true;
     });
 
@@ -404,7 +407,8 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
       // Check if first part looks like a specific building/house detail
       const firstPart = cleanParts[0];
-      const looksLikeHouseDetail = /^\d+|house|flat|plot|#|building|block/i.test(firstPart);
+      const looksLikeHouseDetail =
+        /^\d+|house|flat|plot|#|building|block/i.test(firstPart);
 
       if (looksLikeHouseDetail) {
         // First part is house/building - use as street
@@ -427,7 +431,6 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         console.log("🛣️ Street name:", cleanParts[0]);
         console.log("🏘️ Extended area:", areaParts.join(", "));
       }
-    }
     }
   };
 
