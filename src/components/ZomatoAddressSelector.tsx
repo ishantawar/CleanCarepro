@@ -37,6 +37,7 @@ interface ZomatoAddressSelectorProps {
   onClose: () => void;
   onSelectAddress: (address: SavedAddress) => void;
   onAddNewAddress: () => void;
+  onEditAddress?: (address: SavedAddress) => void;
   currentUser?: any;
   selectedAddressId?: string;
 }
@@ -46,10 +47,12 @@ const ZomatoAddressSelector: React.FC<ZomatoAddressSelectorProps> = ({
   onClose,
   onSelectAddress,
   onAddNewAddress,
+  onEditAddress,
   currentUser,
   selectedAddressId,
 }) => {
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && currentUser) {
