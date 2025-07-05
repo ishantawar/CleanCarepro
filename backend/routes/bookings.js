@@ -546,6 +546,15 @@ router.post("/", async (req, res) => {
       booking._id,
     );
     console.log("🆔 Generated custom order ID:", booking.custom_order_id);
+
+    // Verify the booking was saved with custom_order_id
+    const savedBooking = await Booking.findById(booking._id);
+    console.log("🔍 VERIFICATION: Re-fetched booking from database:", {
+      id: savedBooking._id,
+      custom_order_id: savedBooking.custom_order_id,
+      has_custom_order_id: !!savedBooking.custom_order_id,
+    });
+
     console.log("📊 Booking summary:", {
       id: booking._id,
       custom_order_id: booking.custom_order_id,

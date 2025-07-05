@@ -112,6 +112,41 @@ const AddressSearchDemo: React.FC = () => {
         showLabel={true}
       />
 
+      {/* Test House Number Detection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>🧪 Test House Number Auto-Detection</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-4">
+            Try searching for these example addresses to see house number
+            auto-detection in action:
+          </p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">
+                Simple Formats:
+              </h4>
+              <ul className="text-sm text-gray-600 space-y-1 font-mono bg-gray-50 p-3 rounded">
+                <li>• "123, MG Road, Delhi"</li>
+                <li>• "45B, Sector 21, Gurgaon"</li>
+                <li>• "A-789, Laxmi Nagar, Delhi"</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">
+                Complex Formats:
+              </h4>
+              <ul className="text-sm text-gray-600 space-y-1 font-mono bg-gray-50 p-3 rounded">
+                <li>• "Plot 67, Phase 2, Gurgaon"</li>
+                <li>• "Tower A-123, DLF Phase 3"</li>
+                <li>• "House No 456, Vasant Vihar"</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Features List */}
       <Card>
         <CardHeader>
@@ -128,17 +163,21 @@ const AddressSearchDemo: React.FC = () => {
                 <li>• Support for addresses, establishments, and localities</li>
                 <li>• Restricted to India for relevant results</li>
                 <li>• Fallback to multiple geocoding services</li>
+                <li>
+                  • <strong>🏠 Auto-detects house numbers</strong>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-gray-900 mb-2">
-                🗺️ Nearby Places
+                🏠 House Number Detection
               </h4>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Automatic nearby places detection</li>
-                <li>• Restaurant, hospital, school icons</li>
-                <li>• One-tap landmark addition</li>
-                <li>• Rating display for businesses</li>
+                <li>• Auto-fills house numbers: 123, A-45, Plot 67</li>
+                <li>• Detects building names and tower info</li>
+                <li>• Handles complex formats: Tower A-123</li>
+                <li>• Visual feedback when auto-detected</li>
+                <li>�� Works with current location and search</li>
               </ul>
             </div>
           </div>

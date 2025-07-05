@@ -12,6 +12,7 @@ import {
   Home,
   Building2,
   MapIcon,
+  CheckCircle,
 } from "lucide-react";
 import { locationService, Coordinates } from "@/services/locationService";
 
@@ -84,6 +85,7 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
     initialAddress?.type || "home",
   );
   const [addressLabel, setAddressLabel] = useState(initialAddress?.label || "");
+  const [autoDetectedHouseNo, setAutoDetectedHouseNo] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const autocompleteService = useRef<any>(null);
@@ -239,7 +241,7 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
     });
   };
 
-  // Parse address and fill form fields
+  // Parse address and fill form fields with enhanced house number detection
   const parseAndFillAddress = (
     address: string,
     coordinates: Coordinates,
@@ -249,12 +251,16 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
     let parsedPincode = "";
     let parsedStreet = "";
     let parsedVillage = "";
+    let parsedFlatNo = "";
+    let parsedBuilding = "";
 
     if (addressComponents) {
       // Parse Google Places address components
       addressComponents.forEach((component) => {
         const types = component.types;
-        if (
+        if (types.includes("street_number")) {
+          parsedFlatNo = component.long_name;
+        } else if (
           types.includes("locality") ||
           types.includes("administrative_area_level_2")
         ) {
@@ -265,11 +271,41 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
           parsedStreet = component.long_name;
         } else if (types.includes("administrative_area_level_3")) {
           parsedVillage = component.long_name;
+        } else if (types.includes("premise") || types.includes("subpremise")) {
+          // Extract building or complex name, and also use as flat number if empty
+          if (!parsedBuilding) {
+            parsedBuilding = component.long_name;
+          }
+          if (!parsedFlatNo) {
+            parsedFlatNo = component.long_name;
+          }
         }
       });
     } else {
-      // Parse plain address string
+      // Parse plain address string with enhanced house number extraction
       const parts = address.split(",").map((part) => part.trim());
+
+      // Extract house/flat number first
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+
+        // Skip if it's a pincode (exactly 6 digits)
+        if (part.match(/^\d{6}$/)) {
+          continue;
+        }
+
+        if (
+          (part.match(/^\d+/) && !part.match(/^\d{5,}$/)) || // Starts with number like "123" but not 5+ digits
+          part.match(/^[A-Z]-?\d+/) || // Like "A-123" or "A123"
+          part.match(/^\d+[A-Z]?\/\d+/) || // Like "123/45" or "123A/45"
+          part.match(/^(House|Plot|Building|Block)\s*(No\.?)?\s*\d+/i) || // House No 123, Plot 45, etc.
+          part.match(/^\d+[-\s][A-Z]+/) || // Like "123-A" or "123 Main"
+          part.match(/^[A-Z]\d+/) // Like "A123", "B45"
+        ) {
+          parsedFlatNo = part;
+          break;
+        }
+      }
 
       // Try to extract pincode
       const pincodeMatch = address.match(/\b\d{6}\b/);
@@ -277,16 +313,64 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
         parsedPincode = pincodeMatch[0];
       }
 
+      // Enhanced house number extraction using utility function
+      const extractedDetails = locationService.extractHouseNumber(address);
+
+      if (extractedDetails.houseNumber) {
+        parsedFlatNo = extractedDetails.houseNumber;
+      }
+
+      if (extractedDetails.building) {
+        parsedBuilding = extractedDetails.building;
+      }
+
+      // Use cleaned address for further parsing
+      const cleanedParts = extractedDetails.cleanedAddress
+        ? extractedDetails.cleanedAddress.split(",").map((part) => part.trim())
+        : parts.slice(parsedFlatNo ? 1 : 0);
+
       // Try to extract city (usually second-to-last or third-to-last part)
-      if (parts.length >= 2) {
-        parsedCity = parts[parts.length - 3] || parts[parts.length - 2] || "";
+      if (cleanedParts.length >= 2) {
+        parsedCity =
+          cleanedParts[cleanedParts.length - 3] ||
+          cleanedParts[cleanedParts.length - 2] ||
+          "";
         parsedCity = parsedCity.replace(/\d{6}/, "").trim(); // Remove pincode if present
       }
 
       // Extract street (usually first part after building/house number)
-      if (parts.length >= 1) {
-        parsedStreet = parts[1] || "";
+      let streetStartIndex = parsedFlatNo ? 1 : 0;
+      if (cleanedParts.length > streetStartIndex) {
+        parsedStreet = cleanedParts[streetStartIndex] || "";
+        // Make sure we don't use the same part that was used for flatNo
+        if (parsedStreet === parsedFlatNo) {
+          parsedStreet = cleanedParts[streetStartIndex + 1] || "";
+        }
+        // Clean up street name
+        parsedStreet = parsedStreet
+          .replace(/^\d+[A-Z]*\s*[-\/]?\s*/i, "")
+          .trim();
       }
+
+      // Extract village/area from remaining parts
+      if (cleanedParts.length >= 2) {
+        parsedVillage = cleanedParts[1] || "";
+        parsedVillage = parsedVillage.replace(/\d{6}/, "").trim();
+      }
+    }
+
+    // Update house details if we found house number or building info
+    const newHouseDetails = {
+      ...houseDetails,
+      ...(parsedFlatNo && { flatNo: parsedFlatNo }),
+      ...(parsedBuilding && { building: parsedBuilding }),
+    };
+
+    // Set auto-detection flag if house number was found
+    if (parsedFlatNo && parsedFlatNo !== houseDetails.flatNo) {
+      setAutoDetectedHouseNo(true);
+      // Clear the flag after 3 seconds
+      setTimeout(() => setAutoDetectedHouseNo(false), 3000);
     }
 
     const newLocationDetails = {
@@ -299,8 +383,9 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
       coordinates: coordinates,
     };
 
+    setHouseDetails(newHouseDetails);
     setLocationDetails(newLocationDetails);
-    notifyAddressChange(houseDetails, newLocationDetails);
+    notifyAddressChange(newHouseDetails, newLocationDetails);
   };
 
   // Detect current location
@@ -441,16 +526,25 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="flatNo">House/Flat Number *</Label>
+              <Label htmlFor="flatNo" className="flex items-center gap-2">
+                House/Flat Number *
+                {autoDetectedHouseNo && (
+                  <span className="flex items-center gap-1 text-green-600 text-sm">
+                    <CheckCircle className="h-4 w-4" />
+                    Auto-detected
+                  </span>
+                )}
+              </Label>
               <Input
                 id="flatNo"
                 type="text"
                 placeholder="e.g., 123, A-45, Plot 67"
                 value={houseDetails.flatNo}
-                onChange={(e) =>
-                  handleHouseDetailsChange("flatNo", e.target.value)
-                }
-                className="mt-1"
+                onChange={(e) => {
+                  handleHouseDetailsChange("flatNo", e.target.value);
+                  setAutoDetectedHouseNo(false); // Clear auto-detection flag on manual edit
+                }}
+                className={`mt-1 ${autoDetectedHouseNo ? "border-green-300 bg-green-50" : ""}`}
               />
             </div>
             <div>

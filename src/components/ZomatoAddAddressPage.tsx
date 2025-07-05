@@ -364,13 +364,44 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       console.log("📮 Pincode extracted:", pincodeMatch[0]);
     }
 
-    // Clear previous values
+    // Extract house/flat number
+    let extractedFlatNo = "";
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+
+      // Skip if it's a pincode (exactly 6 digits)
+      if (part.match(/^\d{6}$/)) {
+        continue;
+      }
+
+      // Look for parts that start with numbers or contain typical house number patterns
+      if (
+        (part.match(/^\d+/) && !part.match(/^\d{5,}$/)) || // Starts with number like "123" but not 5+ digits
+        part.match(/^[A-Z]-?\d+/) || // Like "A-123" or "A123"
+        part.match(/^\d+[A-Z]?\/\d+/) || // Like "123/45" or "123A/45"
+        part.match(/^(House|Plot|Building|Block)\s*(No\.?)?\s*\d+/i) || // House No 123, Plot 45, etc.
+        part.match(/^\d+[-\s][A-Z]+/) || // Like "123-A" or "123 Main"
+        part.match(/^[A-Z]\d+/) // Like "A123", "B45"
+      ) {
+        extractedFlatNo = part;
+        console.log("🏠 House number extracted:", extractedFlatNo);
+        break;
+      }
+    }
+
+    // Only fill flatNo if it's currently empty (preserve user input)
+    if (!flatNo && extractedFlatNo) {
+      setFlatNo(extractedFlatNo);
+    }
+
+    // Clear previous values for other fields
     setStreet("");
     setArea("");
 
     // More comprehensive filtering - preserve meaningful address components
     const cleanParts = parts.filter((part) => {
       if (!part || part.length < 2) return false;
+      if (part === extractedFlatNo) return false; // Exclude extracted house number
       if (part.match(/^\d{6}$/)) return false; // Pure pincode
       if (part.toLowerCase() === "india") return false;
       if (
@@ -403,34 +434,15 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       console.log("🛣️ Street:", cleanParts[0]);
       console.log("🏘️ Area:", cleanParts[1]);
     } else if (cleanParts.length >= 3) {
-      // Multiple parts - be more careful about what goes where
+      // Multiple parts - first as street, rest as area
+      setStreet(cleanParts[0]);
 
-      // Check if first part looks like a specific building/house detail
-      const firstPart = cleanParts[0];
-      const looksLikeHouseDetail =
-        /^\d+|house|flat|plot|#|building|block/i.test(firstPart);
+      // Use next 2-3 parts for area to keep locality details
+      const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
+      setArea(areaParts.join(", "));
 
-      if (looksLikeHouseDetail) {
-        // First part is house/building - use as street
-        setStreet(firstPart);
-
-        // Take next 2-3 parts for area to preserve locality details
-        const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
-        setArea(areaParts.join(", "));
-
-        console.log("🏢 House detail as street:", firstPart);
-        console.log("🏘️ Detailed area:", areaParts.join(", "));
-      } else {
-        // First part is street name - preserve more context
-        setStreet(cleanParts[0]);
-
-        // Use next 2-3 parts for area to keep locality details
-        const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
-        setArea(areaParts.join(", "));
-
-        console.log("🛣️ Street name:", cleanParts[0]);
-        console.log("🏘️ Extended area:", areaParts.join(", "));
-      }
+      console.log("🛣️ Street name:", cleanParts[0]);
+      console.log("🏘️ Extended area:", areaParts.join(", "));
     }
   };
 

@@ -16,7 +16,10 @@ interface LocationDetectorProps {
   className?: string;
   showInTopBar?: boolean;
   defaultValue?: string;
-  onAddressSelect?: (address: string, coordinates: { lat: number; lng: number } | null) => void;
+  onAddressSelect?: (
+    address: string,
+    coordinates: { lat: number; lng: number } | null,
+  ) => void;
 }
 
 declare global {
@@ -108,8 +111,24 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
               setIsDetecting(false);
               if (status === "OK" && results[0]) {
                 let bestAddress = results[0].formatted_address;
+                let addressWithHouseNumber = null;
 
+                // Prioritize results with house numbers for more precise detection
                 for (const result of results) {
+                  const hasHouseNumber = result.address_components?.some(
+                    (component) => component.types.includes("street_number"),
+                  );
+
+                  if (
+                    hasHouseNumber &&
+                    (result.types.includes("street_address") ||
+                      result.types.includes("premise") ||
+                      result.types.includes("subpremise"))
+                  ) {
+                    addressWithHouseNumber = result.formatted_address;
+                    break;
+                  }
+
                   if (
                     result.types.includes("street_address") ||
                     result.types.includes("premise") ||
@@ -118,22 +137,36 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
                     result.types.includes("point_of_interest")
                   ) {
                     bestAddress = result.formatted_address;
-                    break;
                   }
                 }
 
-                setCurrentLocation(bestAddress);
-                setSearchValue(bestAddress);
-                onLocationChange(bestAddress, {
+                // Use address with house number if available, otherwise use best address
+                const finalAddress = addressWithHouseNumber || bestAddress;
+
+                setCurrentLocation(finalAddress);
+                setSearchValue(finalAddress);
+                onLocationChange(finalAddress, {
                   lat: latitude,
                   lng: longitude,
                   accuracy,
                 });
+
+                // If we have a house number result, also pass the detailed components
+                if (addressWithHouseNumber && onAddressSelect) {
+                  onAddressSelect(finalAddress, {
+                    lat: latitude,
+                    lng: longitude,
+                  });
+                }
               } else {
                 const fallback = `Location ${latitude}, ${longitude}`;
                 setCurrentLocation(fallback);
                 setSearchValue(fallback);
-                onLocationChange(fallback, { lat: latitude, lng: longitude, accuracy });
+                onLocationChange(fallback, {
+                  lat: latitude,
+                  lng: longitude,
+                  accuracy,
+                });
               }
             });
             return;
@@ -148,12 +181,24 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
             let address = "";
             if (data.address) {
               const parts = [];
+              // Include house number if available
+              if (data.address.house_number)
+                parts.push(data.address.house_number);
               if (data.address.road) parts.push(data.address.road);
               if (data.address.suburb || data.address.neighbourhood)
                 parts.push(data.address.suburb || data.address.neighbourhood);
-              if (data.address.city || data.address.town || data.address.village)
-                parts.push(data.address.city || data.address.town || data.address.village);
+              if (
+                data.address.city ||
+                data.address.town ||
+                data.address.village
+              )
+                parts.push(
+                  data.address.city ||
+                    data.address.town ||
+                    data.address.village,
+                );
               if (data.address.state) parts.push(data.address.state);
+              if (data.address.postcode) parts.push(data.address.postcode);
               address = parts.join(", ") || data.display_name;
             } else {
               address = data.display_name || `${latitude}, ${longitude}`;
@@ -161,7 +206,11 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
 
             setCurrentLocation(address);
             setSearchValue(address);
-            onLocationChange(address, { lat: latitude, lng: longitude, accuracy });
+            onLocationChange(address, {
+              lat: latitude,
+              lng: longitude,
+              accuracy,
+            });
             setIsDetecting(false);
             return;
           }
@@ -169,7 +218,11 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
           const fallback = `Location ${latitude}, ${longitude}`;
           setCurrentLocation(fallback);
           setSearchValue(fallback);
-          onLocationChange(fallback, { lat: latitude, lng: longitude, accuracy });
+          onLocationChange(fallback, {
+            lat: latitude,
+            lng: longitude,
+            accuracy,
+          });
           setIsDetecting(false);
         } catch (err) {
           console.error(err);
@@ -305,8 +358,12 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-gray-400" />
                 <div>
-                  <p className="text-sm font-medium">{s.structured_formatting.main_text}</p>
-                  <p className="text-xs text-gray-500">{s.structured_formatting.secondary_text}</p>
+                  <p className="text-sm font-medium">
+                    {s.structured_formatting.main_text}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {s.structured_formatting.secondary_text}
+                  </p>
                 </div>
               </div>
             </button>
@@ -330,21 +387,31 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
     return (
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <div className={`flex items-center space-x-2 cursor-pointer ${className}`}>
+          <div
+            className={`flex items-center space-x-2 cursor-pointer ${className}`}
+          >
             <MapPin className="w-4 h-4 text-white" />
             <span className="text-white text-sm truncate max-w-32 md:max-w-48">
-              {isDetecting ? "Detecting..." : currentLocation || "Select location"}
+              {isDetecting
+                ? "Detecting..."
+                : currentLocation || "Select location"}
             </span>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-4">{renderLocationBox}</PopoverContent>
+        <PopoverContent className="w-80 p-4">
+          {renderLocationBox}
+        </PopoverContent>
       </Popover>
     );
   }
 
   return (
-    <div className={`bg-white rounded-2xl p-6 shadow-lg border border-blue-100 ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-900 mb-3">📍 Select Location</h3>
+    <div
+      className={`bg-white rounded-2xl p-6 shadow-lg border border-blue-100 ${className}`}
+    >
+      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+        📍 Select Location
+      </h3>
       <div className="space-y-4">{renderLocationBox}</div>
     </div>
   );

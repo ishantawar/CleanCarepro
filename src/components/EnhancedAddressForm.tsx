@@ -229,8 +229,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const shortName = component.short_name;
 
       if (types.includes("street_number")) {
-        // House/building number
-        if (!newAddress.flatNo) {
+        // House/building number - fill if empty or if location was auto-detected
+        if (!newAddress.flatNo || !address.flatNo) {
           newAddress.flatNo = longName;
         }
       } else if (types.includes("route")) {
@@ -266,8 +266,11 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
         // Pincode
         newAddress.pincode = longName;
       } else if (types.includes("premise") || types.includes("establishment")) {
-        // Building name - don't use for landmark, but can use for flat number if empty
-        if (!newAddress.flatNo && types.includes("premise")) {
+        // Building name - don't use for landmark, but can use for flat number if empty or location detected
+        if (
+          (!newAddress.flatNo || !address.flatNo) &&
+          types.includes("premise")
+        ) {
           newAddress.flatNo = longName;
         }
         // Never autofill landmark from location
@@ -412,15 +415,55 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     console.log("📍 Address parts for parsing:", parts);
 
     // Enhanced parsing for better area/village extraction
+    let flatNo = "";
     let street = "";
     let village = "";
     let city = "";
 
-    // Extract street (first meaningful part)
-    if (parts.length >= 1) {
-      const streetCandidate = parts[0];
-      if (streetCandidate && !streetCandidate.match(/^\d+$/)) {
+    // Extract house/flat number (usually first part if it contains numbers)
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+
+      // Skip if it's a pincode (exactly 6 digits)
+      if (part.match(/^\d{6}$/)) {
+        continue;
+      }
+
+      // Look for parts that start with numbers or contain typical house number patterns
+      if (
+        (part.match(/^\d+/) && !part.match(/^\d{5,}$/)) || // Starts with number like "123" but not 5+ digits
+        part.match(/^[A-Z]-?\d+/) || // Like "A-123" or "A123"
+        part.match(/^\d+[A-Z]?\/\d+/) || // Like "123/45" or "123A/45"
+        part.match(/^(House|Plot|Building|Block)\s*(No\.?)?\s*\d+/i) || // House No 123, Plot 45, etc.
+        part.match(/^\d+[-\s][A-Z]+/) || // Like "123-A" or "123 Main"
+        part.match(/^[A-Z]\d+/) // Like "A123", "B45"
+      ) {
+        // Only use if current flatNo is empty (preserve user input)
+        if (!address.flatNo) {
+          flatNo = part;
+          console.log("🏠 House number extracted:", flatNo);
+        }
+        break;
+      }
+    }
+
+    // Extract street (first meaningful part after house number)
+    let streetStartIndex = flatNo ? 1 : 0; // Start after house number if found
+    for (let i = streetStartIndex; i < parts.length; i++) {
+      const streetCandidate = parts[i];
+      if (
+        streetCandidate &&
+        streetCandidate !== flatNo &&
+        !streetCandidate.match(/^\d+$/) &&
+        !streetCandidate.match(/\b\d{6}\b/) && // Not a pincode
+        streetCandidate.length > 2 &&
+        !streetCandidate.includes("Pradesh") &&
+        !streetCandidate.includes("State") &&
+        streetCandidate !== "India"
+      ) {
         street = streetCandidate;
+        console.log("🛣️ Street extracted:", street);
+        break;
       }
     }
 
@@ -444,6 +487,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const part = parts[i];
       if (
         part &&
+        part !== flatNo && // Exclude extracted house number
+        part !== street && // Exclude already extracted street
         !part.match(/\b\d{6}\b/) && // Not a pincode
         ![
           "India",
@@ -477,6 +522,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const cityCandidate = parts[i];
       if (
         cityCandidate &&
+        cityCandidate !== flatNo && // Exclude extracted house number
+        cityCandidate !== street && // Exclude already extracted street
+        cityCandidate !== village && // Exclude already extracted village
         !cityCandidate.match(/\b\d{6}\b/) &&
         !cityCandidate.includes("Pradesh") &&
         !cityCandidate.includes("State") &&
@@ -491,10 +539,10 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       }
     }
 
-    console.log("📋 Parsed components:", { street, village, city });
+    console.log("📋 Parsed components:", { flatNo, street, village, city });
 
     return {
-      flatNo: address.flatNo || "", // Keep user input
+      flatNo: address.flatNo || flatNo, // Use user input if available, otherwise extracted
       street: street || parts[1] || "",
       landmark: "", // Never autofill landmark
       village: village || parts[2] || parts[1] || "",
