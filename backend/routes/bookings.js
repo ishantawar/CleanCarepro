@@ -1313,6 +1313,7 @@ router.put("/:bookingId/cancel", async (req, res) => {
     await booking.save();
 
     console.log("✅ Booking cancelled successfully:", bookingId);
+    console.log("✅ Cancellation authorized for user:", userId);
 
     res.json({
       success: true,
