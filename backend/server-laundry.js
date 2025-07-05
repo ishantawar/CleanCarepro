@@ -353,6 +353,34 @@ if (productionConfig.isProduction()) {
   );
 }
 
+// Keep-alive mechanism for Render deployment
+const setupKeepAlive = () => {
+  if (productionConfig.isProduction()) {
+    const keepAliveInterval = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    setInterval(async () => {
+      try {
+        const url =
+          process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+        const response = await fetch(`${url}/api/health`);
+
+        if (response.ok) {
+          console.log("🔄 Keep-alive ping successful");
+        } else {
+          console.log(
+            "⚠️ Keep-alive ping failed with status:",
+            response.status,
+          );
+        }
+      } catch (error) {
+        console.log("⚠️ Keep-alive ping error:", error.message);
+      }
+    }, keepAliveInterval);
+
+    console.log("🔄 Keep-alive mechanism started (5 min intervals)");
+  }
+};
+
 // Start server with error handling
 const server = app.listen(PORT, () => {
   console.log(`🚀 CleanCare Pro server running on port ${PORT}`);
@@ -370,6 +398,9 @@ const server = app.listen(PORT, () => {
   if (productionConfig.FEATURES.SMS_VERIFICATION) {
     console.log(`📱 SMS Service: DVHosting`);
   }
+
+  // Start keep-alive mechanism
+  setupKeepAlive();
 
   // Google Sheets integration removed
 });
