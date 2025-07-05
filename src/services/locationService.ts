@@ -253,6 +253,100 @@ class LocationService {
   }
 
   /**
+   * Extract house number from Indian address string
+   */
+  extractHouseNumber(address: string): {
+    houseNumber: string;
+    building: string;
+    cleanedAddress: string;
+  } {
+    let houseNumber = "";
+    let building = "";
+    let cleanedAddress = address;
+
+    // Split address into parts
+    const parts = address.split(",").map((part) => part.trim());
+    const firstPart = parts[0] || "";
+
+    // Pattern 1: Simple house numbers (123, 45, etc.)
+    const simpleNumberMatch = firstPart.match(/^\s*(\d+)\s*$/);
+    if (simpleNumberMatch) {
+      houseNumber = simpleNumberMatch[1];
+      cleanedAddress = parts.slice(1).join(", ").trim();
+      return { houseNumber, building, cleanedAddress };
+    }
+
+    // Pattern 2: House number with suffix (123A, 45B, etc.)
+    const numberSuffixMatch = firstPart.match(/^\s*(\d+[A-Z]+)\s*$/i);
+    if (numberSuffixMatch) {
+      houseNumber = numberSuffixMatch[1].toUpperCase();
+      cleanedAddress = parts.slice(1).join(", ").trim();
+      return { houseNumber, building, cleanedAddress };
+    }
+
+    // Pattern 3: Alphanumeric formats (A-123, B/45, Plot-67, etc.)
+    const alphaNumericMatch = firstPart.match(
+      /^\s*([A-Z]*[-\/]?\d+[A-Z]*)\s*$/i,
+    );
+    if (alphaNumericMatch) {
+      houseNumber = alphaNumericMatch[1].toUpperCase();
+      cleanedAddress = parts.slice(1).join(", ").trim();
+      return { houseNumber, building, cleanedAddress };
+    }
+
+    // Pattern 4: House number with description (House No 123, Plot 45, etc.)
+    const houseDescMatch = firstPart.match(
+      /(house\s+no\.?|plot\s+no\.?|flat\s+no\.?|door\s+no\.?|#)\s*(\d+[A-Z]*)/i,
+    );
+    if (houseDescMatch) {
+      houseNumber = houseDescMatch[2];
+      cleanedAddress =
+        firstPart.replace(houseDescMatch[0], "").trim() +
+        ", " +
+        parts.slice(1).join(", ");
+      cleanedAddress = cleanedAddress.replace(/^,\s*/, "").trim();
+      return { houseNumber, building, cleanedAddress };
+    }
+
+    // Pattern 5: Building with flat number (Flat 23, Tower A, etc.)
+    const buildingFlatMatch = firstPart.match(
+      /(flat|apartment|unit)\s*(\d+[A-Z]*),?\s*(.*)/i,
+    );
+    if (buildingFlatMatch) {
+      houseNumber = buildingFlatMatch[2];
+      building = buildingFlatMatch[3] || "";
+      cleanedAddress =
+        (building ? building + ", " : "") + parts.slice(1).join(", ");
+      return { houseNumber, building, cleanedAddress };
+    }
+
+    // Pattern 6: Complex building formats (Tower A-123, Block B-45, etc.)
+    const complexMatch = firstPart.match(
+      /(tower|block|wing|building)\s*([A-Z0-9]*[-\/]?\d+[A-Z]*)/i,
+    );
+    if (complexMatch) {
+      houseNumber = complexMatch[2];
+      building = complexMatch[1] + " " + complexMatch[2].split(/[-\/]/)[0];
+      cleanedAddress = parts.slice(1).join(", ").trim();
+      return { houseNumber, building, cleanedAddress };
+    }
+
+    // Pattern 7: Extract any number from first part
+    const anyNumberMatch = firstPart.match(/(\d+)/);
+    if (anyNumberMatch) {
+      houseNumber = anyNumberMatch[1];
+      // Try to extract building name from the remaining part
+      const buildingPart = firstPart.replace(anyNumberMatch[0], "").trim();
+      if (buildingPart.length > 2) {
+        building = buildingPart.replace(/[,-]/g, "").trim();
+      }
+      cleanedAddress = parts.slice(1).join(", ").trim();
+    }
+
+    return { houseNumber, building, cleanedAddress };
+  }
+
+  /**
    * Get detailed address components from coordinates
    */
   async getDetailedAddressComponents(coordinates: Coordinates): Promise<any> {
