@@ -249,12 +249,15 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
     let parsedPincode = "";
     let parsedStreet = "";
     let parsedVillage = "";
+    let parsedFlatNo = "";
 
     if (addressComponents) {
       // Parse Google Places address components
       addressComponents.forEach((component) => {
         const types = component.types;
-        if (
+        if (types.includes("street_number")) {
+          parsedFlatNo = component.long_name;
+        } else if (
           types.includes("locality") ||
           types.includes("administrative_area_level_2")
         ) {
@@ -265,11 +268,29 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
           parsedStreet = component.long_name;
         } else if (types.includes("administrative_area_level_3")) {
           parsedVillage = component.long_name;
+        } else if (types.includes("premise") && !parsedFlatNo) {
+          parsedFlatNo = component.long_name;
         }
       });
     } else {
       // Parse plain address string
       const parts = address.split(",").map((part) => part.trim());
+
+      // Extract house/flat number first
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (
+          part.match(/^\d+/) || // Starts with number like "123"
+          part.match(/^[A-Z]-?\d+/) || // Like "A-123" or "A123"
+          part.match(/^\d+[A-Z]?\/\d+/) || // Like "123/45" or "123A/45"
+          part.match(/^(House|Plot|Building|Block)\s*(No\.?)?\s*\d+/i) || // House No 123, Plot 45, etc.
+          part.match(/^\d+[-\s][A-Z]+/) || // Like "123-A" or "123 Main"
+          part.match(/^[A-Z]\d+/) // Like "A123", "B45"
+        ) {
+          parsedFlatNo = part;
+          break;
+        }
+      }
 
       // Try to extract pincode
       const pincodeMatch = address.match(/\b\d{6}\b/);
@@ -284,8 +305,13 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
       }
 
       // Extract street (usually first part after building/house number)
-      if (parts.length >= 1) {
-        parsedStreet = parts[1] || "";
+      let streetStartIndex = parsedFlatNo ? 1 : 0;
+      if (parts.length > streetStartIndex) {
+        parsedStreet = parts[streetStartIndex] || "";
+        // Make sure we don't use the same part that was used for flatNo
+        if (parsedStreet === parsedFlatNo) {
+          parsedStreet = parts[streetStartIndex + 1] || "";
+        }
       }
     }
 
