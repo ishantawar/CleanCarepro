@@ -60,15 +60,114 @@ const ZomatoAddressSelector: React.FC<ZomatoAddressSelectorProps> = ({
     }
   }, [isOpen, currentUser]);
 
-  const loadSavedAddresses = () => {
+  const loadSavedAddresses = async () => {
     if (!currentUser) return;
 
-    const userId = currentUser._id || currentUser.id || currentUser.phone;
-    const savedAddressesKey = `addresses_${userId}`;
-    const addresses = JSON.parse(
-      localStorage.getItem(savedAddressesKey) || "[]",
-    );
-    setSavedAddresses(addresses);
+    setLoading(true);
+    try {
+      // Try to load from backend first
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const response = await fetch("/api/addresses", {
+        headers: {
+          "user-id": userId,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.data) {
+          // Transform backend format to frontend format
+          const transformedAddresses = result.data.map((addr: any) => ({
+            id: addr._id,
+            type: addr.address_type || "other",
+            label: addr.title,
+            flatNo: addr.full_address.split(",")[0] || "",
+            fullAddress: addr.full_address,
+            landmark: addr.landmark || "",
+            phone: addr.contact_phone || currentUser.phone,
+            coordinates: addr.coordinates,
+            createdAt: addr.created_at,
+          }));
+          setSavedAddresses(transformedAddresses);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback to localStorage if backend fails
+      console.log("Falling back to localStorage for addresses");
+      const savedAddressesKey = `addresses_${userId}`;
+      const addresses = JSON.parse(
+        localStorage.getItem(savedAddressesKey) || "[]",
+      );
+      setSavedAddresses(addresses);
+    } catch (error) {
+      console.error("Error loading addresses:", error);
+      // Fallback to localStorage
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const savedAddressesKey = `addresses_${userId}`;
+      const addresses = JSON.parse(
+        localStorage.getItem(savedAddressesKey) || "[]",
+      );
+      setSavedAddresses(addresses);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    if (!currentUser) return;
+
+    try {
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const response = await fetch(`/api/addresses/${addressId}`, {
+        method: "DELETE",
+        headers: {
+          "user-id": userId,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Remove from state
+        setSavedAddresses((prev) =>
+          prev.filter((addr) => addr.id !== addressId),
+        );
+
+        // Also remove from localStorage as backup
+        const savedAddressesKey = `addresses_${userId}`;
+        const localAddresses = JSON.parse(
+          localStorage.getItem(savedAddressesKey) || "[]",
+        );
+        const updatedLocalAddresses = localAddresses.filter(
+          (addr: any) => addr.id !== addressId,
+        );
+        localStorage.setItem(
+          savedAddressesKey,
+          JSON.stringify(updatedLocalAddresses),
+        );
+      } else {
+        console.error("Failed to delete address from backend");
+        // Still try to remove from localStorage
+        const savedAddressesKey = `addresses_${userId}`;
+        const localAddresses = JSON.parse(
+          localStorage.getItem(savedAddressesKey) || "[]",
+        );
+        const updatedLocalAddresses = localAddresses.filter(
+          (addr: any) => addr.id !== addressId,
+        );
+        localStorage.setItem(
+          savedAddressesKey,
+          JSON.stringify(updatedLocalAddresses),
+        );
+        setSavedAddresses((prev) =>
+          prev.filter((addr) => addr.id !== addressId),
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting address:", error);
+    }
   };
 
   const getAddressIcon = (type: string) => {
