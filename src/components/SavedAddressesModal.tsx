@@ -33,7 +33,14 @@ import {
   ArrowRight,
   Phone,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import ZomatoAddAddressPage from "./ZomatoAddAddressPage";
+import { AddressService } from "@/services/addressService";
 
 interface AddressData {
   flatNo: string;
@@ -143,10 +150,37 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       setShowAddAddressPage(false);
     };
 
-    const handleDeleteAddress = (id: string) => {
-      const updatedAddresses = addresses.filter((addr) => addr.id !== id);
-      saveAddresses(updatedAddresses);
-      setDeletingId(null);
+    const handleDeleteAddress = async (id: string) => {
+      try {
+        console.log("🗑️ Deleting address with ID:", id);
+
+        // Immediately remove from UI for better UX
+        const updatedAddresses = addresses.filter(
+          (addr) => addr.id !== id && addr._id !== id,
+        );
+        setAddresses(updatedAddresses);
+
+        // Update localStorage
+        saveAddresses(updatedAddresses);
+
+        // Try to delete from backend
+        const addressService = AddressService.getInstance();
+        const result = await addressService.deleteAddress(id);
+
+        if (result.success) {
+          console.log("✅ Address deleted successfully:", result.message);
+        } else {
+          console.warn(
+            "⚠️ Backend deletion failed, but local deletion succeeded:",
+            result.error,
+          );
+        }
+      } catch (error) {
+        console.error("❌ Failed to delete address:", error);
+        // Even if backend fails, keep the local deletion for better UX
+      } finally {
+        setDeletingId(null);
+      }
     };
 
     const getAddressIcon = (type: string) => {
@@ -182,7 +216,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-        <div className="w-full bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto">
+        <div className="w-full bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto relative">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -265,61 +299,59 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingAddress(address);
-                              setShowAddAddressPage(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                        {/* Actions - 3 Dot Menu and Select Button */}
+                        <div className="flex items-center gap-2 ml-4 relative z-10">
+                          <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
-                                onClick={(e) => e.stopPropagation()}
+                                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 relative z-20"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-40 z-[60] bg-white shadow-lg border"
+                              side="bottom"
+                              sideOffset={5}
+                            >
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setEditingAddress(address);
+                                  setShowAddAddressPage(true);
+                                }}
+                                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100"
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit Address
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setDeletingId(address.id || "");
+                                }}
+                                className="flex items-center gap-2 cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-600"
                               >
                                 <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Delete Address?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this address?
-                                  This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleDeleteAddress(address.id!)
-                                  }
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                Delete Address
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
 
                           {onSelectAddress && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-green-600"
+                              className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onSelectAddress(address);
@@ -331,6 +363,33 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                           )}
                         </div>
                       </div>
+
+                      {/* Delete Confirmation Dialog */}
+                      <AlertDialog
+                        open={deletingId === address.id}
+                        onOpenChange={(open) => !open && setDeletingId(null)}
+                      >
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Address?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this address? This
+                              action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={async () => {
+                                await handleDeleteAddress(address.id!);
+                              }}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </CardContent>
                   </Card>
                 ))}

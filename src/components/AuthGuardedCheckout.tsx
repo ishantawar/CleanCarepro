@@ -3,7 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, ShoppingCart, CreditCard, ArrowRight, Lock } from "lucide-react";
+import {
+  User,
+  ShoppingCart,
+  CreditCard,
+  ArrowRight,
+  Lock,
+  Package,
+} from "lucide-react";
 import PhoneOtpAuthModal from "./PhoneOtpAuthModal";
 import { useNotifications } from "@/contexts/NotificationContext";
 import {
@@ -102,9 +109,33 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                   {cartData.services.map((service: any, index: number) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center p-3 bg-blue-50 rounded-lg"
+                      className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg"
                     >
-                      <div>
+                      {/* Service Image */}
+                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                        {service.image ? (
+                          <img
+                            src={service.image}
+                            alt={service.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              target.nextElementSibling?.classList.remove(
+                                "hidden",
+                              );
+                            }}
+                          />
+                        ) : null}
+                        {/* Fallback icon */}
+                        <div
+                          className={`w-full h-full flex items-center justify-center text-gray-400 ${service.image ? "hidden" : ""}`}
+                        >
+                          <Package className="w-7 h-7" />
+                        </div>
+                      </div>
+
+                      <div className="flex-1">
                         <p className="font-medium text-gray-900">
                           {service.name}
                         </p>
@@ -112,6 +143,7 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                           Qty: {service.quantity || 1}
                         </p>
                       </div>
+
                       <p className="font-semibold text-blue-600">
                         ₹{(service.price || 0) * (service.quantity || 1)}
                       </p>
@@ -237,9 +269,33 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                 {cartData.services.map((service: any, index: number) => (
                   <div
                     key={index}
-                    className="flex justify-between items-center p-3 bg-blue-50 rounded-lg"
+                    className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg"
                   >
-                    <div>
+                    {/* Service Image */}
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      {service.image ? (
+                        <img
+                          src={service.image}
+                          alt={service.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                            target.nextElementSibling?.classList.remove(
+                              "hidden",
+                            );
+                          }}
+                        />
+                      ) : null}
+                      {/* Fallback icon */}
+                      <div
+                        className={`w-full h-full flex items-center justify-center text-gray-400 ${service.image ? "hidden" : ""}`}
+                      >
+                        <Package className="w-8 h-8" />
+                      </div>
+                    </div>
+
+                    <div className="flex-1">
                       <p className="font-medium text-gray-900">
                         {service.name}
                       </p>
@@ -247,6 +303,7 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                         Qty: {service.quantity || 1}
                       </p>
                     </div>
+
                     <p className="font-semibold text-blue-600">
                       ₹{(service.price || 0) * (service.quantity || 1)}
                     </p>

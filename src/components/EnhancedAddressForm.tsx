@@ -407,14 +407,98 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     addressString: string,
     coordinates: Coordinates,
   ): AddressData => {
+    console.log("🏠 Enhanced parsing address string:", addressString);
     const parts = addressString.split(",").map((part) => part.trim());
+    console.log("📍 Address parts for parsing:", parts);
+
+    // Enhanced parsing for better area/village extraction
+    let street = "";
+    let village = "";
+    let city = "";
+
+    // Extract street (first meaningful part)
+    if (parts.length >= 1) {
+      const streetCandidate = parts[0];
+      if (streetCandidate && !streetCandidate.match(/^\d+$/)) {
+        street = streetCandidate;
+      }
+    }
+
+    // Extract village/area (look for locality indicators)
+    const localityIndicators = [
+      "extension",
+      "colony",
+      "sector",
+      "block",
+      "phase",
+      "nagar",
+      "ganj",
+      "marg",
+      "vihar",
+      "puram",
+      "abad",
+    ];
+
+    // Find the most specific locality/village
+    for (let i = 1; i < Math.min(parts.length - 1, 5); i++) {
+      const part = parts[i];
+      if (
+        part &&
+        !part.match(/\b\d{6}\b/) && // Not a pincode
+        ![
+          "India",
+          "Delhi",
+          "Mumbai",
+          "Kolkata",
+          "Chennai",
+          "Bangalore",
+          "Hyderabad",
+        ].includes(part) &&
+        !part.includes("Pradesh") &&
+        !part.includes("State")
+      ) {
+        // Prefer parts with locality indicators
+        if (
+          localityIndicators.some((indicator) =>
+            part.toLowerCase().includes(indicator),
+          )
+        ) {
+          village = part;
+          console.log("🏘️ Village/Area with indicator found:", part);
+          break;
+        } else if (!village) {
+          village = part; // Fallback to first suitable part
+        }
+      }
+    }
+
+    // Extract city (avoid states and country)
+    for (let i = Math.max(1, parts.length - 4); i < parts.length; i++) {
+      const cityCandidate = parts[i];
+      if (
+        cityCandidate &&
+        !cityCandidate.match(/\b\d{6}\b/) &&
+        !cityCandidate.includes("Pradesh") &&
+        !cityCandidate.includes("State") &&
+        cityCandidate !== "India"
+      ) {
+        const cleanCity = cityCandidate.replace(/\d{6}/, "").trim();
+        if (cleanCity && cleanCity.length > 2) {
+          city = cleanCity;
+          console.log("🏙️ City extracted:", cleanCity);
+          break;
+        }
+      }
+    }
+
+    console.log("📋 Parsed components:", { street, village, city });
 
     return {
       flatNo: address.flatNo || "", // Keep user input
-      street: parts[1] || "",
+      street: street || parts[1] || "",
       landmark: "", // Never autofill landmark
-      village: parts[2] || parts[1] || "",
-      city: parts[parts.length - 3] || parts[parts.length - 2] || "",
+      village: village || parts[2] || parts[1] || "",
+      city: city || parts[parts.length - 3] || parts[parts.length - 2] || "",
       pincode: extractPincode(addressString) || "",
       fullAddress: addressString,
       coordinates,

@@ -352,30 +352,95 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     }
   };
 
-  // Auto-fill address fields from full address string
+  // Enhanced auto-fill address fields from detailed address string
   const autoFillAddressFields = (fullAddress: string) => {
+    console.log("🏠 Auto-filling address from:", fullAddress);
+
     const parts = fullAddress.split(",").map((part) => part.trim());
+    console.log("📍 Address parts:", parts);
 
     // Extract pincode
     const pincodeMatch = fullAddress.match(/\b\d{6}\b/);
     if (pincodeMatch) {
       setPincode(pincodeMatch[0]);
+      console.log("📮 Pincode extracted:", pincodeMatch[0]);
     }
 
-    // Try to extract city (usually second-to-last or third-to-last part)
-    if (parts.length >= 2) {
-      const cityPart = parts[parts.length - 3] || parts[parts.length - 2] || "";
-      setCity(cityPart.replace(/\d{6}/, "").trim());
-    }
+    // Enhanced parsing for Indian addresses
+    // Pattern: [Street], [Area/Neighborhood], [Sublocality], [Village/Locality], [City], [District], [State], [Pincode]
 
-    // Extract area/village (usually in middle parts)
-    if (parts.length >= 3) {
-      setArea(parts[1] || "");
-    }
-
-    // Extract street (usually first part)
     if (parts.length >= 1) {
-      setStreet(parts[0] || "");
+      // Street/Road (first part, excluding numbers only)
+      const streetPart = parts[0];
+      if (streetPart && !streetPart.match(/^\d+$/)) {
+        setStreet(streetPart);
+        console.log("🛣️ Street extracted:", streetPart);
+      }
+    }
+
+    if (parts.length >= 2) {
+      // Area/Village/Neighborhood (second part, or find the most specific locality)
+      for (let i = 1; i < Math.min(parts.length - 2, 4); i++) {
+        const areaPart = parts[i];
+        // Skip if it's clearly a state, country, or contains only pincode
+        if (
+          areaPart &&
+          !areaPart.match(/\b\d{6}\b/) &&
+          ![
+            "India",
+            "Delhi",
+            "Mumbai",
+            "Kolkata",
+            "Chennai",
+            "Bangalore",
+            "Hyderabad",
+          ].includes(areaPart) &&
+          !areaPart.includes("Pradesh") &&
+          !areaPart.includes("State")
+        ) {
+          setArea(areaPart);
+          console.log("🏘️ Area/Village extracted:", areaPart);
+          break;
+        }
+      }
+    }
+
+    // Extract city (look for known city patterns or position-based)
+    for (let i = Math.max(1, parts.length - 4); i < parts.length - 1; i++) {
+      const cityPart = parts[i];
+      if (
+        cityPart &&
+        !cityPart.match(/\b\d{6}\b/) &&
+        !cityPart.includes("Pradesh") &&
+        !cityPart.includes("State") &&
+        cityPart !== "India"
+      ) {
+        const cleanCity = cityPart.replace(/\d{6}/, "").trim();
+        if (cleanCity) {
+          setCity(cleanCity);
+          console.log("🏙️ City extracted:", cleanCity);
+          break;
+        }
+      }
+    }
+
+    // Enhanced area extraction - also look at landmarks and sub-localities
+    const enhancedArea = parts.find(
+      (part) =>
+        part.toLowerCase().includes("extension") ||
+        part.toLowerCase().includes("colony") ||
+        part.toLowerCase().includes("sector") ||
+        part.toLowerCase().includes("block") ||
+        part.toLowerCase().includes("phase") ||
+        part.toLowerCase().includes("nagar") ||
+        part.toLowerCase().includes("ganj") ||
+        part.toLowerCase().includes("marg") ||
+        part.toLowerCase().includes("vihar"),
+    );
+
+    if (enhancedArea && !getArea()) {
+      setArea(enhancedArea);
+      console.log("🎯 Enhanced area pattern extracted:", enhancedArea);
     }
   };
 

@@ -348,9 +348,26 @@ const ZomatoStyleCart: React.FC<ZomatoStyleCartProps> = ({
             <Card key={service!.id} className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  {/* Item Type Indicator */}
-                  <div className="w-4 h-4 border-2 border-green-600 rounded-sm flex items-center justify-center flex-shrink-0 mt-1">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  {/* Service Image */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {service!.image ? (
+                      <img
+                        src={service!.image}
+                        alt={service!.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          target.nextElementSibling?.classList.remove("hidden");
+                        }}
+                      />
+                    ) : null}
+                    {/* Fallback icon */}
+                    <div
+                      className={`w-full h-full flex items-center justify-center text-gray-400 ${service!.image ? "hidden" : ""}`}
+                    >
+                      <Package className="w-8 h-8" />
+                    </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -384,7 +401,7 @@ const ZomatoStyleCart: React.FC<ZomatoStyleCartProps> = ({
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-gray-900">
-                          ₹{service!.price * quantity}
+                          ��{service!.price * quantity}
                         </div>
                         {quantity > 1 && (
                           <div className="text-xs text-gray-500">

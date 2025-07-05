@@ -77,6 +77,15 @@ const addressSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    status: {
+      type: String,
+      enum: ["active", "deleted"],
+      default: "active",
+    },
+    deleted_at: {
+      type: Date,
+      default: null,
+    },
     created_at: {
       type: Date,
       default: Date.now,
@@ -115,14 +124,14 @@ addressSchema.index({ pincode: 1 });
 addressSchema.index({ created_at: -1 });
 addressSchema.index({ "coordinates.lat": 1, "coordinates.lng": 1 });
 
-// Static method to get user's default address
+// Static method to get user's default address (only active)
 addressSchema.statics.getDefaultAddress = function (userId) {
-  return this.findOne({ user_id: userId, is_default: true });
+  return this.findOne({ user_id: userId, is_default: true, status: "active" });
 };
 
-// Static method to get all user addresses
+// Static method to get all user addresses (only active)
 addressSchema.statics.getUserAddresses = function (userId) {
-  return this.find({ user_id: userId }).sort({
+  return this.find({ user_id: userId, status: "active" }).sort({
     is_default: -1,
     created_at: -1,
   });

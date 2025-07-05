@@ -668,8 +668,21 @@ Confirm this booking?`;
                 key={service!.id}
                 className="flex items-center gap-2 p-1.5 bg-gray-50 rounded-md"
               >
-                <div className="w-6 h-6 bg-gradient-to-br from-green-100 to-green-200 rounded flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs">
+                <div className="w-12 h-12 rounded-md overflow-hidden bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center flex-shrink-0">
+                  {service!.image ? (
+                    <img
+                      src={service!.image}
+                      alt={service!.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        target.nextElementSibling?.classList.remove("hidden");
+                      }}
+                    />
+                  ) : null}
+                  {/* Fallback to emoji/icon */}
+                  <span className={`text-sm ${service!.image ? "hidden" : ""}`}>
                     {service!.category.includes("Men")
                       ? "👔"
                       : service!.category.includes("Women")
