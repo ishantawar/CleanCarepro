@@ -268,9 +268,9 @@ class LocationService {
     const parts = address.split(",").map((part) => part.trim());
     const firstPart = parts[0] || "";
 
-    // Pattern 1: Simple house numbers (123, 45, etc.)
+    // Pattern 1: Simple house numbers (123, 45, etc.) - but not pincodes
     const simpleNumberMatch = firstPart.match(/^\s*(\d+)\s*$/);
-    if (simpleNumberMatch) {
+    if (simpleNumberMatch && !simpleNumberMatch[1].match(/^\d{6}$/)) {
       houseNumber = simpleNumberMatch[1];
       cleanedAddress = parts.slice(1).join(", ").trim();
       return { houseNumber, building, cleanedAddress };
