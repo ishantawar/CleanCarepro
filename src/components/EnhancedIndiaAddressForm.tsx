@@ -338,24 +338,18 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
         parsedCity = parsedCity.replace(/\d{6}/, "").trim(); // Remove pincode if present
       }
 
-<<<<<<< HEAD
-      // Extract street (usually first part of cleaned address)
-      if (cleanedParts.length >= 1) {
-        parsedStreet = cleanedParts[0] || "";
+      // Extract street (usually first part after building/house number)
+      let streetStartIndex = parsedFlatNo ? 1 : 0;
+      if (cleanedParts.length > streetStartIndex) {
+        parsedStreet = cleanedParts[streetStartIndex] || "";
+        // Make sure we don't use the same part that was used for flatNo
+        if (parsedStreet === parsedFlatNo) {
+          parsedStreet = cleanedParts[streetStartIndex + 1] || "";
+        }
         // Clean up street name
         parsedStreet = parsedStreet
           .replace(/^\d+[A-Z]*\s*[-\/]?\s*/i, "")
           .trim();
-=======
-      // Extract street (usually first part after building/house number)
-      let streetStartIndex = parsedFlatNo ? 1 : 0;
-      if (parts.length > streetStartIndex) {
-        parsedStreet = parts[streetStartIndex] || "";
-        // Make sure we don't use the same part that was used for flatNo
-        if (parsedStreet === parsedFlatNo) {
-          parsedStreet = parts[streetStartIndex + 1] || "";
-        }
->>>>>>> b14a53ea735903bebdd87ff64a98ee14cbf0ed4d
       }
 
       // Extract village/area from remaining parts
@@ -389,17 +383,7 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
       coordinates: coordinates,
     };
 
-<<<<<<< HEAD
     setHouseDetails(newHouseDetails);
-=======
-    // Update house details with parsed flat number if current field is empty
-    const newHouseDetails = { ...houseDetails };
-    if (!houseDetails.flatNo && parsedFlatNo) {
-      newHouseDetails.flatNo = parsedFlatNo;
-      setHouseDetails(newHouseDetails);
-    }
-
->>>>>>> b14a53ea735903bebdd87ff64a98ee14cbf0ed4d
     setLocationDetails(newLocationDetails);
     notifyAddressChange(newHouseDetails, newLocationDetails);
   };
