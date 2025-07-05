@@ -96,20 +96,29 @@ router.put("/:addressId", verifyUser, async (req, res) => {
   }
 });
 
-// Delete address
+// Delete address (soft delete)
 router.delete("/:addressId", verifyUser, async (req, res) => {
   try {
-    const address = await Address.findOneAndDelete({
-      _id: req.params.addressId,
-      user_id: req.userId,
-    });
+    const address = await Address.findOneAndUpdate(
+      {
+        _id: req.params.addressId,
+        user_id: req.userId,
+        status: "active",
+      },
+      {
+        status: "deleted",
+        deleted_at: new Date(),
+        updated_at: new Date(),
+      },
+      { new: true },
+    );
 
     if (!address) {
       return res.status(404).json({ error: "Address not found" });
     }
 
     res.json({
-      data: { message: "Address deleted successfully" },
+      data: { message: "Address deleted successfully", address },
       error: null,
     });
   } catch (error) {
