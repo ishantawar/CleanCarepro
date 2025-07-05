@@ -547,34 +547,57 @@ Confirm this booking?`;
   };
 
   // Handle new address creation
-  const handleNewAddressSave = (newAddress: any) => {
+  const handleNewAddressSave = async (newAddress: any) => {
     if (!currentUser) return;
 
     try {
-      const userId = currentUser._id || currentUser.id || currentUser.phone;
-      const savedAddressesKey = `addresses_${userId}`;
-      const existingAddresses = JSON.parse(
-        localStorage.getItem(savedAddressesKey) || "[]",
-      );
+      const addressService = AddressService.getInstance();
+      const result = await addressService.saveAddress(newAddress);
 
-      const addressWithId = {
-        ...newAddress,
-        id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      if (result.success) {
+        // Auto-select the new address
+        setSelectedSavedAddress(result.data || newAddress);
+        setAddressData(result.data || newAddress);
 
-      const updatedAddresses = [...existingAddresses, addressWithId];
-      localStorage.setItem(savedAddressesKey, JSON.stringify(updatedAddresses));
+        addNotification(
+          createSuccessNotification(
+            "Address Saved",
+            "New address has been saved successfully",
+          ),
+        );
 
-      // Auto-select the new address
-      setSelectedSavedAddress(addressWithId);
-      setAddressData(addressWithId);
+        console.log("✅ New address saved to backend and selected");
+      } else {
+        // Still save locally and proceed
+        const addressWithId = {
+          ...newAddress,
+          id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: new Date().toISOString(),
+        };
+
+        setSelectedSavedAddress(addressWithId);
+        setAddressData(addressWithId);
+
+        addNotification(
+          createWarningNotification(
+            "Address Saved Locally",
+            "Address saved locally, will sync when online",
+          ),
+        );
+
+        console.log("⚠️ Address saved locally only");
+      }
 
       setShowZomatoAddAddressPage(false);
-      console.log("✅ New address saved and selected");
     } catch (error) {
       console.error("Failed to save new address:", error);
+
+      addNotification(
+        createErrorNotification(
+          "Save Failed",
+          "Failed to save address. Please try again.",
+        ),
+      );
     }
   };
 
