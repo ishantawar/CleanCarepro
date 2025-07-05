@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ZomatoAddAddressPage from "./ZomatoAddAddressPage";
+import { AddressService } from "@/services/addressService";
 
 interface AddressData {
   flatNo: string;
@@ -149,10 +150,37 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       setShowAddAddressPage(false);
     };
 
-    const handleDeleteAddress = (id: string) => {
-      const updatedAddresses = addresses.filter((addr) => addr.id !== id);
-      saveAddresses(updatedAddresses);
-      setDeletingId(null);
+    const handleDeleteAddress = async (id: string) => {
+      try {
+        console.log("🗑️ Deleting address with ID:", id);
+
+        // Immediately remove from UI for better UX
+        const updatedAddresses = addresses.filter(
+          (addr) => addr.id !== id && addr._id !== id,
+        );
+        setAddresses(updatedAddresses);
+
+        // Update localStorage
+        saveAddresses(updatedAddresses);
+
+        // Try to delete from backend
+        const addressService = AddressService.getInstance();
+        const result = await addressService.deleteAddress(id);
+
+        if (result.success) {
+          console.log("✅ Address deleted successfully:", result.message);
+        } else {
+          console.warn(
+            "⚠️ Backend deletion failed, but local deletion succeeded:",
+            result.error,
+          );
+        }
+      } catch (error) {
+        console.error("❌ Failed to delete address:", error);
+        // Even if backend fails, keep the local deletion for better UX
+      } finally {
+        setDeletingId(null);
+      }
     };
 
     const getAddressIcon = (type: string) => {
