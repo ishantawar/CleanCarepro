@@ -303,23 +303,26 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
         : parts.slice(parsedFlatNo ? 1 : 0);
 
       // Try to extract city (usually second-to-last or third-to-last part)
-      if (parts.length >= 2) {
-        parsedCity = parts[parts.length - 3] || parts[parts.length - 2] || "";
+      if (cleanedParts.length >= 2) {
+        parsedCity =
+          cleanedParts[cleanedParts.length - 3] ||
+          cleanedParts[cleanedParts.length - 2] ||
+          "";
         parsedCity = parsedCity.replace(/\d{6}/, "").trim(); // Remove pincode if present
       }
 
-      // Extract street (usually second part after house number, or first if no house number)
-      if (parts.length >= 2) {
-        parsedStreet = parts[1] || "";
-        // Remove any house number that might have leaked into street
+      // Extract street (usually first part of cleaned address)
+      if (cleanedParts.length >= 1) {
+        parsedStreet = cleanedParts[0] || "";
+        // Clean up street name
         parsedStreet = parsedStreet
           .replace(/^\d+[A-Z]*\s*[-\/]?\s*/i, "")
           .trim();
       }
 
       // Extract village/area from remaining parts
-      if (parts.length >= 3) {
-        parsedVillage = parts[2] || "";
+      if (cleanedParts.length >= 2) {
+        parsedVillage = cleanedParts[1] || "";
         parsedVillage = parsedVillage.replace(/\d{6}/, "").trim();
       }
     }
