@@ -285,17 +285,44 @@ const ZomatoAddressSelector: React.FC<ZomatoAddressSelectorProps> = ({
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Handle more options (edit, delete, etc.)
-                          }}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onEditAddress) {
+                                  onEditAddress(address);
+                                }
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAddress(address.id);
+                              }}
+                              className="cursor-pointer text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                           variant="ghost"
                           size="sm"
