@@ -496,16 +496,25 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="flatNo">House/Flat Number *</Label>
+              <Label htmlFor="flatNo" className="flex items-center gap-2">
+                House/Flat Number *
+                {autoDetectedHouseNo && (
+                  <span className="flex items-center gap-1 text-green-600 text-sm">
+                    <CheckCircle className="h-4 w-4" />
+                    Auto-detected
+                  </span>
+                )}
+              </Label>
               <Input
                 id="flatNo"
                 type="text"
                 placeholder="e.g., 123, A-45, Plot 67"
                 value={houseDetails.flatNo}
-                onChange={(e) =>
-                  handleHouseDetailsChange("flatNo", e.target.value)
-                }
-                className="mt-1"
+                onChange={(e) => {
+                  handleHouseDetailsChange("flatNo", e.target.value);
+                  setAutoDetectedHouseNo(false); // Clear auto-detection flag on manual edit
+                }}
+                className={`mt-1 ${autoDetectedHouseNo ? "border-green-300 bg-green-50" : ""}`}
               />
             </div>
             <div>
