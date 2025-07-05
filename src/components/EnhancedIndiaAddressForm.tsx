@@ -295,8 +295,14 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
       // Extract house/flat number first
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
+
+        // Skip if it's a pincode (exactly 6 digits)
+        if (part.match(/^\d{6}$/)) {
+          continue;
+        }
+
         if (
-          part.match(/^\d+/) || // Starts with number like "123"
+          (part.match(/^\d+/) && !part.match(/^\d{5,}$/)) || // Starts with number like "123" but not 5+ digits
           part.match(/^[A-Z]-?\d+/) || // Like "A-123" or "A123"
           part.match(/^\d+[A-Z]?\/\d+/) || // Like "123/45" or "123A/45"
           part.match(/^(House|Plot|Building|Block)\s*(No\.?)?\s*\d+/i) || // House No 123, Plot 45, etc.
