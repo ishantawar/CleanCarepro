@@ -412,15 +412,49 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
     console.log("📍 Address parts for parsing:", parts);
 
     // Enhanced parsing for better area/village extraction
+    let flatNo = "";
     let street = "";
     let village = "";
     let city = "";
 
-    // Extract street (first meaningful part)
-    if (parts.length >= 1) {
-      const streetCandidate = parts[0];
-      if (streetCandidate && !streetCandidate.match(/^\d+$/)) {
+    // Extract house/flat number (usually first part if it contains numbers)
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      // Look for parts that start with numbers or contain typical house number patterns
+      if (
+        part.match(/^\d+/) || // Starts with number like "123"
+        part.match(/^[A-Z]-?\d+/) || // Like "A-123" or "A123"
+        part.match(/^\d+[A-Z]?\/\d+/) || // Like "123/45" or "123A/45"
+        part.match(/^(House|Plot|Building|Block)\s*(No\.?)?\s*\d+/i) || // House No 123, Plot 45, etc.
+        part.match(/^\d+[-\s][A-Z]+/) || // Like "123-A" or "123 Main"
+        part.match(/^[A-Z]\d+/) // Like "A123", "B45"
+      ) {
+        // Only use if current flatNo is empty (preserve user input)
+        if (!address.flatNo) {
+          flatNo = part;
+          console.log("🏠 House number extracted:", flatNo);
+        }
+        break;
+      }
+    }
+
+    // Extract street (first meaningful part after house number)
+    let streetStartIndex = flatNo ? 1 : 0; // Start after house number if found
+    for (let i = streetStartIndex; i < parts.length; i++) {
+      const streetCandidate = parts[i];
+      if (
+        streetCandidate &&
+        streetCandidate !== flatNo &&
+        !streetCandidate.match(/^\d+$/) &&
+        !streetCandidate.match(/\b\d{6}\b/) && // Not a pincode
+        streetCandidate.length > 2 &&
+        !streetCandidate.includes("Pradesh") &&
+        !streetCandidate.includes("State") &&
+        streetCandidate !== "India"
+      ) {
         street = streetCandidate;
+        console.log("🛣️ Street extracted:", street);
+        break;
       }
     }
 
