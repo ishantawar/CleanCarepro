@@ -512,7 +512,10 @@ const LaundryIndex = () => {
 
         // Store booking data for confirmation screen
         const confirmationData = {
-          bookingId: mongoResult.data._id || `local_${Date.now()}`,
+          bookingId:
+            mongoResult.data.custom_order_id ||
+            mongoResult.data._id ||
+            `local_${Date.now()}`,
           services: detailedServices, // Use detailed services with quantities
           totalAmount: cartData.totalAmount,
           pickupDate: cartData.pickupDate,
