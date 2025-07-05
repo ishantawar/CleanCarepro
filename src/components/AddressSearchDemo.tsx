@@ -135,13 +135,14 @@ const AddressSearchDemo: React.FC = () => {
             </div>
             <div>
               <h4 className="font-medium text-gray-900 mb-2">
-                🗺️ Nearby Places
+                🏠 House Number Detection
               </h4>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Automatic nearby places detection</li>
-                <li>• Restaurant, hospital, school icons</li>
-                <li>• One-tap landmark addition</li>
-                <li>• Rating display for businesses</li>
+                <li>• Auto-fills house numbers: 123, A-45, Plot 67</li>
+                <li>• Detects building names and tower info</li>
+                <li>• Handles complex formats: Tower A-123</li>
+                <li>• Visual feedback when auto-detected</li>
+                <li>• Works with current location and search</li>
               </ul>
             </div>
           </div>
