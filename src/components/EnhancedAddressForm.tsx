@@ -525,10 +525,10 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       }
     }
 
-    console.log("📋 Parsed components:", { street, village, city });
+    console.log("📋 Parsed components:", { flatNo, street, village, city });
 
     return {
-      flatNo: address.flatNo || "", // Keep user input
+      flatNo: address.flatNo || flatNo, // Use user input if available, otherwise extracted
       street: street || parts[1] || "",
       landmark: "", // Never autofill landmark
       village: village || parts[2] || parts[1] || "",
