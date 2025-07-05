@@ -132,14 +132,20 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       }
     };
 
-    const handleEditAddress = (address: AddressData) => {
-      if (!editingAddress?.id) return;
+    const handleEditAddress = (updatedAddress: AddressData) => {
+      if (!editingAddress?.id) {
+        console.error("No editing address ID found");
+        return;
+      }
+
+      console.log("💾 Saving edited address:", editingAddress.id);
 
       const updatedAddresses = addresses.map((addr) =>
         addr.id === editingAddress.id
           ? {
-              ...address,
+              ...updatedAddress,
               id: editingAddress.id,
+              createdAt: editingAddress.createdAt || new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             }
           : addr,
@@ -148,9 +154,16 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
       saveAddresses(updatedAddresses);
       setEditingAddress(null);
       setShowAddAddressPage(false);
+      console.log("✅ Address updated successfully");
     };
 
     const handleDeleteAddress = async (id: string) => {
+      if (!id) {
+        console.error("No address ID provided for deletion");
+        setDeletingId(null);
+        return;
+      }
+
       try {
         console.log("🗑️ Deleting address with ID:", id);
 
@@ -158,26 +171,34 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
         const updatedAddresses = addresses.filter(
           (addr) => addr.id !== id && addr._id !== id,
         );
-        setAddresses(updatedAddresses);
 
-        // Update localStorage
+        // Update localStorage first
         saveAddresses(updatedAddresses);
 
-        // Try to delete from backend
+        // Try to delete from backend (don't await to avoid blocking UI)
         const addressService = AddressService.getInstance();
-        const result = await addressService.deleteAddress(id);
+        addressService
+          .deleteAddress(id)
+          .then((result) => {
+            if (result.success) {
+              console.log("✅ Address deleted from backend:", result.message);
+            } else {
+              console.warn(
+                "⚠️ Backend deletion failed, but local deletion succeeded:",
+                result.error,
+              );
+            }
+          })
+          .catch((error) => {
+            console.warn("❌ Backend deletion error:", error);
+            // Keep local deletion even if backend fails
+          });
 
-        if (result.success) {
-          console.log("✅ Address deleted successfully:", result.message);
-        } else {
-          console.warn(
-            "⚠️ Backend deletion failed, but local deletion succeeded:",
-            result.error,
-          );
-        }
+        console.log("✅ Address deleted from UI and localStorage");
       } catch (error) {
         console.error("❌ Failed to delete address:", error);
-        // Even if backend fails, keep the local deletion for better UX
+        // Try to reload addresses if something went wrong
+        loadSavedAddresses();
       } finally {
         setDeletingId(null);
       }
@@ -322,9 +343,12 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                               sideOffset={5}
                             >
                               <DropdownMenuItem
-                                onClick={(e) => {
+                                onSelect={(e) => {
                                   e.preventDefault();
-                                  e.stopPropagation();
+                                  console.log(
+                                    "✏️ Editing address:",
+                                    address.id,
+                                  );
                                   setEditingAddress(address);
                                   setShowAddAddressPage(true);
                                 }}
@@ -334,9 +358,12 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                                 Edit Address
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={(e) => {
+                                onSelect={(e) => {
                                   e.preventDefault();
-                                  e.stopPropagation();
+                                  console.log(
+                                    "🗑️ Deleting address:",
+                                    address.id,
+                                  );
                                   setDeletingId(address.id || "");
                                 }}
                                 className="flex items-center gap-2 cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-600"

@@ -648,26 +648,54 @@ export class DVHostingSmsService {
     try {
       const token = localStorage.getItem("cleancare_auth_token");
       const user = this.getCurrentUser();
-      return !!(token && user);
+
+      // More thorough validation
+      if (!token || !user) {
+        return false;
+      }
+
+      // Check if token is not expired (basic check)
+      if (token.includes("_")) {
+        const parts = token.split("_");
+        const timestamp = parts[parts.length - 1];
+        if (timestamp && !isNaN(Number(timestamp))) {
+          const tokenAge = Date.now() - Number(timestamp);
+          // Token expires after 7 days (7 * 24 * 60 * 60 * 1000)
+          if (tokenAge > 7 * 24 * 60 * 60 * 1000) {
+            this.logout();
+            return false;
+          }
+        }
+      }
+
+      return true;
     } catch (error) {
       console.error("Error checking authentication:", error);
+      // Clear potentially corrupted data
+      this.logout();
       return false;
     }
   }
 
   getCurrentUser(): any | null {
     try {
-      const userStr = localStorage.getItem("current_user");
+      const userStr =
+        localStorage.getItem("cleancare_user") ||
+        localStorage.getItem("current_user");
       if (userStr) {
         const user = JSON.parse(userStr);
         // Verify user data is valid
-        if (user && user.phone) {
+        if (user && (user.phone || user.id || user._id)) {
           return user;
         }
       }
       return null;
     } catch (error) {
       console.error("Error getting current user:", error);
+      // Clear corrupted data
+      localStorage.removeItem("current_user");
+      localStorage.removeItem("cleancare_user");
+      localStorage.removeItem("cleancare_auth_token");
       return null;
     }
   }
@@ -675,14 +703,18 @@ export class DVHostingSmsService {
   setCurrentUser(user: any, token?: string): void {
     try {
       if (user) {
+        // Store in both keys for backward compatibility
+        localStorage.setItem("cleancare_user", JSON.stringify(user));
         localStorage.setItem("current_user", JSON.stringify(user));
+
         if (token) {
           localStorage.setItem("cleancare_auth_token", token);
         } else {
           // Generate a simple token if none provided
+          const userPhone = user.phone || user.id || user._id;
           localStorage.setItem(
             "cleancare_auth_token",
-            `phone_token_${Date.now()}_${user.phone}`,
+            `user_token_${Date.now()}_${userPhone}`,
           );
         }
         console.log("✅ User authentication saved to localStorage");
@@ -694,8 +726,9 @@ export class DVHostingSmsService {
 
   logout(): void {
     try {
-      // Clear localStorage
+      // Clear all auth-related localStorage
       localStorage.removeItem("current_user");
+      localStorage.removeItem("cleancare_user");
       localStorage.removeItem("cleancare_auth_token");
 
       // Clear sessionStorage for iOS compatibility

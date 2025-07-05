@@ -108,6 +108,12 @@ export class AddressService {
         } catch {
           errorData = { error: errorText };
         }
+
+        // Check for rate limiting
+        if (response.status === 429) {
+          throw new Error("Too many requests, please try again later");
+        }
+
         throw new Error(
           errorData.error || `HTTP ${response.status}: ${errorText}`,
         );

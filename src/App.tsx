@@ -16,9 +16,30 @@ function App() {
     const restoreUserSession = async () => {
       try {
         const authService = DVHostingSmsService.getInstance();
-        await authService.restoreSession();
+
+        // Check if user is already authenticated locally
+        const isLocallyAuthenticated = authService.isAuthenticated();
+
+        if (isLocallyAuthenticated) {
+          console.log("✅ User already authenticated locally");
+          // Try to restore from backend, but don't fail if it doesn't work
+          try {
+            await authService.restoreSession();
+          } catch (backendError) {
+            console.warn(
+              "Backend restore failed, but local auth is valid:",
+              backendError,
+            );
+          }
+        } else {
+          console.log("ℹ️ No local authentication found");
+        }
       } catch (error) {
         console.warn("Session restoration failed:", error);
+        // Clear any potentially corrupted data
+        localStorage.removeItem("cleancare_user");
+        localStorage.removeItem("current_user");
+        localStorage.removeItem("cleancare_auth_token");
       }
     };
 
