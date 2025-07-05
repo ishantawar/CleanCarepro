@@ -336,6 +336,13 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
       ...(parsedBuilding && { building: parsedBuilding }),
     };
 
+    // Set auto-detection flag if house number was found
+    if (parsedFlatNo && parsedFlatNo !== houseDetails.flatNo) {
+      setAutoDetectedHouseNo(true);
+      // Clear the flag after 3 seconds
+      setTimeout(() => setAutoDetectedHouseNo(false), 3000);
+    }
+
     const newLocationDetails = {
       street: parsedStreet,
       landmark: "",
