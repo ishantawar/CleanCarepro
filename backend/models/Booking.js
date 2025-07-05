@@ -175,31 +175,76 @@ bookingSchema.statics.generateCustomOrderId = async function () {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const yearMonth = `${year}${month}`;
 
-  // Find the latest booking for this month
-  const latestBooking = await this.findOne({
-    custom_order_id: { $regex: `^[A-Z]${yearMonth}` },
-  }).sort({ custom_order_id: -1 });
+  console.log("🔢 Generating custom order ID for year-month:", yearMonth);
+
+  // Use a more robust query to find the latest booking for this month
+  const latestBooking = await this.findOne(
+    {
+      custom_order_id: {
+        $regex: `^[A-Z]${yearMonth}`,
+        $exists: true,
+        $ne: null,
+      },
+    },
+    null,
+    { sort: { custom_order_id: -1 } },
+  );
+
+  console.log(
+    "🔍 Latest booking found:",
+    latestBooking ? latestBooking.custom_order_id : "none",
+  );
 
   let letter = "A";
   let sequence = 1;
 
-  if (latestBooking) {
-    const lastOrderId = latestBooking.custom_order_id;
-    const lastLetter = lastOrderId.charAt(0);
-    const lastSequence = parseInt(lastOrderId.slice(-5));
+  if (latestBooking && latestBooking.custom_order_id) {
+    try {
+      const lastOrderId = latestBooking.custom_order_id;
+      const lastLetter = lastOrderId.charAt(0);
+      const lastSequence = parseInt(lastOrderId.slice(-5));
 
-    if (lastSequence >= 99999) {
-      // Roll over to next letter
-      letter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
-      sequence = 1;
-    } else {
-      letter = lastLetter;
-      sequence = lastSequence + 1;
+      console.log("📊 Last order details:", {
+        lastOrderId,
+        lastLetter,
+        lastSequence,
+      });
+
+      if (!isNaN(lastSequence)) {
+        if (lastSequence >= 99999) {
+          // Roll over to next letter
+          letter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+          sequence = 1;
+        } else {
+          letter = lastLetter;
+          sequence = lastSequence + 1;
+        }
+      }
+    } catch (parseError) {
+      console.warn(
+        "⚠️ Error parsing last order ID, using defaults:",
+        parseError,
+      );
     }
   }
 
   const sequenceStr = String(sequence).padStart(5, "0");
-  return `${letter}${yearMonth}${sequenceStr}`;
+  const newOrderId = `${letter}${yearMonth}${sequenceStr}`;
+
+  console.log("✨ Generated new order ID:", newOrderId);
+
+  // Double-check that this ID doesn't already exist (prevent duplicates)
+  const existingBooking = await this.findOne({ custom_order_id: newOrderId });
+  if (existingBooking) {
+    console.warn("⚠️ Generated ID already exists, incrementing...");
+    sequence++;
+    const fallbackSequenceStr = String(sequence).padStart(5, "0");
+    const fallbackOrderId = `${letter}${yearMonth}${fallbackSequenceStr}`;
+    console.log("🔄 Fallback order ID:", fallbackOrderId);
+    return fallbackOrderId;
+  }
+
+  return newOrderId;
 };
 
 // Calculate final amount and generate custom order ID before saving
