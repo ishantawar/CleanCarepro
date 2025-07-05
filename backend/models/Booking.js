@@ -175,31 +175,76 @@ bookingSchema.statics.generateCustomOrderId = async function () {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const yearMonth = `${year}${month}`;
 
-  // Find the latest booking for this month
-  const latestBooking = await this.findOne({
-    custom_order_id: { $regex: `^[A-Z]${yearMonth}` },
-  }).sort({ custom_order_id: -1 });
+  console.log("🔢 Generating custom order ID for year-month:", yearMonth);
+
+  // Use a more robust query to find the latest booking for this month
+  const latestBooking = await this.findOne(
+    {
+      custom_order_id: {
+        $regex: `^[A-Z]${yearMonth}`,
+        $exists: true,
+        $ne: null,
+      },
+    },
+    null,
+    { sort: { custom_order_id: -1 } },
+  );
+
+  console.log(
+    "🔍 Latest booking found:",
+    latestBooking ? latestBooking.custom_order_id : "none",
+  );
 
   let letter = "A";
   let sequence = 1;
 
-  if (latestBooking) {
-    const lastOrderId = latestBooking.custom_order_id;
-    const lastLetter = lastOrderId.charAt(0);
-    const lastSequence = parseInt(lastOrderId.slice(-5));
+  if (latestBooking && latestBooking.custom_order_id) {
+    try {
+      const lastOrderId = latestBooking.custom_order_id;
+      const lastLetter = lastOrderId.charAt(0);
+      const lastSequence = parseInt(lastOrderId.slice(-5));
 
-    if (lastSequence >= 99999) {
-      // Roll over to next letter
-      letter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
-      sequence = 1;
-    } else {
-      letter = lastLetter;
-      sequence = lastSequence + 1;
+      console.log("📊 Last order details:", {
+        lastOrderId,
+        lastLetter,
+        lastSequence,
+      });
+
+      if (!isNaN(lastSequence)) {
+        if (lastSequence >= 99999) {
+          // Roll over to next letter
+          letter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+          sequence = 1;
+        } else {
+          letter = lastLetter;
+          sequence = lastSequence + 1;
+        }
+      }
+    } catch (parseError) {
+      console.warn(
+        "⚠️ Error parsing last order ID, using defaults:",
+        parseError,
+      );
     }
   }
 
   const sequenceStr = String(sequence).padStart(5, "0");
-  return `${letter}${yearMonth}${sequenceStr}`;
+  const newOrderId = `${letter}${yearMonth}${sequenceStr}`;
+
+  console.log("✨ Generated new order ID:", newOrderId);
+
+  // Double-check that this ID doesn't already exist (prevent duplicates)
+  const existingBooking = await this.findOne({ custom_order_id: newOrderId });
+  if (existingBooking) {
+    console.warn("⚠️ Generated ID already exists, incrementing...");
+    sequence++;
+    const fallbackSequenceStr = String(sequence).padStart(5, "0");
+    const fallbackOrderId = `${letter}${yearMonth}${fallbackSequenceStr}`;
+    console.log("🔄 Fallback order ID:", fallbackOrderId);
+    return fallbackOrderId;
+  }
+
+  return newOrderId;
 };
 
 // Calculate final amount and generate custom order ID before saving
@@ -208,12 +253,32 @@ bookingSchema.pre("save", async function (next) {
 
   // Generate custom order ID if it's a new document
   if (this.isNew && !this.custom_order_id) {
-    try {
-      this.custom_order_id = await this.constructor.generateCustomOrderId();
-      console.log("✅ Generated custom order ID:", this.custom_order_id);
-    } catch (error) {
-      console.error("❌ Failed to generate custom order ID:", error);
-      return next(error);
+    console.log("🔢 Attempting to generate custom order ID for new booking...");
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        this.custom_order_id = await this.constructor.generateCustomOrderId();
+        console.log("✅ Generated custom order ID:", this.custom_order_id);
+        break;
+      } catch (error) {
+        retryCount++;
+        console.error(
+          `❌ Failed to generate custom order ID (attempt ${retryCount}/${maxRetries}):`,
+          error,
+        );
+
+        if (retryCount >= maxRetries) {
+          // Generate a fallback custom order ID
+          const fallbackId = `B${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          this.custom_order_id = fallbackId;
+          console.warn("⚠️ Using fallback custom order ID:", fallbackId);
+        } else {
+          // Wait a bit before retrying to avoid race conditions
+          await new Promise((resolve) => setTimeout(resolve, 100 * retryCount));
+        }
+      }
     }
   }
 

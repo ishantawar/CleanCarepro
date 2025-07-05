@@ -94,6 +94,8 @@ export class BookingService {
     return fallbackId;
   }
 
+  private static pendingBookings = new Set<string>();
+
   /**
    * Create a new booking
    */
@@ -120,77 +122,109 @@ export class BookingService {
         console.log("✅ Resolved user ID for booking:", resolvedUserId);
       }
 
-      // Generate booking ID
-      const bookingId = `booking_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Create a unique identifier for this booking to prevent duplicates
+      const bookingHash = `${resolvedUserId}_${bookingData.pickupDate}_${bookingData.pickupTime}_${bookingData.totalAmount}`;
 
-      const booking: BookingDetails = {
-        ...bookingData,
-        userId: resolvedUserId, // Use resolved user ID
-        id: bookingId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        // Add item prices if provided
-        ...(itemPrices && { item_prices: itemPrices }),
-      };
-
-      // Always save to localStorage first for immediate availability
-      this.saveBookingToLocalStorage(booking);
-      console.log("💾 Booking saved to localStorage:", booking.id);
-
-      // Trigger immediate UI update for booking history
-      const bookingCreatedEvent = new CustomEvent("bookingCreated", {
-        detail: { booking },
-      });
-      window.dispatchEvent(bookingCreatedEvent);
-
-      // Save to backend (with improved error handling)
-      let backendSaveSuccess = false;
-
-      // Only try backend sync if API URL is configured
-      if (this.apiBaseUrl) {
-        try {
-          await this.syncBookingToBackend(booking);
-          console.log("✅ Booking synced to backend API:", booking.id);
-          backendSaveSuccess = true;
-        } catch (syncError) {
-          console.warn("⚠️ Backend API sync failed:", syncError);
-        }
+      // Check if this booking is already being processed
+      if (BookingService.pendingBookings.has(bookingHash)) {
+        console.log(
+          "⚠️ Duplicate booking request detected, ignoring:",
+          bookingHash,
+        );
+        return {
+          success: false,
+          error: "Booking is already being processed. Please wait.",
+        };
       }
 
-      // Save to MongoDB as fallback (but don't use MongoDB's API call)
-      // This just saves to local MongoDB storage, not the API
-      if (!backendSaveSuccess) {
-        try {
-          // Save to MongoDB local storage without triggering API call
-          const mongoBookingData = {
-            ...booking,
-            _id: booking.id,
-            customer_id: booking.userId,
-          };
-          localStorage.setItem(
-            `mongo_booking_${booking.id}`,
-            JSON.stringify(mongoBookingData),
-          );
-          console.log("💾 Booking saved to MongoDB localStorage:", booking.id);
-        } catch (error) {
-          console.warn("⚠️ MongoDB localStorage save error:", error);
+      // Mark this booking as pending
+      BookingService.pendingBookings.add(bookingHash);
+
+      try {
+        // Generate booking ID
+        const bookingId = `booking_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const booking: BookingDetails = {
+          ...bookingData,
+          userId: resolvedUserId, // Use resolved user ID
+          id: bookingId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          // Add item prices if provided
+          ...(itemPrices && { item_prices: itemPrices }),
+        };
+
+        // Always save to localStorage first for immediate availability
+        this.saveBookingToLocalStorage(booking);
+        console.log("💾 Booking saved to localStorage:", booking.id);
+
+        // Trigger immediate UI update for booking history
+        const bookingCreatedEvent = new CustomEvent("bookingCreated", {
+          detail: { booking },
+        });
+        window.dispatchEvent(bookingCreatedEvent);
+
+        // Save to backend (with improved error handling)
+        let backendSaveSuccess = false;
+        let backendBooking = booking;
+
+        // Only try backend sync if API URL is configured
+        if (this.apiBaseUrl) {
+          try {
+            const result = await this.syncBookingToBackend(booking);
+            console.log("✅ Booking synced to backend API:", booking.id);
+            backendSaveSuccess = true;
+
+            // If backend returns a booking with custom_order_id, use that
+            if (result && result.custom_order_id) {
+              backendBooking = {
+                ...booking,
+                custom_order_id: result.custom_order_id,
+              };
+              // Update localStorage with backend data
+              this.saveBookingToLocalStorage(backendBooking);
+            }
+          } catch (syncError) {
+            console.warn("⚠️ Backend API sync failed:", syncError);
+          }
         }
+
+        // Save to MongoDB as fallback (but don't use MongoDB's API call)
+        // This just saves to local MongoDB storage, not the API
+        if (!backendSaveSuccess) {
+          try {
+            // Save to MongoDB local storage without triggering API call
+            const mongoBookingData = {
+              ...booking,
+              _id: booking.id,
+              customer_id: booking.userId,
+            };
+            localStorage.setItem(
+              `mongo_booking_${booking.id}`,
+              JSON.stringify(mongoBookingData),
+            );
+            console.log(
+              "💾 Booking saved to MongoDB localStorage:",
+              booking.id,
+            );
+          } catch (error) {
+            console.warn("⚠️ MongoDB localStorage save error:", error);
+          }
+        }
+
+        const message = backendSaveSuccess
+          ? "Booking created and saved to server successfully"
+          : "Booking created (saved locally, will sync when online)";
+
+        return {
+          success: true,
+          message,
+          booking: backendBooking,
+        };
+      } finally {
+        // Always remove from pending set
+        BookingService.pendingBookings.delete(bookingHash);
       }
-
-      // Google Sheets integration removed
-
-      // Background sync is no longer needed as we already synced above
-      // This prevents duplicate API calls that were causing the 400 errors
-
-      const message = backendSaveSuccess
-        ? "Booking created and saved to server successfully"
-        : "Booking created (saved locally, will sync when online)";
-
-      return {
-        success: true,
-        message,
-        booking,
-      };
     } catch (error) {
       console.error("❌ Failed to create booking:", error);
       return {
@@ -704,6 +738,9 @@ export class BookingService {
       if (response.ok) {
         const result = await response.json();
         console.log("✅ Booking synced to backend:", booking.id, result);
+
+        // Return the result so the calling function can use the custom_order_id
+        return result.booking || result;
       } else {
         let errorDetails;
         const contentType = response.headers.get("content-type");
