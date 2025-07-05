@@ -208,12 +208,32 @@ bookingSchema.pre("save", async function (next) {
 
   // Generate custom order ID if it's a new document
   if (this.isNew && !this.custom_order_id) {
-    try {
-      this.custom_order_id = await this.constructor.generateCustomOrderId();
-      console.log("✅ Generated custom order ID:", this.custom_order_id);
-    } catch (error) {
-      console.error("❌ Failed to generate custom order ID:", error);
-      return next(error);
+    console.log("🔢 Attempting to generate custom order ID for new booking...");
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        this.custom_order_id = await this.constructor.generateCustomOrderId();
+        console.log("✅ Generated custom order ID:", this.custom_order_id);
+        break;
+      } catch (error) {
+        retryCount++;
+        console.error(
+          `❌ Failed to generate custom order ID (attempt ${retryCount}/${maxRetries}):`,
+          error,
+        );
+
+        if (retryCount >= maxRetries) {
+          // Generate a fallback custom order ID
+          const fallbackId = `B${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          this.custom_order_id = fallbackId;
+          console.warn("⚠️ Using fallback custom order ID:", fallbackId);
+        } else {
+          // Wait a bit before retrying to avoid race conditions
+          await new Promise((resolve) => setTimeout(resolve, 100 * retryCount));
+        }
+      }
     }
   }
 
