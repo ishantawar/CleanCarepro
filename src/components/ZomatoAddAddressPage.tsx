@@ -395,6 +395,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     // More comprehensive filtering - preserve meaningful address components
     const cleanParts = parts.filter((part) => {
       if (!part || part.length < 2) return false;
+      if (part === extractedFlatNo) return false; // Exclude extracted house number
       if (part.match(/^\d{6}$/)) return false; // Pure pincode
       if (part.toLowerCase() === "india") return false;
       if (
