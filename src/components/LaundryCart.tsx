@@ -929,7 +929,7 @@ Confirm this booking?`;
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-1">
                   <span className="text-green-700 font-medium text-xs">
-                    ✓ {appliedCoupon.code}
+                    �� {appliedCoupon.code}
                   </span>
                   <span className="text-xs text-green-600">
                     ({appliedCoupon.discount}%)
@@ -1016,9 +1016,11 @@ Confirm this booking?`;
         onClose={() => setShowZomatoAddressSelector(false)}
         onSelectAddress={handleAddressSelect}
         onAddNewAddress={() => {
+          setEditingAddress(null);
           setShowZomatoAddressSelector(false);
           setShowZomatoAddAddressPage(true);
         }}
+        onEditAddress={handleEditAddress}
         currentUser={currentUser}
         selectedAddressId={selectedSavedAddress?.id}
       />
