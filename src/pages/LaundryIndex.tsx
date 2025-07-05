@@ -478,7 +478,9 @@ const LaundryIndex = () => {
       if (mongoResult.data) {
         console.log(
           "✅ Booking saved to MongoDB:",
-          mongoResult.data._id || "unknown_id",
+          mongoResult.data.custom_order_id ||
+            mongoResult.data._id ||
+            "unknown_id",
         );
 
         // Google Sheets integration removed
