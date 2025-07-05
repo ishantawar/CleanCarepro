@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: [true, "Phone number is required"],
+      unique: true,
       trim: true,
       match: [/^[6-9]\d{9}$/, "Please enter a valid 10-digit phone number"],
     },
@@ -137,7 +138,6 @@ userSchema.statics.phoneExists = async function (phone) {
 };
 
 // Create indexes
-userSchema.index({ phone: 1 }, { unique: true });
 userSchema.index({ user_type: 1 });
 userSchema.index({ created_at: -1 });
 
