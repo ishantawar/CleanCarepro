@@ -168,20 +168,17 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
-// Generate custom order ID
-async function generateCustomOrderId() {
+// Generate custom order ID - moved inside schema statics
+bookingSchema.statics.generateCustomOrderId = async function () {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const yearMonth = `${year}${month}`;
 
   // Find the latest booking for this month
-  const latestBooking = await mongoose
-    .model("Booking")
-    .findOne({
-      custom_order_id: { $regex: `^[A-Z]${yearMonth}` },
-    })
-    .sort({ custom_order_id: -1 });
+  const latestBooking = await this.findOne({
+    custom_order_id: { $regex: `^[A-Z]${yearMonth}` },
+  }).sort({ custom_order_id: -1 });
 
   let letter = "A";
   let sequence = 1;
@@ -203,7 +200,7 @@ async function generateCustomOrderId() {
 
   const sequenceStr = String(sequence).padStart(5, "0");
   return `${letter}${yearMonth}${sequenceStr}`;
-}
+};
 
 // Calculate final amount and generate custom order ID before saving
 bookingSchema.pre("save", async function (next) {
@@ -212,8 +209,10 @@ bookingSchema.pre("save", async function (next) {
   // Generate custom order ID if it's a new document
   if (this.isNew && !this.custom_order_id) {
     try {
-      this.custom_order_id = await generateCustomOrderId();
+      this.custom_order_id = await this.constructor.generateCustomOrderId();
+      console.log("✅ Generated custom order ID:", this.custom_order_id);
     } catch (error) {
+      console.error("❌ Failed to generate custom order ID:", error);
       return next(error);
     }
   }
