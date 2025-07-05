@@ -428,34 +428,15 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       console.log("🛣️ Street:", cleanParts[0]);
       console.log("🏘️ Area:", cleanParts[1]);
     } else if (cleanParts.length >= 3) {
-      // Multiple parts - be more careful about what goes where
+      // Multiple parts - first as street, rest as area
+      setStreet(cleanParts[0]);
 
-      // Check if first part looks like a specific building/house detail
-      const firstPart = cleanParts[0];
-      const looksLikeHouseDetail =
-        /^\d+|house|flat|plot|#|building|block/i.test(firstPart);
+      // Use next 2-3 parts for area to keep locality details
+      const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
+      setArea(areaParts.join(", "));
 
-      if (looksLikeHouseDetail) {
-        // First part is house/building - use as street
-        setStreet(firstPart);
-
-        // Take next 2-3 parts for area to preserve locality details
-        const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
-        setArea(areaParts.join(", "));
-
-        console.log("🏢 House detail as street:", firstPart);
-        console.log("🏘️ Detailed area:", areaParts.join(", "));
-      } else {
-        // First part is street name - preserve more context
-        setStreet(cleanParts[0]);
-
-        // Use next 2-3 parts for area to keep locality details
-        const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
-        setArea(areaParts.join(", "));
-
-        console.log("🛣️ Street name:", cleanParts[0]);
-        console.log("🏘️ Extended area:", areaParts.join(", "));
-      }
+      console.log("🛣️ Street name:", cleanParts[0]);
+      console.log("🏘️ Extended area:", areaParts.join(", "));
     }
   };
 
