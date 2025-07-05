@@ -182,7 +182,20 @@ const SimplifiedAddressForm: React.FC<SimplifiedAddressFormProps> = ({
 
       const data = await response.json();
 
+      // Extract house number from address components
+      let flatNo = "";
+      if (data.streetNumber) {
+        flatNo = data.streetNumber;
+      } else if (data.street && data.street.match(/^\d+/)) {
+        // If street starts with number, extract it as house number
+        const match = data.street.match(/^(\d+[\w\/\-]*)/);
+        if (match) {
+          flatNo = match[1];
+        }
+      }
+
       return {
+        flatNo: flatNo || "",
         street: data.locality || data.city || "",
         village: data.city || data.locality || "",
         city: data.city || data.principalSubdivision || "",
