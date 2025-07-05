@@ -1002,36 +1002,24 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label
                   htmlFor="area"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Area/Village
+                  Area/Village/City *
                 </Label>
                 <Input
                   id="area"
-                  placeholder="Area name"
+                  placeholder="Complete location (area, village, city)"
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
                   className="mt-2"
                 />
-              </div>
-              <div>
-                <Label
-                  htmlFor="city"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  City *
-                </Label>
-                <Input
-                  id="city"
-                  placeholder="City name"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="mt-2"
-                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Complete location including area, village, and city
+                </p>
               </div>
               <div>
                 <Label
