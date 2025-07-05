@@ -602,6 +602,12 @@ Confirm this booking?`;
     }
   };
 
+  const handleEditAddress = (address: any) => {
+    setEditingAddress(address);
+    setShowZomatoAddressSelector(false);
+    setShowZomatoAddAddressPage(true);
+  };
+
   const saveAddressAfterBooking = async (orderAddress: any) => {
     if (!currentUser || !orderAddress) return;
 
