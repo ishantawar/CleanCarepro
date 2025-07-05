@@ -85,6 +85,7 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
     initialAddress?.type || "home",
   );
   const [addressLabel, setAddressLabel] = useState(initialAddress?.label || "");
+  const [autoDetectedHouseNo, setAutoDetectedHouseNo] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const autocompleteService = useRef<any>(null);
