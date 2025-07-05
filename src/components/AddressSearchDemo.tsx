@@ -128,6 +128,9 @@ const AddressSearchDemo: React.FC = () => {
                 <li>• Support for addresses, establishments, and localities</li>
                 <li>• Restricted to India for relevant results</li>
                 <li>• Fallback to multiple geocoding services</li>
+                <li>
+                  • <strong>🏠 Auto-detects house numbers</strong>
+                </li>
               </ul>
             </div>
             <div>
