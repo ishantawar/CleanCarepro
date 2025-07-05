@@ -293,6 +293,7 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     useState(false);
   const [showZomatoAddAddressPage, setShowZomatoAddAddressPage] =
     useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const [selectedSavedAddress, setSelectedSavedAddress] = useState<any>(null);
 
   const handleProceedToCheckout = async () => {
