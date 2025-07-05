@@ -181,6 +181,9 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
             let address = "";
             if (data.address) {
               const parts = [];
+              // Include house number if available
+              if (data.address.house_number)
+                parts.push(data.address.house_number);
               if (data.address.road) parts.push(data.address.road);
               if (data.address.suburb || data.address.neighbourhood)
                 parts.push(data.address.suburb || data.address.neighbourhood);
@@ -195,6 +198,7 @@ const LocationDetector: React.FC<LocationDetectorProps> = ({
                     data.address.village,
                 );
               if (data.address.state) parts.push(data.address.state);
+              if (data.address.postcode) parts.push(data.address.postcode);
               address = parts.join(", ") || data.display_name;
             } else {
               address = data.display_name || `${latitude}, ${longitude}`;
