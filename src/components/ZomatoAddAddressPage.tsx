@@ -660,8 +660,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         : flatNo,
       street,
       landmark,
-      area,
-      city,
+      area, // This now contains the merged area/city information
       pincode,
     ].filter(Boolean);
 
@@ -671,8 +670,8 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       flatNo: flatNo,
       street: street,
       landmark: landmark,
-      village: area,
-      city: city,
+      village: area, // Use the merged area field as village
+      city: area, // Use the merged area field as city for backward compatibility
       pincode: pincode,
       fullAddress: completeAddress || selectedLocation.address,
       coordinates: selectedLocation.coordinates,
@@ -693,7 +692,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const isFormValid = () => {
     return (
       selectedLocation &&
-      city.trim() &&
+      area.trim() && // Now checking the merged area field instead of city
       pincode.trim() &&
       pincode.length === 6 &&
       receiverName.trim() &&
