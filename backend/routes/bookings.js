@@ -458,8 +458,22 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Create booking with proper customer_id as ObjectId
+    // Generate custom order ID
+    const generateCustomOrderId = () => {
+      const timestamp = Date.now().toString();
+      const randomSuffix = Math.random()
+        .toString(36)
+        .substr(2, 6)
+        .toUpperCase();
+      return `ORD_${timestamp}_${randomSuffix}`;
+    };
+
+    const customOrderId = generateCustomOrderId();
+    console.log("🆔 Generated custom order ID:", customOrderId);
+
+    // Create booking with proper customer_id as ObjectId and custom order ID
     const booking = new Booking({
+      custom_order_id: customOrderId,
       customer_id: customer._id, // Use the actual customer ObjectId from database
       service,
       service_type,
