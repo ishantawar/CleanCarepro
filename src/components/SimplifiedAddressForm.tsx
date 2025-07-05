@@ -131,7 +131,7 @@ const SimplifiedAddressForm: React.FC<SimplifiedAddressFormProps> = ({
             coordinates: { lat: latitude, lng: longitude, accuracy },
             ...addressFromCoords,
             fullAddress:
-              `${addressFromCoords.street || ""}, ${addressFromCoords.village || ""}, ${addressFromCoords.city || ""}, ${addressFromCoords.pincode || ""}`
+              `${addressFromCoords.flatNo || ""}, ${addressFromCoords.street || ""}, ${addressFromCoords.village || ""}, ${addressFromCoords.city || ""}, ${addressFromCoords.pincode || ""}`
                 .replace(/^, |, $|, , /g, ", ")
                 .replace(/^, |, $/g, ""),
           }));
