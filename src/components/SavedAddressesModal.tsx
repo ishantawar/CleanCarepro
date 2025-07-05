@@ -33,6 +33,12 @@ import {
   ArrowRight,
   Phone,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import ZomatoAddAddressPage from "./ZomatoAddAddressPage";
 
 interface AddressData {
@@ -265,38 +271,53 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingAddress(address);
-                              setShowAddAddressPage(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                        {/* Actions - 3 Dot Menu */}
+                        <div className="flex items-center ml-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
+                                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Delete Address?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingAddress(address);
+                                  setShowAddAddressPage(true);
+                                }}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit Address
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeletingId(address.id || "");
+                                }}
+                                className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete Address
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        {/* Delete Confirmation Dialog */}
+                        <AlertDialog open={deletingId === address.id} onOpenChange={(open) => !open && setDeletingId(null)}>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete Address?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
                                   Are you sure you want to delete this address?
                                   This action cannot be undone.
                                 </AlertDialogDescription>
