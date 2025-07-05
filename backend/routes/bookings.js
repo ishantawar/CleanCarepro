@@ -250,7 +250,7 @@ router.post("/", async (req, res) => {
         actualCustomerId = phone;
         console.log(`📞 ✅ Extracted valid phone from user ID: ${phone}`);
       } else {
-        console.log(`📞 ❌ Extracted phone is invalid: ${phone}`);
+        console.log(`📞 ��� Extracted phone is invalid: ${phone}`);
       }
     } else if (
       typeof customer_id === "string" &&
@@ -522,7 +522,7 @@ router.post("/", async (req, res) => {
       item_prices, // Store individual service prices
     });
 
-    console.log("���� SAVING BOOKING: About to save booking to database...");
+    console.log("🔍 SAVING BOOKING: About to save booking to database...");
 
     console.log(
       "📦 Final booking object (before save):",
@@ -546,6 +546,16 @@ router.post("/", async (req, res) => {
       booking._id,
     );
     console.log("🆔 Generated custom order ID:", booking.custom_order_id);
+    console.log("📊 Booking summary:", {
+      id: booking._id,
+      custom_order_id: booking.custom_order_id,
+      customer_id: booking.customer_id,
+      service: booking.service,
+      total_price: booking.total_price,
+      final_amount: booking.final_amount,
+      status: booking.status,
+      created_at: booking.created_at,
+    });
 
     console.log("🚀 ========== BOOKING CREATION SUCCESS ==========");
 
