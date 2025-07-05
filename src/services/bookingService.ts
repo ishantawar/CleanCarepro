@@ -4,6 +4,7 @@ import { config } from "../config/env";
 
 export interface BookingDetails {
   id: string;
+  custom_order_id?: string;
   userId: string;
   services: string[];
   totalAmount: number;
