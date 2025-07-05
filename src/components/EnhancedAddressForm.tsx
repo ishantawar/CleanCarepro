@@ -229,8 +229,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const shortName = component.short_name;
 
       if (types.includes("street_number")) {
-        // House/building number
-        if (!newAddress.flatNo) {
+        // House/building number - fill if empty or if location was auto-detected
+        if (!newAddress.flatNo || !address.flatNo) {
           newAddress.flatNo = longName;
         }
       } else if (types.includes("route")) {
