@@ -503,6 +503,7 @@ router.post("/", async (req, res) => {
       "✅ ✅ ✅ BOOKING SAVED SUCCESSFULLY to database:",
       booking._id,
     );
+    console.log("🆔 Generated custom order ID:", booking.custom_order_id);
 
     console.log("🚀 ========== BOOKING CREATION SUCCESS ==========");
 
