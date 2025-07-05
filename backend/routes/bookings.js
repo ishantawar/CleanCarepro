@@ -1000,6 +1000,12 @@ router.put("/:bookingId/cancel", async (req, res) => {
     let canCancel = false;
 
     if (userId) {
+      console.log("🔍 Starting user ID validation:", {
+        userId,
+        userIdType: typeof userId,
+        bookingCustomerId: booking.customer_id,
+      });
+
       // Direct ObjectId match
       if (booking.customer_id.toString() === userId) {
         canCancel = true;
@@ -1009,26 +1015,42 @@ router.put("/:bookingId/cancel", async (req, res) => {
       // Handle user_ prefix format
       if (!canCancel && userId.startsWith("user_")) {
         const phone = userId.replace("user_", "");
+        console.log("🔍 Extracted phone from user_ format:", phone);
 
         // Find the User record by phone and check if it matches
         try {
           const userRecord = await User.findOne({ phone: phone });
+          console.log("🔍 User lookup by phone result:", {
+            found: !!userRecord,
+            userId: userRecord?._id,
+            matches:
+              userRecord?._id.toString() === booking.customer_id.toString(),
+          });
+
           if (
             userRecord &&
             userRecord._id.toString() === booking.customer_id.toString()
           ) {
             canCancel = true;
-            console.log("✅ Phone-based user match");
+            console.log("✅ Phone-based user match via user_ prefix");
           }
         } catch (userError) {
           console.warn("Failed to lookup user by phone:", userError);
         }
       }
 
-      // Handle phone number match
+      // Handle phone number match (direct 10-digit number)
       if (!canCancel && userId.match(/^\d{10,}$/)) {
+        console.log("🔍 Treating userId as direct phone number:", userId);
         try {
           const userRecord = await User.findOne({ phone: userId });
+          console.log("🔍 User lookup by direct phone result:", {
+            found: !!userRecord,
+            userId: userRecord?._id,
+            matches:
+              userRecord?._id.toString() === booking.customer_id.toString(),
+          });
+
           if (
             userRecord &&
             userRecord._id.toString() === booking.customer_id.toString()
@@ -1038,6 +1060,42 @@ router.put("/:bookingId/cancel", async (req, res) => {
           }
         } catch (userError) {
           console.warn("Failed to lookup user by phone:", userError);
+        }
+      }
+
+      // Handle ObjectId format - check if this ObjectId belongs to a user with same phone as booking's customer
+      if (!canCancel && mongoose.Types.ObjectId.isValid(userId)) {
+        console.log("🔍 Treating userId as ObjectId:", userId);
+        try {
+          // Get the user by the provided ObjectId
+          const providedUser = await User.findById(userId);
+          // Get the booking's customer
+          const bookingCustomer = await User.findById(booking.customer_id);
+
+          console.log("🔍 ObjectId comparison:", {
+            providedUser: {
+              id: providedUser?._id,
+              phone: providedUser?.phone,
+            },
+            bookingCustomer: {
+              id: bookingCustomer?._id,
+              phone: bookingCustomer?.phone,
+            },
+          });
+
+          // Allow cancellation if:
+          // 1. Direct ObjectId match (already checked above)
+          // 2. Both users exist and have the same phone number
+          if (
+            providedUser &&
+            bookingCustomer &&
+            providedUser.phone === bookingCustomer.phone
+          ) {
+            canCancel = true;
+            console.log("✅ ObjectId match via same phone number");
+          }
+        } catch (userError) {
+          console.warn("Failed to lookup users by ObjectId:", userError);
         }
       }
     }
