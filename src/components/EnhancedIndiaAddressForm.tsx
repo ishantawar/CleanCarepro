@@ -286,60 +286,21 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
         parsedPincode = pincodeMatch[0];
       }
 
-      // Enhanced house number extraction from the first part of address
-      if (parts.length > 0) {
-        const firstPart = parts[0];
+      // Enhanced house number extraction using utility function
+      const extractedDetails = locationService.extractHouseNumber(address);
 
-        // Pattern 1: Simple numbers (123, 45, etc.)
-        const simpleNumberMatch = firstPart.match(/^\s*(\d+)\s*$/);
-        if (simpleNumberMatch) {
-          parsedFlatNo = simpleNumberMatch[1];
-        }
-
-        // Pattern 2: Number with letters (123A, 45B, etc.)
-        const numberLetterMatch = firstPart.match(/^\s*(\d+[A-Z]*)\s*$/i);
-        if (numberLetterMatch && !simpleNumberMatch) {
-          parsedFlatNo = numberLetterMatch[1];
-        }
-
-        // Pattern 3: Alphanumeric formats (A-123, B/45, Plot-67, etc.)
-        const alphaNumericMatch = firstPart.match(
-          /^\s*([A-Z]*[-\/]?\d+[A-Z]*)\s*$/i,
-        );
-        if (alphaNumericMatch && !numberLetterMatch && !simpleNumberMatch) {
-          parsedFlatNo = alphaNumericMatch[1];
-        }
-
-        // Pattern 4: House number with description (House No 123, Plot 45, etc.)
-        const houseNumberMatch = firstPart.match(
-          /(?:house\s+no\.?|plot\s+no\.?|flat\s+no\.?|door\s+no\.?|#)\s*(\d+[A-Z]*)/i,
-        );
-        if (houseNumberMatch) {
-          parsedFlatNo = houseNumberMatch[1];
-        }
-
-        // Pattern 5: Complex formats with building/tower info
-        const complexMatch = firstPart.match(/([A-Z]\d*[-\/]?\d*[A-Z]*)/i);
-        if (complexMatch && !parsedFlatNo) {
-          parsedFlatNo = complexMatch[1];
-        }
-
-        // Pattern 6: Extract building/society name if present
-        const buildingMatch = firstPart.match(
-          /(?:tower|block|wing|building|apartment|society|complex)\s+([A-Z0-9\s]+)/i,
-        );
-        if (buildingMatch) {
-          parsedBuilding = buildingMatch[1].trim();
-        }
-
-        // If no house number found yet, try to extract any numeric component
-        if (!parsedFlatNo) {
-          const anyNumberMatch = firstPart.match(/(\d+)/);
-          if (anyNumberMatch) {
-            parsedFlatNo = anyNumberMatch[1];
-          }
-        }
+      if (extractedDetails.houseNumber) {
+        parsedFlatNo = extractedDetails.houseNumber;
       }
+
+      if (extractedDetails.building) {
+        parsedBuilding = extractedDetails.building;
+      }
+
+      // Use cleaned address for further parsing
+      const cleanedParts = extractedDetails.cleanedAddress
+        ? extractedDetails.cleanedAddress.split(",").map((part) => part.trim())
+        : parts.slice(parsedFlatNo ? 1 : 0);
 
       // Try to extract city (usually second-to-last or third-to-last part)
       if (parts.length >= 2) {
