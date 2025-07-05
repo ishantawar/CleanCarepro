@@ -250,55 +250,69 @@ bookingSchema.statics.generateCustomOrderId = async function () {
 
 // Calculate final amount and generate custom order ID before saving
 bookingSchema.pre("save", async function (next) {
-  this.updated_at = new Date();
+  try {
+    this.updated_at = new Date();
 
-  // Generate custom order ID if it's a new document
-  if (this.isNew && !this.custom_order_id) {
-    console.log("🔢 Attempting to generate custom order ID for new booking...");
-    let retryCount = 0;
-    const maxRetries = 3;
+    // Generate custom order ID if it's a new document
+    if (this.isNew && !this.custom_order_id) {
+      console.log(
+        "🔢 Attempting to generate custom order ID for new booking...",
+      );
+      let retryCount = 0;
+      const maxRetries = 3;
 
-    while (retryCount < maxRetries) {
-      try {
-        this.custom_order_id = await this.constructor.generateCustomOrderId();
-        console.log("✅ Generated custom order ID:", this.custom_order_id);
-        break;
-      } catch (error) {
-        retryCount++;
-        console.error(
-          `❌ Failed to generate custom order ID (attempt ${retryCount}/${maxRetries}):`,
-          error,
-        );
+      while (retryCount < maxRetries) {
+        try {
+          const generatedId = await this.constructor.generateCustomOrderId();
+          this.custom_order_id = generatedId;
+          console.log("✅ Generated custom order ID:", this.custom_order_id);
 
-        if (retryCount >= maxRetries) {
-          // Generate a fallback custom order ID
-          const fallbackId = `B${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-          this.custom_order_id = fallbackId;
-          console.warn("⚠️ Using fallback custom order ID:", fallbackId);
-        } else {
-          // Wait a bit before retrying to avoid race conditions
-          await new Promise((resolve) => setTimeout(resolve, 100 * retryCount));
+          // Explicitly mark the field as modified to ensure it gets saved
+          this.markModified("custom_order_id");
+          break;
+        } catch (error) {
+          retryCount++;
+          console.error(
+            `❌ Failed to generate custom order ID (attempt ${retryCount}/${maxRetries}):`,
+            error,
+          );
+
+          if (retryCount >= maxRetries) {
+            // Generate a fallback custom order ID
+            const fallbackId = `B${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+            this.custom_order_id = fallbackId;
+            this.markModified("custom_order_id");
+            console.warn("⚠️ Using fallback custom order ID:", fallbackId);
+          } else {
+            // Wait a bit before retrying to avoid race conditions
+            await new Promise((resolve) =>
+              setTimeout(resolve, 100 * retryCount),
+            );
+          }
         }
       }
     }
-  }
 
-  // Calculate final amount if not already set
-  if (!this.final_amount) {
-    this.final_amount = this.total_price - (this.discount_amount || 0);
-  }
+    // Calculate final amount if not already set
+    if (!this.final_amount) {
+      this.final_amount = this.total_price - (this.discount_amount || 0);
+    }
 
-  // Ensure final amount is not negative
-  if (this.final_amount < 0) {
-    this.final_amount = 0;
-  }
+    // Ensure final amount is not negative
+    if (this.final_amount < 0) {
+      this.final_amount = 0;
+    }
 
-  // Set completion timestamp if status is completed
-  if (this.status === "completed" && !this.completed_at) {
-    this.completed_at = new Date();
-  }
+    // Set completion timestamp if status is completed
+    if (this.status === "completed" && !this.completed_at) {
+      this.completed_at = new Date();
+    }
 
-  next();
+    next();
+  } catch (error) {
+    console.error("❌ Error in pre-save middleware:", error);
+    next(error);
+  }
 });
 
 // Create indexes
