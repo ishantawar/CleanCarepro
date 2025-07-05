@@ -1121,8 +1121,38 @@ router.put("/:bookingId/cancel", async (req, res) => {
       if (!canCancel && mongoose.Types.ObjectId.isValid(userId)) {
         console.log("🔍 Treating userId as ObjectId:", userId);
         try {
-          // Get the user by the provided ObjectId
-          const providedUser = await User.findById(userId);
+          // First try to get the user by the provided ObjectId
+          let providedUser = await User.findById(userId);
+
+          // If not found in User collection, check CleanCareUser collection
+          if (!providedUser) {
+            console.log(
+              "🔍 User not found, checking CleanCareUser collection...",
+            );
+            try {
+              const CleanCareUser = mongoose.model("CleanCareUser");
+              const cleanCareUser = await CleanCareUser.findById(userId);
+
+              if (cleanCareUser && cleanCareUser.phone) {
+                console.log(
+                  "🔍 Found CleanCareUser, looking for corresponding User by phone:",
+                  cleanCareUser.phone,
+                );
+                providedUser = await User.findOne({
+                  phone: cleanCareUser.phone,
+                });
+
+                if (providedUser) {
+                  console.log(
+                    "✅ Found corresponding User via CleanCareUser phone mapping",
+                  );
+                }
+              }
+            } catch (cleanCareError) {
+              console.warn("Failed to lookup CleanCareUser:", cleanCareError);
+            }
+          }
+
           // Get the booking's customer
           const bookingCustomer = await User.findById(booking.customer_id);
 
