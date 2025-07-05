@@ -325,8 +325,15 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
       coordinates: coordinates,
     };
 
+    // Update house details with parsed flat number if current field is empty
+    const newHouseDetails = { ...houseDetails };
+    if (!houseDetails.flatNo && parsedFlatNo) {
+      newHouseDetails.flatNo = parsedFlatNo;
+      setHouseDetails(newHouseDetails);
+    }
+
     setLocationDetails(newLocationDetails);
-    notifyAddressChange(houseDetails, newLocationDetails);
+    notifyAddressChange(newHouseDetails, newLocationDetails);
   };
 
   // Detect current location
