@@ -310,37 +310,11 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                           </DropdownMenu>
                         </div>
 
-                        {/* Delete Confirmation Dialog */}
-                        <AlertDialog open={deletingId === address.id} onOpenChange={(open) => !open && setDeletingId(null)}>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete Address?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                  Are you sure you want to delete this address?
-                                  This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleDeleteAddress(address.id!)
-                                  }
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-
                           {onSelectAddress && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-green-600"
+                              className="h-8 w-8 p-0 text-green-600 ml-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onSelectAddress(address);
@@ -351,6 +325,30 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                             </Button>
                           )}
                         </div>
+
+                        {/* Delete Confirmation Dialog */}
+                        <AlertDialog open={deletingId === address.id} onOpenChange={(open) => !open && setDeletingId(null)}>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete Address?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this address?
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteAddress(address.id!)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </CardContent>
                   </Card>
