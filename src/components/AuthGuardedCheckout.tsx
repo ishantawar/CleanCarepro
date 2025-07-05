@@ -3,7 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, ShoppingCart, CreditCard, ArrowRight, Lock } from "lucide-react";
+import {
+  User,
+  ShoppingCart,
+  CreditCard,
+  ArrowRight,
+  Lock,
+  Package,
+} from "lucide-react";
 import PhoneOtpAuthModal from "./PhoneOtpAuthModal";
 import { useNotifications } from "@/contexts/NotificationContext";
 import {
