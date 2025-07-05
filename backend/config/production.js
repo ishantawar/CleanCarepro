@@ -38,9 +38,9 @@ const config = {
   // Rate Limiting
   RATE_LIMIT: {
     WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-    MAX_REQUESTS: process.env.NODE_ENV === "development" ? 1000 : 100, // More generous in development
+    MAX_REQUESTS: process.env.NODE_ENV === "development" ? 2000 : 500, // More generous for normal usage
     AUTH_WINDOW_MS: 5 * 60 * 1000, // 5 minutes
-    AUTH_MAX_REQUESTS: process.env.NODE_ENV === "development" ? 50 : 10, // More generous in development
+    AUTH_MAX_REQUESTS: process.env.NODE_ENV === "development" ? 100 : 30, // Allow more auth attempts
   },
 
   // File Upload
