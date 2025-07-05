@@ -188,7 +188,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-        <div className="w-full bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto">
+        <div className="w-full bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto relative">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -272,36 +272,46 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                         </div>
 
                         {/* Actions - 3 Dot Menu and Select Button */}
-                        <div className="flex items-center gap-2 ml-4">
-                          <DropdownMenu>
+                        <div className="flex items-center gap-2 ml-4 relative z-10">
+                          <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                                onClick={(e) => e.stopPropagation()}
+                                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 relative z-20"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-40 z-[60] bg-white shadow-lg border"
+                              side="bottom"
+                              sideOffset={5}
+                            >
                               <DropdownMenuItem
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   setEditingAddress(address);
                                   setShowAddAddressPage(true);
                                 }}
-                                className="flex items-center gap-2 cursor-pointer"
+                                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100"
                               >
                                 <Edit className="h-4 w-4" />
                                 Edit Address
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   setDeletingId(address.id || "");
                                 }}
-                                className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                                className="flex items-center gap-2 cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-600"
                               >
                                 <Trash2 className="h-4 w-4" />
                                 Delete Address
@@ -313,7 +323,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-green-600"
+                              className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onSelectAddress(address);
