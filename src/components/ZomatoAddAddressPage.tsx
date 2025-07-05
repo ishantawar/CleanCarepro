@@ -71,8 +71,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         building && `${building}`,
         street && `${street}`,
         landmark && `${landmark}`,
-        area && `${area}`,
-        city && `${city}`,
+        area && `${area}`, // This now contains the merged area/city information
         pincode && `${pincode}`,
       ].filter(Boolean);
 
@@ -87,7 +86,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     };
 
     buildFullAddress();
-  }, [flatNo, building, street, landmark, area, city, pincode]);
+  }, [flatNo, building, street, landmark, area, pincode]); // Removed city from dependencies
   const [addressType, setAddressType] = useState<"home" | "office" | "other">(
     "home",
   );
