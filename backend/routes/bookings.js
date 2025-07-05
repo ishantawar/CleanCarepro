@@ -1102,43 +1102,104 @@ router.put("/:bookingId/cancel", async (req, res) => {
       }
     }
 
-    // LAST RESORT: Check if there are multiple User records for the same phone
+    // PHONE NUMBER MATCHING: Allow cancellation if user has same phone number as booking customer
     if (!canCancel) {
       console.log(
-        "🔍 Last resort: Checking for duplicate users with same phone",
+        "🔍 Phone number matching: Checking if user has same phone as booking customer",
       );
       try {
         const bookingCustomer = await User.findById(booking.customer_id);
         if (bookingCustomer && bookingCustomer.phone) {
           console.log("🔍 Booking customer phone:", bookingCustomer.phone);
 
-          // Find all users with the same phone number
-          const allUsersWithSamePhone = await User.find({
-            phone: bookingCustomer.phone,
-          });
-          console.log(
-            `🔍 Found ${allUsersWithSamePhone.length} users with phone ${bookingCustomer.phone}`,
-          );
+          // Check different user ID formats to find the requesting user's phone
+          let requestingUserPhone = null;
 
-          // Check if the provided userId matches any of these users
-          const matchingUser = allUsersWithSamePhone.find(
-            (user) => user._id.toString() === userId,
-          );
-
-          if (matchingUser) {
-            canCancel = true;
+          // 1. Try direct phone number lookup if userId is phone format
+          if (userId && userId.match(/^\d{10,}$/)) {
+            requestingUserPhone = userId;
             console.log(
-              "✅ Found matching user via phone number duplicate check",
+              "🔍 Using userId as direct phone number:",
+              requestingUserPhone,
             );
-            console.log("🔍 Matched user:", {
-              id: matchingUser._id,
-              phone: matchingUser.phone,
-              name: matchingUser.name || matchingUser.full_name,
+          }
+
+          // 2. Try extracting phone from user_ prefix format
+          if (!requestingUserPhone && userId && userId.startsWith("user_")) {
+            const extractedPhone = userId.replace("user_", "");
+            if (extractedPhone.match(/^\d{10,}$/)) {
+              requestingUserPhone = extractedPhone;
+              console.log(
+                "🔍 Extracted phone from user_ format:",
+                requestingUserPhone,
+              );
+            }
+          }
+
+          // 3. Try looking up user by ObjectId to get their phone
+          if (
+            !requestingUserPhone &&
+            userId &&
+            mongoose.Types.ObjectId.isValid(userId)
+          ) {
+            const requestingUser = await User.findById(userId);
+            if (requestingUser && requestingUser.phone) {
+              requestingUserPhone = requestingUser.phone;
+              console.log(
+                "🔍 Found phone via ObjectId lookup:",
+                requestingUserPhone,
+              );
+            }
+          }
+
+          // If we found the requesting user's phone, compare with booking customer's phone
+          if (
+            requestingUserPhone &&
+            requestingUserPhone === bookingCustomer.phone
+          ) {
+            canCancel = true;
+            console.log("✅ Phone number match - allowing cancellation");
+            console.log("🔍 Phone number match details:", {
+              bookingCustomerPhone: bookingCustomer.phone,
+              requestingUserPhone: requestingUserPhone,
+              userId: userId,
+              bookingCustomerId: booking.customer_id.toString(),
             });
+          } else {
+            console.log("❌ No phone number match found:", {
+              bookingCustomerPhone: bookingCustomer.phone,
+              requestingUserPhone: requestingUserPhone,
+              userId: userId,
+            });
+
+            // FALLBACK: Check if there are multiple User records for the same phone
+            const allUsersWithSamePhone = await User.find({
+              phone: bookingCustomer.phone,
+            });
+            console.log(
+              `🔍 Found ${allUsersWithSamePhone.length} users with phone ${bookingCustomer.phone}`,
+            );
+
+            // Check if the provided userId matches any of these users
+            const matchingUser = allUsersWithSamePhone.find(
+              (user) => user._id.toString() === userId,
+            );
+
+            if (matchingUser) {
+              canCancel = true;
+              console.log(
+                "✅ Found matching user via phone number duplicate check",
+              );
+              console.log("🔍 Matched user:", {
+                id: matchingUser._id,
+                phone: matchingUser.phone,
+                name: matchingUser.name || matchingUser.full_name,
+              });
+            }
           }
         }
-      } catch (duplicateCheckError) {
-        console.warn("Duplicate user check failed:", duplicateCheckError);
+      } catch (phoneMatchError) {
+        console.warn("Phone number matching failed:", phoneMatchError);
       }
     }
 
