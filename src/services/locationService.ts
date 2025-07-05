@@ -70,78 +70,186 @@ class LocationService {
   }
 
   /**
-   * Reverse geocode coordinates to human-readable address with maximum detail
+   * Reverse geocode coordinates to human-readable address with maximum detail including area/village
    */
   async reverseGeocode(coordinates: Coordinates): Promise<string> {
-    console.log("🔍 Starting detailed reverse geocoding for:", coordinates);
+    console.log("🔍 Starting enhanced reverse geocoding for:", coordinates);
 
-    // Try multiple geocoding services for maximum accuracy and detail
-
-    // Method 1: Google Maps API with detailed results (if available)
+    // Method 1: Google Maps API with enhanced result types for Indian addresses
     if (this.GOOGLE_MAPS_API_KEY) {
       try {
         const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coordinates.lat},${coordinates.lng}&result_type=street_address|premise|subpremise&key=${this.GOOGLE_MAPS_API_KEY}`,
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coordinates.lat},${coordinates.lng}&result_type=street_address|premise|subpremise|neighborhood|sublocality|locality&language=en&region=IN&key=${this.GOOGLE_MAPS_API_KEY}`,
         );
 
         const data = await response.json();
 
         if (data.status === "OK" && data.results.length > 0) {
-          console.log("✅ Google Maps detailed result:", data.results[0]);
-          return data.results[0].formatted_address;
+          // Try to get the most detailed result first
+          const detailedResult =
+            data.results.find(
+              (result) =>
+                result.types.includes("street_address") ||
+                result.types.includes("premise") ||
+                result.types.includes("subpremise"),
+            ) || data.results[0];
+
+          console.log("✅ Google Maps enhanced result:", detailedResult);
+
+          // Extract detailed components for better formatting
+          const addressComponents = this.extractDetailedComponents(
+            detailedResult.address_components,
+          );
+          const enhancedAddress =
+            this.formatEnhancedIndianAddress(addressComponents);
+
+          return enhancedAddress || detailedResult.formatted_address;
         }
       } catch (error) {
-        console.warn("Google Maps reverse geocoding failed:", error);
+        console.warn("Google Maps enhanced reverse geocoding failed:", error);
       }
     }
 
-    // Method 2: Nominatim with maximum detail zoom level
+    // Method 2: Enhanced Nominatim with detailed zoom and Indian-specific parameters
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.lat}&lon=${coordinates.lng}&zoom=20&addressdetails=1&extratags=1&namedetails=1`,
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.lat}&lon=${coordinates.lng}&zoom=18&addressdetails=1&extratags=1&namedetails=1&accept-language=en&countrycodes=in`,
         {
           headers: {
-            "User-Agent": "LaundaryFlash-App/1.0",
+            "User-Agent": "CleanCarePro-LocationService/1.0",
           },
         },
       );
 
       const data = await response.json();
 
-      if (data && data.display_name) {
-        console.log("✅ Nominatim detailed result:", data);
-        return data.display_name;
+      if (data && data.address) {
+        console.log("✅ Nominatim enhanced result:", data);
+
+        // Extract detailed Indian address components
+        const enhancedAddress = this.formatDetailedNominatimAddress(
+          data.address,
+        );
+        return enhancedAddress || data.display_name;
       }
     } catch (error) {
-      console.warn("Nominatim reverse geocoding failed:", error);
+      console.warn("Nominatim enhanced reverse geocoding failed:", error);
     }
 
-    // Method 3: Try alternative coordinates API
+    // Method 3: BigDataCloud with enhanced locality details
     try {
       const response = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coordinates.lat}&longitude=${coordinates.lng}&localityLanguage=en`,
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coordinates.lat}&longitude=${coordinates.lng}&localityLanguage=en&localityType=full`,
       );
 
       const data = await response.json();
 
-      if (data && data.locality) {
-        const address = [
-          data.locality,
-          data.principalSubdivision,
+      if (data) {
+        console.log("✅ BigDataCloud enhanced result:", data);
+
+        const enhancedAddress = [
+          data.localityInfo?.administrative?.[4]?.name, // Village/Area
+          data.localityInfo?.administrative?.[3]?.name, // Locality
+          data.locality, // City
+          data.localityInfo?.administrative?.[1]?.name, // State
           data.countryName,
         ]
           .filter(Boolean)
           .join(", ");
-        console.log("✅ BigDataCloud result:", address);
-        return address;
+
+        if (enhancedAddress.length > 10) {
+          return enhancedAddress;
+        }
       }
     } catch (error) {
-      console.warn("BigDataCloud reverse geocoding failed:", error);
+      console.warn("BigDataCloud enhanced reverse geocoding failed:", error);
     }
 
-    // Method 4: Create a formatted address from coordinates using detailed location patterns
+    // Method 4: Fallback with coordinate-based address
     const formattedCoords = await this.formatCoordinatesAsAddress(coordinates);
     return formattedCoords;
+  }
+
+  /**
+   * Extract detailed components from Google Maps address components
+   */
+  private extractDetailedComponents(components: any[]): any {
+    const extracted: any = {};
+
+    components.forEach((component) => {
+      const types = component.types;
+      const longName = component.long_name;
+      const shortName = component.short_name;
+
+      if (types.includes("street_number")) {
+        extracted.street_number = longName;
+      } else if (types.includes("route")) {
+        extracted.route = longName;
+      } else if (types.includes("neighborhood")) {
+        extracted.neighborhood = longName;
+      } else if (types.includes("sublocality_level_2")) {
+        extracted.sublocality_level_2 = longName;
+      } else if (types.includes("sublocality_level_1")) {
+        extracted.sublocality_level_1 = longName;
+      } else if (types.includes("sublocality")) {
+        extracted.sublocality = longName;
+      } else if (types.includes("locality")) {
+        extracted.locality = longName;
+      } else if (types.includes("administrative_area_level_3")) {
+        extracted.area_level_3 = longName;
+      } else if (types.includes("administrative_area_level_2")) {
+        extracted.area_level_2 = longName;
+      } else if (types.includes("administrative_area_level_1")) {
+        extracted.state = longName;
+      } else if (types.includes("postal_code")) {
+        extracted.postal_code = longName;
+      }
+    });
+
+    return extracted;
+  }
+
+  /**
+   * Format enhanced Indian address from Google Maps components
+   */
+  private formatEnhancedIndianAddress(components: any): string {
+    const parts = [
+      components.street_number,
+      components.route,
+      components.neighborhood,
+      components.sublocality_level_2,
+      components.sublocality_level_1,
+      components.sublocality,
+      components.area_level_3,
+      components.locality,
+      components.area_level_2,
+      components.state,
+      components.postal_code,
+    ].filter(Boolean);
+
+    return parts.join(", ");
+  }
+
+  /**
+   * Format detailed address from Nominatim response for Indian locations
+   */
+  private formatDetailedNominatimAddress(address: any): string {
+    const parts = [
+      address.house_number,
+      address.road,
+      address.neighbourhood,
+      address.suburb,
+      address.village,
+      address.town,
+      address.city_district,
+      address.city,
+      address.county,
+      address.state_district,
+      address.state,
+      address.postcode,
+    ].filter(Boolean);
+
+    return parts.join(", ");
   }
 
   /**
