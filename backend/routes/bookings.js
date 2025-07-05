@@ -1332,6 +1332,12 @@ router.delete("/:bookingId", async (req, res) => {
     const { bookingId } = req.params;
     const { user_id, user_type } = req.body;
 
+    console.log("🚫 Legacy booking cancellation request:", {
+      bookingId,
+      user_id,
+      user_type,
+    });
+
     // Get booking details first
     const booking = await Booking.findById(bookingId);
     if (!booking) {
@@ -1339,14 +1345,60 @@ router.delete("/:bookingId", async (req, res) => {
     }
 
     // Check if user has permission to cancel
-    const canCancel =
+    let canCancel =
       (user_type === "customer" &&
         booking.customer_id.toString() === user_id) ||
       (user_type === "rider" &&
         booking.rider_id &&
         booking.rider_id.toString() === user_id);
 
+    // If direct ID match failed for customer, try phone number matching
+    if (!canCancel && user_type === "customer" && user_id) {
+      console.log(
+        "🔍 Legacy route: Checking phone number matching for customer cancellation",
+      );
+      try {
+        const bookingCustomer = await User.findById(booking.customer_id);
+        if (bookingCustomer && bookingCustomer.phone) {
+          // Get requesting user's phone
+          let requestingUserPhone = null;
+
+          // Try different formats to get the requesting user's phone
+          if (user_id.match(/^\d{10,}$/)) {
+            requestingUserPhone = user_id;
+          } else if (user_id.startsWith("user_")) {
+            const extractedPhone = user_id.replace("user_", "");
+            if (extractedPhone.match(/^\d{10,}$/)) {
+              requestingUserPhone = extractedPhone;
+            }
+          } else if (mongoose.Types.ObjectId.isValid(user_id)) {
+            const requestingUser = await User.findById(user_id);
+            if (requestingUser && requestingUser.phone) {
+              requestingUserPhone = requestingUser.phone;
+            }
+          }
+
+          // Check if phones match
+          if (
+            requestingUserPhone &&
+            requestingUserPhone === bookingCustomer.phone
+          ) {
+            canCancel = true;
+            console.log(
+              "✅ Legacy route: Phone number match - allowing cancellation",
+            );
+          }
+        }
+      } catch (phoneMatchError) {
+        console.warn(
+          "Legacy route: Phone number matching failed:",
+          phoneMatchError,
+        );
+      }
+    }
+
     if (!canCancel) {
+      console.log("❌ Legacy route: Access denied for booking cancellation");
       return res.status(403).json({ error: "Access denied" });
     }
 
