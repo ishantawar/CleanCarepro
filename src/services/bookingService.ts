@@ -738,6 +738,9 @@ export class BookingService {
       if (response.ok) {
         const result = await response.json();
         console.log("✅ Booking synced to backend:", booking.id, result);
+
+        // Return the result so the calling function can use the custom_order_id
+        return result.booking || result;
       } else {
         let errorDetails;
         const contentType = response.headers.get("content-type");
