@@ -4,7 +4,6 @@ const bookingSchema = new mongoose.Schema(
   {
     custom_order_id: {
       type: String,
-      unique: true,
       required: false,
     },
     customer_id: {
@@ -238,7 +237,7 @@ bookingSchema.pre("save", async function (next) {
 });
 
 // Create indexes
-bookingSchema.index({ custom_order_id: 1 });
+bookingSchema.index({ custom_order_id: 1 }, { unique: true, sparse: true });
 bookingSchema.index({ customer_id: 1 });
 bookingSchema.index({ rider_id: 1 });
 bookingSchema.index({ status: 1 });
