@@ -384,34 +384,22 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
 
     if (cleanParts.length === 0) return;
 
-    // Strategy: Use the first part as street, combine middle parts as area, last part as city
+    // Strategy: First part as street (if multiple), rest combined as area/city
     if (cleanParts.length === 1) {
-      // Only one part - put it in both area and city for better coverage
-      const singlePart = cleanParts[0];
-      setArea(singlePart);
-      setCity(singlePart);
-      console.log("🏘️ Single part used for both area and city:", singlePart);
-    } else if (cleanParts.length === 2) {
-      // Two parts - first as area, second as city
+      // Only one part - put it in the merged area field
       setArea(cleanParts[0]);
-      setCity(cleanParts[1]);
-      console.log("🏘️ Area:", cleanParts[0]);
-      console.log("🏙️ City:", cleanParts[1]);
-    } else if (cleanParts.length >= 3) {
-      // Multiple parts - first as street, combine middle parts as area, last as city
+      console.log("🏘️ Single part used for area/city:", cleanParts[0]);
+    } else if (cleanParts.length >= 2) {
+      // Multiple parts - first as street, rest combined as area/city
       setStreet(cleanParts[0]);
 
-      // Combine middle parts for area (everything except first and last)
-      const middleParts = cleanParts.slice(1, -1);
-      const combinedArea = middleParts.join(", ");
-      setArea(combinedArea);
-
-      // Last part as city
-      setCity(cleanParts[cleanParts.length - 1]);
+      // Combine all remaining parts for the merged area/city field
+      const locationParts = cleanParts.slice(1);
+      const combinedLocation = locationParts.join(", ");
+      setArea(combinedLocation);
 
       console.log("🛣️ Street:", cleanParts[0]);
-      console.log("🏘️ Combined Area:", combinedArea);
-      console.log("🏙️ City:", cleanParts[cleanParts.length - 1]);
+      console.log("🏘️ Combined Location (Area/City):", combinedLocation);
     }
   };
 
