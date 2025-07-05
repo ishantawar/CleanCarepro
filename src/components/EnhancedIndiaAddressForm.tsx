@@ -252,10 +252,7 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
     let parsedStreet = "";
     let parsedVillage = "";
     let parsedFlatNo = "";
-<<<<<<< HEAD
     let parsedBuilding = "";
-=======
->>>>>>> b14a53ea735903bebdd87ff64a98ee14cbf0ed4d
 
     if (addressComponents) {
       // Parse Google Places address components
@@ -274,18 +271,14 @@ const EnhancedIndiaAddressForm: React.FC<EnhancedIndiaAddressFormProps> = ({
           parsedStreet = component.long_name;
         } else if (types.includes("administrative_area_level_3")) {
           parsedVillage = component.long_name;
-<<<<<<< HEAD
-        } else if (types.includes("street_number")) {
-          parsedFlatNo = component.long_name;
         } else if (types.includes("premise") || types.includes("subpremise")) {
-          // Extract building or complex name
+          // Extract building or complex name, and also use as flat number if empty
           if (!parsedBuilding) {
             parsedBuilding = component.long_name;
           }
-=======
-        } else if (types.includes("premise") && !parsedFlatNo) {
-          parsedFlatNo = component.long_name;
->>>>>>> b14a53ea735903bebdd87ff64a98ee14cbf0ed4d
+          if (!parsedFlatNo) {
+            parsedFlatNo = component.long_name;
+          }
         }
       });
     } else {
