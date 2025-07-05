@@ -327,15 +327,16 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                       </div>
 
                       {/* Delete Confirmation Dialog */}
-                      <AlertDialog open={deletingId === address.id} onOpenChange={(open) => !open && setDeletingId(null)}>
+                      <AlertDialog
+                        open={deletingId === address.id}
+                        onOpenChange={(open) => !open && setDeletingId(null)}
+                      >
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Delete Address?
-                            </AlertDialogTitle>
+                            <AlertDialogTitle>Delete Address?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete this address?
-                              This action cannot be undone.
+                              Are you sure you want to delete this address? This
+                              action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -349,7 +350,6 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = React.memo(
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                      </div>
                     </CardContent>
                   </Card>
                 ))}
