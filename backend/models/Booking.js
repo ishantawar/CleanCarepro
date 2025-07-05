@@ -5,6 +5,7 @@ const bookingSchema = new mongoose.Schema(
     custom_order_id: {
       type: String,
       required: false,
+      index: true,
     },
     customer_id: {
       type: mongoose.Schema.Types.ObjectId,
