@@ -1041,16 +1041,33 @@ export class BookingService {
 
       // For cancellation, use the specific cancel endpoint
       if (updates.status === "cancelled") {
-        // Get proper user ID for backend
-        const userId =
-          currentUser._id ||
-          currentUser.id ||
-          (currentUser.phone ? `user_${currentUser.phone}` : null);
+        // Get proper user ID for backend - prioritize MongoDB ObjectId formats
+        let userId = null;
+
+        // First try to get a MongoDB ObjectId format
+        if (currentUser._id && !currentUser._id.startsWith("user_")) {
+          userId = currentUser._id;
+        } else if (currentUser.id && !currentUser.id.startsWith("user_")) {
+          userId = currentUser.id;
+        }
+        // Fallback to phone-based ID for backend resolution
+        else if (currentUser.phone) {
+          userId = currentUser.phone; // Send just the phone number for backend to resolve
+        }
+        // Last resort: use the user_ format
+        else if (currentUser.id || currentUser._id) {
+          userId = currentUser.id || currentUser._id;
+        }
 
         console.log("🚫 Syncing booking cancellation to backend:", {
           bookingId,
           userId,
-          currentUser,
+          currentUser: {
+            id: currentUser.id,
+            _id: currentUser._id,
+            phone: currentUser.phone,
+            name: currentUser.name,
+          },
         });
 
         const response = await fetch(
