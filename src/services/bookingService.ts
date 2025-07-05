@@ -4,6 +4,7 @@ import { config } from "../config/env";
 
 export interface BookingDetails {
   id: string;
+  custom_order_id?: string;
   userId: string;
   services: string[];
   totalAmount: number;
@@ -1041,16 +1042,33 @@ export class BookingService {
 
       // For cancellation, use the specific cancel endpoint
       if (updates.status === "cancelled") {
-        // Get proper user ID for backend
-        const userId =
-          currentUser._id ||
-          currentUser.id ||
-          (currentUser.phone ? `user_${currentUser.phone}` : null);
+        // Get proper user ID for backend - prioritize MongoDB ObjectId formats
+        let userId = null;
+
+        // First try to get a MongoDB ObjectId format
+        if (currentUser._id && !currentUser._id.startsWith("user_")) {
+          userId = currentUser._id;
+        } else if (currentUser.id && !currentUser.id.startsWith("user_")) {
+          userId = currentUser.id;
+        }
+        // Fallback to phone-based ID for backend resolution
+        else if (currentUser.phone) {
+          userId = currentUser.phone; // Send just the phone number for backend to resolve
+        }
+        // Last resort: use the user_ format
+        else if (currentUser.id || currentUser._id) {
+          userId = currentUser.id || currentUser._id;
+        }
 
         console.log("🚫 Syncing booking cancellation to backend:", {
           bookingId,
           userId,
-          currentUser,
+          currentUser: {
+            id: currentUser.id,
+            _id: currentUser._id,
+            phone: currentUser.phone,
+            name: currentUser.name,
+          },
         });
 
         const response = await fetch(
@@ -1079,6 +1097,70 @@ export class BookingService {
             errorData = JSON.parse(errorText);
           } catch {
             errorData = { error: errorText };
+          }
+
+          // If access denied, try to refresh user data and retry once
+          if (response.status === 403 && errorData.error === "Access denied") {
+            console.log(
+              "🔄 Access denied - attempting to refresh user data...",
+            );
+
+            try {
+              // Try to refresh user session from backend
+              const dvhostingSmsService = (
+                await import("./dvhostingSmsService")
+              ).default;
+              const smsService = dvhostingSmsService.getInstance();
+              const refreshed = await smsService.restoreSession();
+
+              if (refreshed) {
+                console.log(
+                  "🔄 User session refreshed, retrying cancellation...",
+                );
+                const refreshedUser = smsService.getCurrentUser();
+
+                if (refreshedUser) {
+                  // Try again with refreshed user data
+                  let retryUserId = null;
+                  if (
+                    refreshedUser._id &&
+                    !refreshedUser._id.startsWith("user_")
+                  ) {
+                    retryUserId = refreshedUser._id;
+                  } else if (refreshedUser.phone) {
+                    retryUserId = refreshedUser.phone;
+                  }
+
+                  const retryResponse = await fetch(
+                    `${this.apiBaseUrl}/bookings/${bookingId}/cancel`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "user-id": retryUserId || "",
+                      },
+                      body: JSON.stringify({
+                        user_id: retryUserId,
+                        user_type: "customer",
+                      }),
+                    },
+                  );
+
+                  if (retryResponse.ok) {
+                    const retryData = await retryResponse.json();
+                    console.log(
+                      "✅ Booking cancellation successful after user refresh",
+                    );
+                    return {
+                      success: true,
+                      booking: retryData.booking,
+                    };
+                  }
+                }
+              }
+            } catch (refreshError) {
+              console.warn("⚠️ User refresh failed:", refreshError);
+            }
           }
 
           throw new Error(

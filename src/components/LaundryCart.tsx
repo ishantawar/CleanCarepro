@@ -39,6 +39,7 @@ import { FormValidation, validateCheckoutForm } from "./FormValidation";
 import SavedAddressesModal from "./SavedAddressesModal";
 import ZomatoAddressSelector from "./ZomatoAddressSelector";
 import ZomatoAddAddressPage from "./ZomatoAddAddressPage";
+import { AddressService } from "@/services/addressService";
 
 interface LaundryCartProps {
   onBack: () => void;
@@ -292,6 +293,7 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
     useState(false);
   const [showZomatoAddAddressPage, setShowZomatoAddAddressPage] =
     useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const [selectedSavedAddress, setSelectedSavedAddress] = useState<any>(null);
 
   const handleProceedToCheckout = async () => {
@@ -546,35 +548,64 @@ Confirm this booking?`;
   };
 
   // Handle new address creation
-  const handleNewAddressSave = (newAddress: any) => {
+  const handleNewAddressSave = async (newAddress: any) => {
     if (!currentUser) return;
 
     try {
-      const userId = currentUser._id || currentUser.id || currentUser.phone;
-      const savedAddressesKey = `addresses_${userId}`;
-      const existingAddresses = JSON.parse(
-        localStorage.getItem(savedAddressesKey) || "[]",
-      );
+      const addressService = AddressService.getInstance();
+      const result = await addressService.saveAddress(newAddress);
 
-      const addressWithId = {
-        ...newAddress,
-        id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      if (result.success) {
+        // Auto-select the new address
+        setSelectedSavedAddress(result.data || newAddress);
+        setAddressData(result.data || newAddress);
 
-      const updatedAddresses = [...existingAddresses, addressWithId];
-      localStorage.setItem(savedAddressesKey, JSON.stringify(updatedAddresses));
+        addNotification(
+          createSuccessNotification(
+            "Address Saved",
+            "New address has been saved successfully",
+          ),
+        );
 
-      // Auto-select the new address
-      setSelectedSavedAddress(addressWithId);
-      setAddressData(addressWithId);
+        console.log("✅ New address saved to backend and selected");
+      } else {
+        // Still save locally and proceed
+        const addressWithId = {
+          ...newAddress,
+          id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: new Date().toISOString(),
+        };
+
+        setSelectedSavedAddress(addressWithId);
+        setAddressData(addressWithId);
+
+        addNotification(
+          createWarningNotification(
+            "Address Saved Locally",
+            "Address saved locally, will sync when online",
+          ),
+        );
+
+        console.log("⚠️ Address saved locally only");
+      }
 
       setShowZomatoAddAddressPage(false);
-      console.log("✅ New address saved and selected");
     } catch (error) {
       console.error("Failed to save new address:", error);
+
+      addNotification(
+        createErrorNotification(
+          "Save Failed",
+          "Failed to save address. Please try again.",
+        ),
+      );
     }
+  };
+
+  const handleEditAddress = (address: any) => {
+    setEditingAddress(address);
+    setShowZomatoAddressSelector(false);
+    setShowZomatoAddAddressPage(true);
   };
 
   const saveAddressAfterBooking = async (orderAddress: any) => {
@@ -985,9 +1016,11 @@ Confirm this booking?`;
         onClose={() => setShowZomatoAddressSelector(false)}
         onSelectAddress={handleAddressSelect}
         onAddNewAddress={() => {
+          setEditingAddress(null);
           setShowZomatoAddressSelector(false);
           setShowZomatoAddAddressPage(true);
         }}
+        onEditAddress={handleEditAddress}
         currentUser={currentUser}
         selectedAddressId={selectedSavedAddress?.id}
       />
@@ -995,9 +1028,16 @@ Confirm this booking?`;
       {/* Zomato Add Address Page */}
       <ZomatoAddAddressPage
         isOpen={showZomatoAddAddressPage}
-        onClose={() => setShowZomatoAddAddressPage(false)}
-        onSave={handleNewAddressSave}
+        onClose={() => {
+          setShowZomatoAddAddressPage(false);
+          setEditingAddress(null);
+        }}
+        onSave={(address) => {
+          handleNewAddressSave(address);
+          setEditingAddress(null);
+        }}
         currentUser={currentUser}
+        editingAddress={editingAddress}
       />
 
       {/* Saved Addresses Modal (fallback) */}

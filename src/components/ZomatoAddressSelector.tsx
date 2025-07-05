@@ -2,6 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   X,
   Plus,
   Home,
@@ -10,6 +16,8 @@ import {
   MoreHorizontal,
   ArrowRight,
   Phone,
+  Edit,
+  Trash2,
 } from "lucide-react";
 
 interface SavedAddress {
@@ -29,6 +37,7 @@ interface ZomatoAddressSelectorProps {
   onClose: () => void;
   onSelectAddress: (address: SavedAddress) => void;
   onAddNewAddress: () => void;
+  onEditAddress?: (address: SavedAddress) => void;
   currentUser?: any;
   selectedAddressId?: string;
 }
@@ -38,10 +47,12 @@ const ZomatoAddressSelector: React.FC<ZomatoAddressSelectorProps> = ({
   onClose,
   onSelectAddress,
   onAddNewAddress,
+  onEditAddress,
   currentUser,
   selectedAddressId,
 }) => {
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && currentUser) {
@@ -49,15 +60,114 @@ const ZomatoAddressSelector: React.FC<ZomatoAddressSelectorProps> = ({
     }
   }, [isOpen, currentUser]);
 
-  const loadSavedAddresses = () => {
+  const loadSavedAddresses = async () => {
     if (!currentUser) return;
 
-    const userId = currentUser._id || currentUser.id || currentUser.phone;
-    const savedAddressesKey = `addresses_${userId}`;
-    const addresses = JSON.parse(
-      localStorage.getItem(savedAddressesKey) || "[]",
-    );
-    setSavedAddresses(addresses);
+    setLoading(true);
+    try {
+      // Try to load from backend first
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const response = await fetch("/api/addresses", {
+        headers: {
+          "user-id": userId,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.data) {
+          // Transform backend format to frontend format
+          const transformedAddresses = result.data.map((addr: any) => ({
+            id: addr._id,
+            type: addr.address_type || "other",
+            label: addr.title,
+            flatNo: addr.full_address.split(",")[0] || "",
+            fullAddress: addr.full_address,
+            landmark: addr.landmark || "",
+            phone: addr.contact_phone || currentUser.phone,
+            coordinates: addr.coordinates,
+            createdAt: addr.created_at,
+          }));
+          setSavedAddresses(transformedAddresses);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback to localStorage if backend fails
+      console.log("Falling back to localStorage for addresses");
+      const savedAddressesKey = `addresses_${userId}`;
+      const addresses = JSON.parse(
+        localStorage.getItem(savedAddressesKey) || "[]",
+      );
+      setSavedAddresses(addresses);
+    } catch (error) {
+      console.error("Error loading addresses:", error);
+      // Fallback to localStorage
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const savedAddressesKey = `addresses_${userId}`;
+      const addresses = JSON.parse(
+        localStorage.getItem(savedAddressesKey) || "[]",
+      );
+      setSavedAddresses(addresses);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    if (!currentUser) return;
+
+    try {
+      const userId = currentUser._id || currentUser.id || currentUser.phone;
+      const response = await fetch(`/api/addresses/${addressId}`, {
+        method: "DELETE",
+        headers: {
+          "user-id": userId,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Remove from state
+        setSavedAddresses((prev) =>
+          prev.filter((addr) => addr.id !== addressId),
+        );
+
+        // Also remove from localStorage as backup
+        const savedAddressesKey = `addresses_${userId}`;
+        const localAddresses = JSON.parse(
+          localStorage.getItem(savedAddressesKey) || "[]",
+        );
+        const updatedLocalAddresses = localAddresses.filter(
+          (addr: any) => addr.id !== addressId,
+        );
+        localStorage.setItem(
+          savedAddressesKey,
+          JSON.stringify(updatedLocalAddresses),
+        );
+      } else {
+        console.error("Failed to delete address from backend");
+        // Still try to remove from localStorage
+        const savedAddressesKey = `addresses_${userId}`;
+        const localAddresses = JSON.parse(
+          localStorage.getItem(savedAddressesKey) || "[]",
+        );
+        const updatedLocalAddresses = localAddresses.filter(
+          (addr: any) => addr.id !== addressId,
+        );
+        localStorage.setItem(
+          savedAddressesKey,
+          JSON.stringify(updatedLocalAddresses),
+        );
+        setSavedAddresses((prev) =>
+          prev.filter((addr) => addr.id !== addressId),
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting address:", error);
+    }
   };
 
   const getAddressIcon = (type: string) => {
@@ -175,17 +285,44 @@ const ZomatoAddressSelector: React.FC<ZomatoAddressSelectorProps> = ({
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Handle more options (edit, delete, etc.)
-                          }}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onEditAddress) {
+                                  onEditAddress(address);
+                                }
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAddress(address.id);
+                              }}
+                              className="cursor-pointer text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                           variant="ghost"
                           size="sm"

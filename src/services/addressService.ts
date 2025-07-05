@@ -214,9 +214,30 @@ export class AddressService {
 
           if (response.ok) {
             const result = await response.json();
+            // Transform backend format to frontend format
+            const transformedAddresses = (result.data || []).map(
+              (addr: any) => ({
+                id: addr._id,
+                _id: addr._id,
+                flatNo: addr.full_address.split(",")[0] || "",
+                street: addr.area || "",
+                landmark: addr.landmark || "",
+                village: addr.city || "",
+                city: addr.city || "",
+                pincode: addr.pincode || "",
+                fullAddress: addr.full_address,
+                coordinates: addr.coordinates,
+                label: addr.title || addr.address_type,
+                type: addr.address_type || "other",
+                phone: addr.contact_phone || "",
+                createdAt: addr.created_at,
+                status: addr.status,
+              }),
+            );
+
             return {
               success: true,
-              data: result.data || [],
+              data: transformedAddresses,
             };
           }
         } catch (error) {
@@ -247,6 +268,145 @@ export class AddressService {
         error:
           error instanceof Error ? error.message : "Failed to get addresses",
         data: [],
+      };
+    }
+  }
+
+  /**
+   * Save address to backend and localStorage
+   */
+  async saveAddress(addressData: AddressData): Promise<AddressResponse> {
+    try {
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      console.log("💾 Saving address:", addressData);
+
+      // Prepare data for backend
+      const backendData = {
+        title: addressData.label || addressData.type,
+        full_address: addressData.fullAddress,
+        area: addressData.street || addressData.village,
+        city: addressData.city || addressData.village,
+        state: "India", // Default state
+        pincode: addressData.pincode,
+        landmark: addressData.landmark,
+        coordinates: addressData.coordinates,
+        address_type: addressData.type,
+        contact_phone: addressData.phone,
+        is_default: false, // You can modify this logic
+        status: "active",
+      };
+
+      // Try to save to backend first
+      if (this.apiBaseUrl) {
+        try {
+          const url = addressData.id
+            ? `${this.apiBaseUrl}/addresses/${addressData.id}`
+            : `${this.apiBaseUrl}/addresses`;
+
+          const method = addressData.id ? "PUT" : "POST";
+
+          const response = await fetch(url, {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+              "user-id": userId,
+            },
+            body: JSON.stringify(backendData),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log("✅ Address saved to backend:", result);
+
+            // Also save to localStorage as backup
+            this.saveAddressToLocalStorage(addressData, userId);
+
+            return {
+              success: true,
+              message: "Address saved successfully",
+              data: result.data,
+            };
+          } else {
+            const errorText = await response.text();
+            console.error("Backend save failed:", errorText);
+            // Still try to save locally
+          }
+        } catch (error) {
+          console.error("Backend save error:", error);
+          // Continue to localStorage save
+        }
+      }
+
+      // Fallback to localStorage
+      const result = this.saveAddressToLocalStorage(addressData, userId);
+      return {
+        ...result,
+        message: "Address saved locally (will sync when online)",
+      };
+    } catch (error) {
+      console.error("Failed to save address:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to save address",
+      };
+    }
+  }
+
+  /**
+   * Save address to localStorage
+   */
+  private saveAddressToLocalStorage(
+    addressData: AddressData,
+    userId: string,
+  ): AddressResponse {
+    try {
+      const storageKey = `addresses_${userId}`;
+      const savedAddresses = localStorage.getItem(storageKey);
+      const addresses = savedAddresses ? JSON.parse(savedAddresses) : [];
+
+      // Add unique ID if not present
+      if (!addressData.id && !addressData._id) {
+        addressData.id = `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+
+      // Add timestamps
+      if (!addressData.createdAt) {
+        addressData.createdAt = new Date().toISOString();
+      }
+
+      // Update existing address or add new one
+      const existingIndex = addresses.findIndex(
+        (addr: AddressData) =>
+          addr.id === addressData.id || addr._id === addressData._id,
+      );
+
+      if (existingIndex >= 0) {
+        addresses[existingIndex] = {
+          ...addresses[existingIndex],
+          ...addressData,
+        };
+      } else {
+        addresses.push(addressData);
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(addresses));
+      console.log("✅ Address saved to localStorage");
+
+      return {
+        success: true,
+        message: "Address saved successfully",
+        data: addressData,
+      };
+    } catch (error) {
+      console.error("Failed to save address to localStorage:", error);
+      return {
+        success: false,
+        error: "Failed to save address locally",
       };
     }
   }
