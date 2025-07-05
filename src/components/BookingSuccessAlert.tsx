@@ -49,10 +49,12 @@ const BookingSuccessAlert: React.FC<BookingSuccessAlertProps> = React.memo(
               </span>
             </div>
             <p className="text-green-700 text-xs">
-              Booking ID: #CC
-              {booking._id
-                ? booking._id.slice(-6).toUpperCase()
-                : new Date().getTime().toString().slice(-6)}
+              Booking ID: #
+              {booking.custom_order_id ||
+                "CC" +
+                  (booking._id
+                    ? booking._id.slice(-6).toUpperCase()
+                    : new Date().getTime().toString().slice(-6))}
             </p>
           </div>
 
