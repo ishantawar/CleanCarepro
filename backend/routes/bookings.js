@@ -1101,11 +1101,54 @@ router.put("/:bookingId/cancel", async (req, res) => {
     }
 
     if (!canCancel) {
-      console.log("❌ Access denied:", {
+      // Get additional debugging info
+      let debugInfo = {
         bookingCustomerId: booking.customer_id,
         userId,
         bookingFound: !!booking,
-      });
+        timestamp: new Date().toISOString(),
+      };
+
+      // Try to get more context about the users involved
+      try {
+        const bookingCustomer = await User.findById(booking.customer_id);
+        if (bookingCustomer) {
+          debugInfo.bookingCustomer = {
+            id: bookingCustomer._id,
+            phone: bookingCustomer.phone,
+            name: bookingCustomer.name || bookingCustomer.full_name,
+          };
+        }
+
+        // If userId looks like an ObjectId, try to get that user too
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+          const providedUser = await User.findById(userId);
+          if (providedUser) {
+            debugInfo.providedUser = {
+              id: providedUser._id,
+              phone: providedUser.phone,
+              name: providedUser.name || providedUser.full_name,
+            };
+          }
+        }
+
+        // If userId looks like user_phone format, try to find by phone
+        if (userId && userId.startsWith("user_")) {
+          const phone = userId.replace("user_", "");
+          const userByPhone = await User.findOne({ phone: phone });
+          if (userByPhone) {
+            debugInfo.userByPhone = {
+              id: userByPhone._id,
+              phone: userByPhone.phone,
+              name: userByPhone.name || userByPhone.full_name,
+            };
+          }
+        }
+      } catch (debugError) {
+        console.warn("Error gathering debug info:", debugError);
+      }
+
+      console.log("❌ Access denied:", debugInfo);
 
       // More permissive fallback - if no userId provided, allow cancellation
       // This handles cases where the frontend doesn't send the user ID correctly
@@ -1113,7 +1156,10 @@ router.put("/:bookingId/cancel", async (req, res) => {
         console.log("⚠️ No user ID provided - allowing cancellation");
         canCancel = true;
       } else {
-        return res.status(403).json({ error: "Access denied" });
+        return res.status(403).json({
+          error: "Access denied",
+          debug: import.meta.env.DEV ? debugInfo : undefined,
+        });
       }
     }
 
