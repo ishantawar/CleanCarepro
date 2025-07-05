@@ -12,6 +12,7 @@ import {
   Home,
   Building2,
   MapIcon,
+  CheckCircle,
 } from "lucide-react";
 import { locationService, Coordinates } from "@/services/locationService";
 
