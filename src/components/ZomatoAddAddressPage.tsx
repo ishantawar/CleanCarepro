@@ -367,7 +367,6 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     // Clear previous values
     setStreet("");
     setArea("");
-    setCity("");
 
     // Filter out empty parts, pincode, state, country
     const cleanParts = parts.filter((part) => {
