@@ -478,6 +478,8 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const part = parts[i];
       if (
         part &&
+        part !== flatNo && // Exclude extracted house number
+        part !== street && // Exclude already extracted street
         !part.match(/\b\d{6}\b/) && // Not a pincode
         ![
           "India",
