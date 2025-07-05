@@ -1210,6 +1210,7 @@ router.put("/:bookingId/cancel", async (req, res) => {
         userId,
         bookingFound: !!booking,
         timestamp: new Date().toISOString(),
+        reason: "Phone number does not match booking customer",
       };
 
       // Try to get more context about the users involved
@@ -1223,32 +1224,62 @@ router.put("/:bookingId/cancel", async (req, res) => {
           };
         }
 
+        // Get requesting user's phone for comparison
+        let requestingUserPhone = null;
+        let requestingUserInfo = null;
+
         // If userId looks like an ObjectId, try to get that user too
         if (mongoose.Types.ObjectId.isValid(userId)) {
           const providedUser = await User.findById(userId);
           if (providedUser) {
-            debugInfo.providedUser = {
+            requestingUserPhone = providedUser.phone;
+            requestingUserInfo = {
               id: providedUser._id,
               phone: providedUser.phone,
               name: providedUser.name || providedUser.full_name,
             };
+            debugInfo.providedUser = requestingUserInfo;
           }
         }
 
         // If userId looks like user_phone format, try to find by phone
         if (userId && userId.startsWith("user_")) {
           const phone = userId.replace("user_", "");
+          requestingUserPhone = phone;
           const userByPhone = await User.findOne({ phone: phone });
           if (userByPhone) {
-            debugInfo.userByPhone = {
+            requestingUserInfo = {
               id: userByPhone._id,
               phone: userByPhone.phone,
               name: userByPhone.name || userByPhone.full_name,
             };
+            debugInfo.userByPhone = requestingUserInfo;
           }
         }
+
+        // If userId is direct phone number
+        if (userId && userId.match(/^\d{10,}$/)) {
+          requestingUserPhone = userId;
+          const userByPhone = await User.findOne({ phone: userId });
+          if (userByPhone) {
+            requestingUserInfo = {
+              id: userByPhone._id,
+              phone: userByPhone.phone,
+              name: userByPhone.name || userByPhone.full_name,
+            };
+            debugInfo.userByDirectPhone = requestingUserInfo;
+          }
+        }
+
+        // Add phone comparison to debug info
+        debugInfo.phoneComparison = {
+          bookingCustomerPhone: bookingCustomer?.phone,
+          requestingUserPhone: requestingUserPhone,
+          phonesMatch: bookingCustomer?.phone === requestingUserPhone,
+        };
       } catch (debugError) {
         console.warn("Error gathering debug info:", debugError);
+        debugInfo.debugError = debugError.message;
       }
 
       console.log("❌ Access denied:", debugInfo);
@@ -1260,7 +1291,8 @@ router.put("/:bookingId/cancel", async (req, res) => {
         canCancel = true;
       } else {
         return res.status(403).json({
-          error: "Access denied",
+          error:
+            "Access denied. Only the customer who made the booking can cancel it.",
           debug: process.env.NODE_ENV !== "production" ? debugInfo : undefined,
         });
       }
