@@ -60,7 +60,6 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const [street, setStreet] = useState("");
   const [landmark, setLandmark] = useState("");
   const [area, setArea] = useState("");
-  const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
 
   // Auto-update full address when individual fields change
