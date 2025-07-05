@@ -1098,6 +1098,70 @@ export class BookingService {
             errorData = { error: errorText };
           }
 
+          // If access denied, try to refresh user data and retry once
+          if (response.status === 403 && errorData.error === "Access denied") {
+            console.log(
+              "🔄 Access denied - attempting to refresh user data...",
+            );
+
+            try {
+              // Try to refresh user session from backend
+              const dvhostingSmsService = (
+                await import("./dvhostingSmsService")
+              ).default;
+              const smsService = dvhostingSmsService.getInstance();
+              const refreshed = await smsService.restoreSession();
+
+              if (refreshed) {
+                console.log(
+                  "🔄 User session refreshed, retrying cancellation...",
+                );
+                const refreshedUser = smsService.getCurrentUser();
+
+                if (refreshedUser) {
+                  // Try again with refreshed user data
+                  let retryUserId = null;
+                  if (
+                    refreshedUser._id &&
+                    !refreshedUser._id.startsWith("user_")
+                  ) {
+                    retryUserId = refreshedUser._id;
+                  } else if (refreshedUser.phone) {
+                    retryUserId = refreshedUser.phone;
+                  }
+
+                  const retryResponse = await fetch(
+                    `${this.apiBaseUrl}/bookings/${bookingId}/cancel`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "user-id": retryUserId || "",
+                      },
+                      body: JSON.stringify({
+                        user_id: retryUserId,
+                        user_type: "customer",
+                      }),
+                    },
+                  );
+
+                  if (retryResponse.ok) {
+                    const retryData = await retryResponse.json();
+                    console.log(
+                      "✅ Booking cancellation successful after user refresh",
+                    );
+                    return {
+                      success: true,
+                      booking: retryData.booking,
+                    };
+                  }
+                }
+              }
+            } catch (refreshError) {
+              console.warn("⚠️ User refresh failed:", refreshError);
+            }
+          }
+
           throw new Error(
             errorData.error || `HTTP ${response.status}: ${errorText}`,
           );
