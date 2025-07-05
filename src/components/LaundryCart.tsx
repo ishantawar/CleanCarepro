@@ -929,7 +929,7 @@ Confirm this booking?`;
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-1">
                   <span className="text-green-700 font-medium text-xs">
-                    �� {appliedCoupon.code}
+                    ✓ {appliedCoupon.code}
                   </span>
                   <span className="text-xs text-green-600">
                     ({appliedCoupon.discount}%)
@@ -1028,9 +1028,16 @@ Confirm this booking?`;
       {/* Zomato Add Address Page */}
       <ZomatoAddAddressPage
         isOpen={showZomatoAddAddressPage}
-        onClose={() => setShowZomatoAddAddressPage(false)}
-        onSave={handleNewAddressSave}
+        onClose={() => {
+          setShowZomatoAddAddressPage(false);
+          setEditingAddress(null);
+        }}
+        onSave={(address) => {
+          handleNewAddressSave(address);
+          setEditingAddress(null);
+        }}
         currentUser={currentUser}
+        editingAddress={editingAddress}
       />
 
       {/* Saved Addresses Modal (fallback) */}
