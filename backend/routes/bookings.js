@@ -1114,6 +1114,46 @@ router.put("/:bookingId/cancel", async (req, res) => {
       }
     }
 
+    // LAST RESORT: Check if there are multiple User records for the same phone
+    if (!canCancel) {
+      console.log(
+        "🔍 Last resort: Checking for duplicate users with same phone",
+      );
+      try {
+        const bookingCustomer = await User.findById(booking.customer_id);
+        if (bookingCustomer && bookingCustomer.phone) {
+          console.log("🔍 Booking customer phone:", bookingCustomer.phone);
+
+          // Find all users with the same phone number
+          const allUsersWithSamePhone = await User.find({
+            phone: bookingCustomer.phone,
+          });
+          console.log(
+            `🔍 Found ${allUsersWithSamePhone.length} users with phone ${bookingCustomer.phone}`,
+          );
+
+          // Check if the provided userId matches any of these users
+          const matchingUser = allUsersWithSamePhone.find(
+            (user) => user._id.toString() === userId,
+          );
+
+          if (matchingUser) {
+            canCancel = true;
+            console.log(
+              "✅ Found matching user via phone number duplicate check",
+            );
+            console.log("🔍 Matched user:", {
+              id: matchingUser._id,
+              phone: matchingUser.phone,
+              name: matchingUser.name || matchingUser.full_name,
+            });
+          }
+        }
+      } catch (duplicateCheckError) {
+        console.warn("Duplicate user check failed:", duplicateCheckError);
+      }
+    }
+
     if (!canCancel) {
       // Get additional debugging info
       let debugInfo = {
