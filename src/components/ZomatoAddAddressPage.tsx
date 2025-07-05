@@ -60,7 +60,6 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const [street, setStreet] = useState("");
   const [landmark, setLandmark] = useState("");
   const [area, setArea] = useState("");
-  const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
 
   // Auto-update full address when individual fields change
@@ -71,8 +70,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         building && `${building}`,
         street && `${street}`,
         landmark && `${landmark}`,
-        area && `${area}`,
-        city && `${city}`,
+        area && `${area}`, // This now contains the merged area/city information
         pincode && `${pincode}`,
       ].filter(Boolean);
 
@@ -87,7 +85,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     };
 
     buildFullAddress();
-  }, [flatNo, building, street, landmark, area, city, pincode]);
+  }, [flatNo, building, street, landmark, area, pincode]); // Removed city from dependencies
   const [addressType, setAddressType] = useState<"home" | "office" | "other">(
     "home",
   );
@@ -359,88 +357,46 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     const parts = fullAddress.split(",").map((part) => part.trim());
     console.log("📍 Address parts:", parts);
 
-    // Extract pincode
+    // Extract pincode first
     const pincodeMatch = fullAddress.match(/\b\d{6}\b/);
     if (pincodeMatch) {
       setPincode(pincodeMatch[0]);
       console.log("📮 Pincode extracted:", pincodeMatch[0]);
     }
 
-    // Enhanced parsing for Indian addresses
-    // Pattern: [Street], [Area/Neighborhood], [Sublocality], [Village/Locality], [City], [District], [State], [Pincode]
+    // Clear previous values
+    setStreet("");
+    setArea("");
 
-    if (parts.length >= 1) {
-      // Street/Road (first part, excluding numbers only)
-      const streetPart = parts[0];
-      if (streetPart && !streetPart.match(/^\d+$/)) {
-        setStreet(streetPart);
-        console.log("🛣️ Street extracted:", streetPart);
-      }
-    }
+    // Filter out empty parts, pincode, state, country
+    const cleanParts = parts.filter((part) => {
+      if (!part || part.length < 2) return false;
+      if (part.match(/\b\d{6}\b/)) return false; // Contains pincode
+      if (part === "India") return false;
+      if (part.includes("Pradesh") || part.includes("State")) return false;
+      return true;
+    });
 
-    if (parts.length >= 2) {
-      // Area/Village/Neighborhood (second part, or find the most specific locality)
-      for (let i = 1; i < Math.min(parts.length - 2, 4); i++) {
-        const areaPart = parts[i];
-        // Skip if it's clearly a state, country, or contains only pincode
-        if (
-          areaPart &&
-          !areaPart.match(/\b\d{6}\b/) &&
-          ![
-            "India",
-            "Delhi",
-            "Mumbai",
-            "Kolkata",
-            "Chennai",
-            "Bangalore",
-            "Hyderabad",
-          ].includes(areaPart) &&
-          !areaPart.includes("Pradesh") &&
-          !areaPart.includes("State")
-        ) {
-          setArea(areaPart);
-          console.log("🏘️ Area/Village extracted:", areaPart);
-          break;
-        }
-      }
-    }
+    console.log("🧹 Clean parts:", cleanParts);
 
-    // Extract city (look for known city patterns or position-based)
-    for (let i = Math.max(1, parts.length - 4); i < parts.length - 1; i++) {
-      const cityPart = parts[i];
-      if (
-        cityPart &&
-        !cityPart.match(/\b\d{6}\b/) &&
-        !cityPart.includes("Pradesh") &&
-        !cityPart.includes("State") &&
-        cityPart !== "India"
-      ) {
-        const cleanCity = cityPart.replace(/\d{6}/, "").trim();
-        if (cleanCity) {
-          setCity(cleanCity);
-          console.log("🏙️ City extracted:", cleanCity);
-          break;
-        }
-      }
-    }
+    if (cleanParts.length === 0) return;
 
-    // Enhanced area extraction - also look at landmarks and sub-localities
-    const enhancedArea = parts.find(
-      (part) =>
-        part.toLowerCase().includes("extension") ||
-        part.toLowerCase().includes("colony") ||
-        part.toLowerCase().includes("sector") ||
-        part.toLowerCase().includes("block") ||
-        part.toLowerCase().includes("phase") ||
-        part.toLowerCase().includes("nagar") ||
-        part.toLowerCase().includes("ganj") ||
-        part.toLowerCase().includes("marg") ||
-        part.toLowerCase().includes("vihar"),
-    );
+    // Strategy: First part as street (if multiple), rest combined as area/city
+    if (cleanParts.length === 1) {
+      // Only one part - put it in the merged area field
+      setArea(cleanParts[0]);
+      console.log("🏘️ Single part used for area/city:", cleanParts[0]);
+    } else if (cleanParts.length >= 2) {
+      // Multiple parts - first as street, rest combined as area/city
+      setStreet(cleanParts[0]);
 
-    if (enhancedArea && !getArea()) {
-      setArea(enhancedArea);
-      console.log("🎯 Enhanced area pattern extracted:", enhancedArea);
+      // Combine all remaining parts for the merged area/city field
+      const locationParts = cleanParts.slice(1);
+      const combinedLocation = locationParts.join(", ");
+      setArea(combinedLocation);
+
+      console.log("🛣️ Street:", cleanParts[0]);
+      console.log("🏘️ Combined Location (Area/City):", combinedLocation);
     }
   };
 
@@ -701,8 +657,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
         : flatNo,
       street,
       landmark,
-      area,
-      city,
+      area, // This now contains the merged area/city information
       pincode,
     ].filter(Boolean);
 
@@ -712,8 +667,8 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
       flatNo: flatNo,
       street: street,
       landmark: landmark,
-      village: area,
-      city: city,
+      village: area, // Use the merged area field as village
+      city: area, // Use the merged area field as city for backward compatibility
       pincode: pincode,
       fullAddress: completeAddress || selectedLocation.address,
       coordinates: selectedLocation.coordinates,
@@ -734,7 +689,7 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
   const isFormValid = () => {
     return (
       selectedLocation &&
-      city.trim() &&
+      area.trim() && // Now checking the merged area field instead of city
       pincode.trim() &&
       pincode.length === 6 &&
       receiverName.trim() &&
@@ -1031,36 +986,24 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label
                   htmlFor="area"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Area/Village
+                  Area/Village/City *
                 </Label>
                 <Input
                   id="area"
-                  placeholder="Area name"
+                  placeholder="Complete location (area, village, city)"
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
                   className="mt-2"
                 />
-              </div>
-              <div>
-                <Label
-                  htmlFor="city"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  City *
-                </Label>
-                <Input
-                  id="city"
-                  placeholder="City name"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="mt-2"
-                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Complete location including area, village, and city
+                </p>
               </div>
               <div>
                 <Label
