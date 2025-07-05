@@ -187,21 +187,11 @@ const PhoneOtpAuthModal: React.FC<PhoneOtpAuthModalProps> = ({
         // Save user to MongoDB backend for persistence across sessions
         try {
           await dvhostingSmsService.saveUserToBackend(result.user);
-
-          // Try to restore updated user data from backend (to get proper MongoDB ID)
-          await dvhostingSmsService.restoreSession();
-
-          // Get the potentially updated user
-          const updatedUser = dvhostingSmsService.getCurrentUser();
-          if (updatedUser) {
-            onSuccess(updatedUser);
-          } else {
-            onSuccess(result.user);
-          }
         } catch (userSaveError) {
-          // Silent fail for user save to backend, proceed with original user
-          onSuccess(result.user);
+          // Silent fail for user save to backend
         }
+
+        onSuccess(result.user);
         onClose();
         resetForm();
       } else {
