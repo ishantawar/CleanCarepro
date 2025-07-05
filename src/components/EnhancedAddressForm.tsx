@@ -513,6 +513,9 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
       const cityCandidate = parts[i];
       if (
         cityCandidate &&
+        cityCandidate !== flatNo && // Exclude extracted house number
+        cityCandidate !== street && // Exclude already extracted street
+        cityCandidate !== village && // Exclude already extracted village
         !cityCandidate.match(/\b\d{6}\b/) &&
         !cityCandidate.includes("Pradesh") &&
         !cityCandidate.includes("State") &&
