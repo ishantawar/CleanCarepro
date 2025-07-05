@@ -112,7 +112,7 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                       className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg"
                     >
                       {/* Service Image */}
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         {service.image ? (
                           <img
                             src={service.image}
@@ -131,7 +131,7 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                         <div
                           className={`w-full h-full flex items-center justify-center text-gray-400 ${service.image ? "hidden" : ""}`}
                         >
-                          <Package className="w-5 h-5" />
+                          <Package className="w-7 h-7" />
                         </div>
                       </div>
 
@@ -272,7 +272,7 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                     className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg"
                   >
                     {/* Service Image */}
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                       {service.image ? (
                         <img
                           src={service.image}
@@ -291,7 +291,7 @@ const AuthGuardedCheckout: React.FC<AuthGuardedCheckoutProps> = ({
                       <div
                         className={`w-full h-full flex items-center justify-center text-gray-400 ${service.image ? "hidden" : ""}`}
                       >
-                        <Package className="w-6 h-6" />
+                        <Package className="w-8 h-8" />
                       </div>
                     </div>
 

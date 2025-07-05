@@ -369,7 +369,7 @@ const LaundryCart: React.FC<LaundryCartProps> = ({
         );
         console.log("📋 Validation results:", errors);
       } catch (validationError) {
-        console.error("��� Validation function failed:", validationError);
+        console.error("❌ Validation function failed:", validationError);
         addNotification(
           createErrorNotification(
             "Validation Error",
@@ -668,7 +668,7 @@ Confirm this booking?`;
                 key={service!.id}
                 className="flex items-center gap-2 p-1.5 bg-gray-50 rounded-md"
               >
-                <div className="w-8 h-8 rounded-md overflow-hidden bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-md overflow-hidden bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center flex-shrink-0">
                   {service!.image ? (
                     <img
                       src={service!.image}
@@ -682,7 +682,7 @@ Confirm this booking?`;
                     />
                   ) : null}
                   {/* Fallback to emoji/icon */}
-                  <span className={`text-xs ${service!.image ? "hidden" : ""}`}>
+                  <span className={`text-sm ${service!.image ? "hidden" : ""}`}>
                     {service!.category.includes("Men")
                       ? "👔"
                       : service!.category.includes("Women")
