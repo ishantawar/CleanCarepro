@@ -911,7 +911,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                             <div className="flex justify-between items-center text-xs">
                               <span className="text-gray-600">Order Value</span>
                               <span className="font-bold text-green-600">
-                                ₹{total}
+                                ���{total}
                               </span>
                             </div>
                           </div>
@@ -1190,22 +1190,7 @@ const EnhancedBookingHistory: React.FC<EnhancedBookingHistoryProps> =
                         <div className="space-y-2 pt-2 border-t">
                           {hasRealId ? (
                             <>
-                              <div className="grid grid-cols-2 gap-2">
-                                {canEditBooking(booking) && (
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEditBooking(booking);
-                                    }}
-                                    variant="outline"
-                                    className="text-xs py-2 border-green-200 text-green-600 hover:bg-green-50"
-                                    size="sm"
-                                  >
-                                    <Edit className="h-3 w-3 mr-1" />
-                                    Edit Order
-                                  </Button>
-                                )}
-
+                              <div className="grid grid-cols-1 gap-2">
                                 {canCancelBooking(booking) && (
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
