@@ -2,6 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   X,
   Plus,
   Home,
@@ -10,6 +16,8 @@ import {
   MoreHorizontal,
   ArrowRight,
   Phone,
+  Edit,
+  Trash2,
 } from "lucide-react";
 
 interface SavedAddress {
