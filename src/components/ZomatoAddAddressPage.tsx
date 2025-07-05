@@ -368,35 +368,66 @@ const ZomatoAddAddressPage: React.FC<ZomatoAddAddressPageProps> = ({
     setStreet("");
     setArea("");
 
-    // Filter out empty parts, pincode, state, country
+    // More comprehensive filtering - preserve meaningful address components
     const cleanParts = parts.filter((part) => {
       if (!part || part.length < 2) return false;
-      if (part.match(/\b\d{6}\b/)) return false; // Contains pincode
-      if (part === "India") return false;
-      if (part.includes("Pradesh") || part.includes("State")) return false;
+      if (part.match(/^\d{6}$/)) return false; // Pure pincode
+      if (part.toLowerCase() === "india") return false;
+      if (part.toLowerCase().includes("pradesh") ||
+          part.toLowerCase().includes("state") ||
+          part.toLowerCase().includes("bharath") ||
+          part.toLowerCase().includes("bharat")) return false;
       return true;
     });
 
     console.log("🧹 Clean parts:", cleanParts);
 
-    if (cleanParts.length === 0) return;
+    if (cleanParts.length === 0) {
+      // If no parts, use the full address as area
+      setArea(fullAddress.replace(/,?\s*\d{6}.*$/, "").trim());
+      return;
+    }
 
-    // Strategy: First part as street (if multiple), rest combined as area/city
+    // Improved strategy: Be more conservative to preserve details
     if (cleanParts.length === 1) {
-      // Only one part - put it in the merged area field
+      // Only one part - use it as the area
       setArea(cleanParts[0]);
-      console.log("🏘️ Single part used for area/city:", cleanParts[0]);
-    } else if (cleanParts.length >= 2) {
-      // Multiple parts - first as street, rest combined as area/city
+      console.log("🏘️ Single part used for area:", cleanParts[0]);
+    } else if (cleanParts.length === 2) {
+      // Two parts - first as street, second as area
       setStreet(cleanParts[0]);
-
-      // Combine all remaining parts for the merged area/city field
-      const locationParts = cleanParts.slice(1);
-      const combinedLocation = locationParts.join(", ");
-      setArea(combinedLocation);
-
+      setArea(cleanParts[1]);
       console.log("🛣️ Street:", cleanParts[0]);
-      console.log("🏘️ Combined Location (Area/City):", combinedLocation);
+      console.log("🏘️ Area:", cleanParts[1]);
+    } else if (cleanParts.length >= 3) {
+      // Multiple parts - be more careful about what goes where
+
+      // Check if first part looks like a specific building/house detail
+      const firstPart = cleanParts[0];
+      const looksLikeHouseDetail = /^\d+|house|flat|plot|#|building|block/i.test(firstPart);
+
+      if (looksLikeHouseDetail) {
+        // First part is house/building - use as street
+        setStreet(firstPart);
+
+        // Take next 2-3 parts for area to preserve locality details
+        const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
+        setArea(areaParts.join(", "));
+
+        console.log("🏢 House detail as street:", firstPart);
+        console.log("🏘️ Detailed area:", areaParts.join(", "));
+      } else {
+        // First part is street name - preserve more context
+        setStreet(cleanParts[0]);
+
+        // Use next 2-3 parts for area to keep locality details
+        const areaParts = cleanParts.slice(1, Math.min(4, cleanParts.length));
+        setArea(areaParts.join(", "));
+
+        console.log("🛣️ Street name:", cleanParts[0]);
+        console.log("🏘️ Extended area:", areaParts.join(", "));
+      }
+    }
     }
   };
 
